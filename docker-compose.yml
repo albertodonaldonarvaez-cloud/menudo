@@ -1,0 +1,41 @@
+# =============================================================
+#  DOCKER COMPOSE — Menú Digital
+#
+#  ✏️  Para cambiar el puerto edita el archivo .env:
+#       PORT=8080   →  cambia 8080 al puerto que necesites
+#
+#  Comandos de uso rápido:
+#    Iniciar:    docker compose up -d
+#    Detener:    docker compose down
+#    Reiniciar:  docker compose restart
+#    Ver logs:   docker compose logs -f
+#    Reconstruir: docker compose up -d --build --force-recreate
+# =============================================================
+
+services:
+  menu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: menudo_menu
+    restart: unless-stopped
+    ports:
+      # Puerto externo configurable en .env → Puerto interno fijo 80
+      - "${PORT:-8080}:80"
+    environment:
+      # Credenciales del admin — se leen desde .env
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
+    volumes:
+      # Persistencia del archivo .htpasswd generado
+      - htpasswd_data:/etc/nginx/auth
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+# Volumen para el .htpasswd (persiste entre reinicios)
+volumes:
+  htpasswd_data:

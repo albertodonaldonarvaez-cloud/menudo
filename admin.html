@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración | Menú Digital & Publicidad</title>
+  <meta name="theme-color" content="#1E2022">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- QRCode Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="admin-page-body">
+
+  <!-- Admin Top Navigation -->
+  <header class="admin-topbar">
+    <div class="container admin-topbar-inner">
+      <div class="admin-brand">
+        <i class="fa-solid fa-utensils"></i>
+        <span>Panel de Control</span>
+      </div>
+      <a href="index.html" class="btn-back-menu">
+        <i class="fa-solid fa-eye"></i> Ver Menú en Mesa
+      </a>
+    </div>
+  </header>
+
+  <!-- Admin Dashboard Container -->
+  <main class="container admin-main-container">
+    
+    <div class="admin-welcome-box">
+      <div>
+        <h2>⚙️ Administración del Menú & Publicidad</h2>
+        <p>Edita los <strong>títulos de platillos</strong>, guisados, fotos reales, descripciones, precios y genera carteles para mesas o volantes para la calle.</p>
+      </div>
+    </div>
+
+    <!-- Admin Navigation Tabs -->
+    <div class="admin-dashboard-tabs">
+      <button class="dashboard-tab active" data-tab="tab-guisados">
+        <i class="fa-solid fa-kitchen-set"></i> Guisados del Día
+      </button>
+      <button class="dashboard-tab" data-tab="tab-fotos-desc">
+        <i class="fa-solid fa-pen-to-square"></i> Títulos, Fotos & Descripciones
+      </button>
+      <button class="dashboard-tab" data-tab="tab-precios">
+        <i class="fa-solid fa-tags"></i> Precios & Negocio
+      </button>
+      <button class="dashboard-tab" data-tab="tab-qr">
+        <i class="fa-solid fa-qrcode"></i> Carteles Mesas (3x Hoja)
+      </button>
+      <button class="dashboard-tab" data-tab="tab-volantes">
+        <i class="fa-solid fa-bullhorn"></i> Volantes Calle (4x Hoja)
+      </button>
+    </div>
+
+    <!-- TAB CONTENTS -->
+    <div class="admin-dashboard-content">
+
+      <!-- 1. GUISADOS DEL DÍA -->
+      <section class="tab-pane active" id="tab-guisados">
+        <div class="admin-panel-card">
+          <div class="card-header-styled">
+            <h3><i class="fa-solid fa-fire-burner"></i> Guisados para Gorditas y Burritos</h3>
+            <p>Activa o desactiva con el interruptor los guisados disponibles hoy. Los que marques como agotados se mostrarán deshabilitados para tus clientes.</p>
+          </div>
+
+          <!-- Add new Guisado Form -->
+          <form class="add-guisado-form" id="addGuisadoForm">
+            <input type="text" id="newGuisadoName" placeholder="Escribe el nombre del nuevo guisado (Ej: Chicharrón en salsa roja)" required class="form-input">
+            <button type="submit" class="btn-add-guisado">
+              <i class="fa-solid fa-plus"></i> Agregar Guisado
+            </button>
+          </form>
+
+          <!-- Guisados List -->
+          <div class="admin-guisados-list" id="adminGuisadosList">
+            <!-- Renderizado dinámico desde admin.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. TÍTULOS, FOTOS & DESCRIPCIONES DE PLATILLOS -->
+      <section class="tab-pane" id="tab-fotos-desc">
+        <div class="admin-panel-card">
+          <div class="card-header-styled">
+            <h3><i class="fa-solid fa-pen-to-square"></i> Títulos, Fotos Reales y Descripciones de Platillos</h3>
+            <p>Personaliza el <strong>nombre/título</strong> que verán tus clientes, sube fotos reales y cambia las descripciones de cada platillo.</p>
+          </div>
+
+          <form id="descriptionsForm" class="descriptions-form-wrapper">
+            <div class="dish-editor-grid">
+              
+              <!-- 1: Menudo -->
+              <div class="dish-editor-card">
+                <div class="dish-editor-header">
+                  <h4>🍲 Sección 1: Menudo Tradicional</h4>
+                </div>
+                <div class="dish-editor-body">
+                  <div class="photo-preview-wrap">
+                    <img id="prev-menudo" src="" alt="Foto Menudo">
+                  </div>
+                  <div class="dish-editor-controls">
+                    <div class="field-item">
+                      <label for="title-menudo"><i class="fa-solid fa-tag"></i> Título del Platillo:</label>
+                      <input type="text" id="title-menudo" class="form-input" placeholder="Ej: Plato de Menudo Tradicional" required>
+                    </div>
+
+                    <div class="photo-card-actions" style="margin-top:6px;">
+                      <label class="btn-upload-file">
+                        <i class="fa-solid fa-camera"></i> Subir Foto Real
+                        <input type="file" accept="image/*" onchange="handleImageUpload(event, 'menudo')" style="display:none;">
+                      </label>
+                      <button type="button" class="btn-reset-img" onclick="resetSingleImage('menudo')" title="Restablecer foto predeterminada">
+                        <i class="fa-solid fa-rotate-left"></i>
+                      </button>
+                    </div>
+
+                    <div class="field-item" style="margin-top:8px;">
+                      <label for="desc-menudo"><i class="fa-regular fa-comment-dots"></i> Descripción del Menudo:</label>
+                      <textarea id="desc-menudo" rows="3" class="form-input" placeholder="Descripción de lo que incluye el menudo..."></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2: Gorditas -->
+              <div class="dish-editor-card">
+                <div class="dish-editor-header">
+                  <h4>🫓 Sección 2: Gorditas</h4>
+                </div>
+                <div class="dish-editor-body">
+                  <div class="photo-preview-wrap">
+                    <img id="prev-gorditas" src="" alt="Foto Gorditas">
+                  </div>
+                  <div class="dish-editor-controls">
+                    <div class="field-item">
+                      <label for="title-gorditas"><i class="fa-solid fa-tag"></i> Título de las Gorditas:</label>
+                      <input type="text" id="title-gorditas" class="form-input" placeholder="Ej: Gorditas de Guisado al Comal" required>
+                    </div>
+
+                    <div class="photo-card-actions" style="margin-top:6px;">
+                      <label class="btn-upload-file">
+                        <i class="fa-solid fa-camera"></i> Subir Foto Real
+                        <input type="file" accept="image/*" onchange="handleImageUpload(event, 'gorditas')" style="display:none;">
+                      </label>
+                      <button type="button" class="btn-reset-img" onclick="resetSingleImage('gorditas')" title="Restablecer foto predeterminada">
+                        <i class="fa-solid fa-rotate-left"></i>
+                      </button>
+                    </div>
+
+                    <div class="field-item" style="margin-top:8px;">
+                      <label for="desc-gorditas"><i class="fa-regular fa-comment-dots"></i> Descripción de Gorditas:</label>
+                      <textarea id="desc-gorditas" rows="3" class="form-input" placeholder="Descripción de las gorditas..."></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3: Burritos -->
+              <div class="dish-editor-card">
+                <div class="dish-editor-header">
+                  <h4>🌯 Sección 3: Burritos</h4>
+                </div>
+                <div class="dish-editor-body">
+                  <div class="photo-preview-wrap">
+                    <img id="prev-burritos" src="" alt="Foto Burritos">
+                  </div>
+                  <div class="dish-editor-controls">
+                    <div class="field-item">
+                      <label for="title-burritos"><i class="fa-solid fa-tag"></i> Título de los Burritos:</label>
+                      <input type="text" id="title-burritos" class="form-input" placeholder="Ej: Burritos Norteños de Guisado" required>
+                    </div>
+
+                    <div class="photo-card-actions" style="margin-top:6px;">
+                      <label class="btn-upload-file">
+                        <i class="fa-solid fa-camera"></i> Subir Foto Real
+                        <input type="file" accept="image/*" onchange="handleImageUpload(event, 'burritos')" style="display:none;">
+                      </label>
+                      <button type="button" class="btn-reset-img" onclick="resetSingleImage('burritos')" title="Restablecer foto predeterminada">
+                        <i class="fa-solid fa-rotate-left"></i>
+                      </button>
+                    </div>
+
+                    <div class="field-item" style="margin-top:8px;">
+                      <label for="desc-burritos"><i class="fa-regular fa-comment-dots"></i> Descripción de Burritos:</label>
+                      <textarea id="desc-burritos" rows="3" class="form-input" placeholder="Descripción de los burritos..."></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4: Café de Olla -->
+              <div class="dish-editor-card">
+                <div class="dish-editor-header">
+                  <h4>☕ Sección 4: Café de Olla</h4>
+                </div>
+                <div class="dish-editor-body">
+                  <div class="photo-preview-wrap">
+                    <img id="prev-cafeOlla" src="" alt="Foto Café de Olla">
+                  </div>
+                  <div class="dish-editor-controls">
+                    <div class="field-item">
+                      <label for="title-cafeOlla"><i class="fa-solid fa-tag"></i> Título del Café:</label>
+                      <input type="text" id="title-cafeOlla" class="form-input" placeholder="Ej: Café de Olla Artesanal" required>
+                    </div>
+
+                    <div class="photo-card-actions" style="margin-top:6px;">
+                      <label class="btn-upload-file">
+                        <i class="fa-solid fa-camera"></i> Subir Foto Real
+                        <input type="file" accept="image/*" onchange="handleImageUpload(event, 'cafeOlla')" style="display:none;">
+                      </label>
+                      <button type="button" class="btn-reset-img" onclick="resetSingleImage('cafeOlla')" title="Restablecer foto predeterminada">
+                        <i class="fa-solid fa-rotate-left"></i>
+                      </button>
+                    </div>
+
+                    <div class="field-item" style="margin-top:8px;">
+                      <label for="desc-cafeOlla"><i class="fa-regular fa-comment-dots"></i> Descripción del Café de Olla:</label>
+                      <textarea id="desc-cafeOlla" rows="3" class="form-input" placeholder="Descripción del café de olla..."></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 5: Refresco -->
+              <div class="dish-editor-card">
+                <div class="dish-editor-header">
+                  <h4>🧊 Sección 5: Refrescos</h4>
+                </div>
+                <div class="dish-editor-body">
+                  <div class="photo-preview-wrap">
+                    <img id="prev-refresco" src="" alt="Foto Refresco">
+                  </div>
+                  <div class="dish-editor-controls">
+                    <div class="field-item">
+                      <label for="title-refresco"><i class="fa-solid fa-tag"></i> Título de Refrescos:</label>
+                      <input type="text" id="title-refresco" class="form-input" placeholder="Ej: Refresco de Vidrio Bien Helado" required>
+                    </div>
+
+                    <div class="photo-card-actions" style="margin-top:6px;">
+                      <label class="btn-upload-file">
+                        <i class="fa-solid fa-camera"></i> Subir Foto Real
+                        <input type="file" accept="image/*" onchange="handleImageUpload(event, 'refresco')" style="display:none;">
+                      </label>
+                      <button type="button" class="btn-reset-img" onclick="resetSingleImage('refresco')" title="Restablecer foto predeterminada">
+                        <i class="fa-solid fa-rotate-left"></i>
+                      </button>
+                    </div>
+
+                    <div class="field-item" style="margin-top:8px;">
+                      <label for="desc-refresco"><i class="fa-regular fa-comment-dots"></i> Descripción de Refrescos:</label>
+                      <textarea id="desc-refresco" rows="3" class="form-input" placeholder="Descripción de los refrescos..."></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="admin-form-actions" style="margin-top: 20px;">
+              <button type="submit" class="btn-save-admin">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar Títulos y Descripciones
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- 3. PRECIOS & DATOS DEL NEGOCIO -->
+      <section class="tab-pane" id="tab-precios">
+        <div class="admin-panel-card">
+          <form id="adminPricesForm" class="admin-form-grid">
+            
+            <div class="card-header-styled">
+              <h3><i class="fa-solid fa-hand-holding-dollar"></i> Precios de Platillos (MXN)</h3>
+              <p>Define los precios unitarios para cada uno de tus productos.</p>
+            </div>
+            
+            <div class="form-row-2">
+              <div class="field-item">
+                <label for="priceMenudo">🍲 Plato de Menudo (Medida Única):</label>
+                <div class="input-prefix-group">
+                  <span class="prefix">$</span>
+                  <input type="number" id="priceMenudo" min="0" step="1" required class="form-input">
+                </div>
+              </div>
+              <div class="field-item">
+                <label for="priceGordita">🫓 Gordita de Guisado (c/u):</label>
+                <div class="input-prefix-group">
+                  <span class="prefix">$</span>
+                  <input type="number" id="priceGordita" min="0" step="1" required class="form-input">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row-3">
+              <div class="field-item">
+                <label for="priceBurrito">🌯 Burrito de Guisado (c/u):</label>
+                <div class="input-prefix-group">
+                  <span class="prefix">$</span>
+                  <input type="number" id="priceBurrito" min="0" step="1" required class="form-input">
+                </div>
+              </div>
+              <div class="field-item">
+                <label for="priceCafe">☕ Café de Olla:</label>
+                <div class="input-prefix-group">
+                  <span class="prefix">$</span>
+                  <input type="number" id="priceCafe" min="0" step="1" required class="form-input">
+                </div>
+              </div>
+              <div class="field-item">
+                <label for="priceRefresco">🧊 Refresco Helado:</label>
+                <div class="input-prefix-group">
+                  <span class="prefix">$</span>
+                  <input type="number" id="priceRefresco" min="0" step="1" required class="form-input">
+                </div>
+              </div>
+            </div>
+
+            <div class="card-header-styled" style="margin-top: 18px;">
+              <h3><i class="fa-solid fa-store"></i> Información del Negocio</h3>
+            </div>
+
+            <div class="field-item">
+              <label for="adminName">Nombre del Negocio:</label>
+              <input type="text" id="adminName" required class="form-input">
+            </div>
+
+            <div class="field-item">
+              <label for="adminSlogan">Eslogan / Frase corta de bienvenida:</label>
+              <input type="text" id="adminSlogan" required class="form-input">
+            </div>
+
+            <div class="field-item">
+              <label for="adminAddress">Ubicación / Referencias del Local (para los volantes):</label>
+              <input type="text" id="adminAddress" class="form-input" placeholder="Ej: Av. Hidalgo #104, Col. Centro (Frente a la plaza)">
+            </div>
+
+            <div class="form-row-2">
+              <div class="field-item">
+                <label for="adminSchedule">Horario de Atención:</label>
+                <input type="text" id="adminSchedule" class="form-input" placeholder="Ej: Mar a Dom: 7:00 AM - 2:00 PM">
+              </div>
+              <div class="field-item">
+                <label for="adminStatus">Estado del Local:</label>
+                <select id="adminStatus" class="form-input">
+                  <option value="open">🟢 Abierto (Atendiendo comensales)</option>
+                  <option value="closed">🔴 Cerrado</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="admin-form-actions" style="margin-top: 15px;">
+              <button type="submit" class="btn-save-admin">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar Precios y Datos
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- 4. CÓDIGO QR PARA MESAS (3 POR HOJA CARTA) -->
+      <section class="tab-pane" id="tab-qr">
+        <div class="admin-panel-card">
+          <div class="card-header-styled">
+            <h3><i class="fa-solid fa-print"></i> Carteles QR para Mesas (3 por Hoja)</h3>
+            <p>Formato optimizado para imprimir <strong>3 carteles de mesa por cada hoja tamaño Carta</strong> listos para recortar.</p>
+          </div>
+
+          <div class="qr-admin-container">
+            <div class="qr-preview-box">
+              <div id="qrcodeBox"></div>
+              <p class="qr-scan-hint">Vista previa del Código QR</p>
+            </div>
+            <div class="qr-details">
+              <h4>Carteles para Mesas (3 por Hoja)</h4>
+              <p>Al hacer clic en el botón, se abrirá la vista de impresión con <strong>3 carteles horizontales perfectamente distribuidos en 1 hoja Carta</strong> divididos por líneas de corte punteadas.</p>
+              
+              <div class="field-item">
+                <label for="customQrUrl">Enlace / IP del Menú (para el QR):</label>
+                <input type="text" id="customQrUrl" class="form-input" placeholder="http://192.168.1.100 o https://...">
+              </div>
+
+              <div class="qr-actions">
+                <button class="btn-print-qr" id="printTableCardsBtn">
+                  <i class="fa-solid fa-print"></i> Imprimir 3 Carteles de Mesa en 1 Hoja Carta
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. VOLANTES PUBLICITARIOS PARA LA CALLE (4 POR HOJA CARTA) -->
+      <section class="tab-pane" id="tab-volantes">
+        <div class="admin-panel-card">
+          <div class="card-header-styled">
+            <h3><i class="fa-solid fa-bullhorn"></i> Volantes Publicitarios para Repartir en la Calle (4 por Hoja Carta)</h3>
+            <p>Diseño comercial muy llamativo y antojable, pensado para entregar en mano a peatones, negocios vecinos o colocar en mostradores. <strong>¡Salen 4 volantes por cada hoja tamaño Carta!</strong></p>
+          </div>
+
+          <div class="street-flyers-config-box">
+            <div class="flyer-preview-sample">
+              <div class="sample-flyer-mini">
+                <div class="mini-tag">🔥 ¡SABOR CASERO!</div>
+                <div class="mini-title printNameTarget">Menudería Doña Güera</div>
+                <div class="mini-items">🍲 Menudo • 🫓 Gorditas • 🌯 Burritos • ☕ Café</div>
+                <div class="mini-prices">Gorditas $25 • Burritos $35 • Menudo $120</div>
+                <div class="mini-qr-hint">📲 ¡Escanea para ver los Guisados del Día!</div>
+              </div>
+            </div>
+
+            <div class="flyer-config-controls">
+              <h4>Características del Volante de Calle:</h4>
+              <ul class="flyer-features-list">
+                <li><i class="fa-solid fa-check-circle"></i> <strong>4 volantes por hoja Carta</strong> (cuarto de carta, tamaño ideal para mano).</li>
+                <li><i class="fa-solid fa-check-circle"></i> <strong>Títulos, precios y antojitos destacados</strong> con llamados de atención.</li>
+                <li><i class="fa-solid fa-check-circle"></i> <strong>Código QR directo al Menú</strong> para que consulten los guisados del día.</li>
+                <li><i class="fa-solid fa-check-circle"></i> <strong>Horarios y dirección de tu local</strong> claramente visibles.</li>
+                <li><i class="fa-solid fa-check-circle"></i> <strong>Líneas de corte en cruz</strong> (✂️) para recortar 4 volantes en 2 cortes rápidos.</li>
+              </ul>
+
+              <div class="qr-actions" style="margin-top: 20px;">
+                <button class="btn-print-flyer" id="printStreetFlyersBtn">
+                  <i class="fa-solid fa-file-arrow-down"></i> Imprimir 4 Volantes para Calle en 1 Hoja Carta
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Bottom Actions / Reset -->
+    <div class="admin-bottom-bar">
+      <button class="btn-reset-data" id="resetDataBtn">
+        <i class="fa-solid fa-rotate-left"></i> Restablecer Valores Predeterminados
+      </button>
+      <a href="index.html" class="btn-back-menu-footer">
+        <i class="fa-solid fa-arrow-left"></i> Volver al Menú
+      </a>
+    </div>
+
+  </main>
+
+  <!-- Toast Notification -->
+  <div class="toast-notification hidden" id="toast">
+    <i class="fa-solid fa-circle-check" id="toastIcon"></i>
+    <span id="toastMsg">Cambios guardados con éxito</span>
+  </div>
+
+  <!-- ==========================================================
+       PRINTABLE 1: 3 TABLE CARDS IN 1 LETTER SHEET (CARTELES DE MESA)
+       ========================================================== -->
+  <div class="print-sheet-tables hidden" id="printTablesSheet">
+    
+    <!-- CARD 1 -->
+    <div class="third-letter-card">
+      <div class="print-card-left">
+        <div class="print-card-title-row">
+          <span class="print-logo-icon">🍲</span>
+          <div>
+            <h1 class="print-biz-name printNameTarget">Menudería y Antojitos</h1>
+            <p class="print-sub-slogan">¡Escanea con tu celular y consulta nuestro Menú Digital en Mesa!</p>
+          </div>
+        </div>
+        <div class="print-chips-row">
+          <span class="print-chip"><span class="chip-title-menudo">🍲 Menudo</span></span>
+          <span class="print-chip"><span class="chip-title-gorditas">🫓 Gorditas</span></span>
+          <span class="print-chip"><span class="chip-title-burritos">🌯 Burritos</span></span>
+          <span class="print-chip"><span class="chip-title-cafe">☕ Café de Olla</span></span>
+          <span class="print-chip"><span class="chip-title-refresco">🧊 Refrescos</span></span>
+        </div>
+      </div>
+      <div class="print-card-right">
+        <div class="print-qr-wrapper">
+          <div id="printQrImage1" class="print-qr-code"></div>
+        </div>
+        <span class="print-scan-legend">Apunta con la cámara</span>
+      </div>
+    </div>
+
+    <!-- CUT SEPARATOR 1 -->
+    <div class="cut-separator">
+      <span class="cut-scissor">✂️</span>
+      <span class="cut-text">- - - - - - - - - - - - CORTAR AQUÍ - - - - - - - - - - - -</span>
+      <span class="cut-scissor">✂️</span>
+    </div>
+
+    <!-- CARD 2 -->
+    <div class="third-letter-card">
+      <div class="print-card-left">
+        <div class="print-card-title-row">
+          <span class="print-logo-icon">🍲</span>
+          <div>
+            <h1 class="print-biz-name printNameTarget">Menudería y Antojitos</h1>
+            <p class="print-sub-slogan">¡Escanea con tu celular y consulta nuestro Menú Digital en Mesa!</p>
+          </div>
+        </div>
+        <div class="print-chips-row">
+          <span class="print-chip"><span class="chip-title-menudo">🍲 Menudo</span></span>
+          <span class="print-chip"><span class="chip-title-gorditas">🫓 Gorditas</span></span>
+          <span class="print-chip"><span class="chip-title-burritos">🌯 Burritos</span></span>
+          <span class="print-chip"><span class="chip-title-cafe">☕ Café de Olla</span></span>
+          <span class="print-chip"><span class="chip-title-refresco">🧊 Refrescos</span></span>
+        </div>
+      </div>
+      <div class="print-card-right">
+        <div class="print-qr-wrapper">
+          <div id="printQrImage2" class="print-qr-code"></div>
+        </div>
+        <span class="print-scan-legend">Apunta con la cámara</span>
+      </div>
+    </div>
+
+    <!-- CUT SEPARATOR 2 -->
+    <div class="cut-separator">
+      <span class="cut-scissor">✂️</span>
+      <span class="cut-text">- - - - - - - - - - - - CORTAR AQUÍ - - - - - - - - - - - -</span>
+      <span class="cut-scissor">✂️</span>
+    </div>
+
+    <!-- CARD 3 -->
+    <div class="third-letter-card">
+      <div class="print-card-left">
+        <div class="print-card-title-row">
+          <span class="print-logo-icon">🍲</span>
+          <div>
+            <h1 class="print-biz-name printNameTarget">Menudería y Antojitos</h1>
+            <p class="print-sub-slogan">¡Escanea con tu celular y consulta nuestro Menú Digital en Mesa!</p>
+          </div>
+        </div>
+        <div class="print-chips-row">
+          <span class="print-chip"><span class="chip-title-menudo">🍲 Menudo</span></span>
+          <span class="print-chip"><span class="chip-title-gorditas">🫓 Gorditas</span></span>
+          <span class="print-chip"><span class="chip-title-burritos">🌯 Burritos</span></span>
+          <span class="print-chip"><span class="chip-title-cafe">☕ Café de Olla</span></span>
+          <span class="print-chip"><span class="chip-title-refresco">🧊 Refrescos</span></span>
+        </div>
+      </div>
+      <div class="print-card-right">
+        <div class="print-qr-wrapper">
+          <div id="printQrImage3" class="print-qr-code"></div>
+        </div>
+        <span class="print-scan-legend">Apunta con la cámara</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==========================================================
+       PRINTABLE 2: 4 STREET FLYERS IN 1 LETTER SHEET (VOLANTES CALLE)
+       ========================================================== -->
+  <div class="print-sheet-flyers hidden" id="printFlyersSheet">
+    
+    <!-- FLYER 1 -->
+    <div class="street-flyer-card">
+      <div class="flyer-top-badge">🔥 ¡AUTÉNTICO SABOR CASERO!</div>
+      <div class="flyer-header">
+        <h2 class="flyer-title printNameTarget">Menudería y Antojitos</h2>
+        <p class="flyer-slogan-text printSloganTarget">Recién hecho, calientito y con el mejor sazón</p>
+      </div>
+
+      <div class="flyer-menu-highlights">
+        <div class="flyer-dish-row">
+          <span class="dish-item-name">🍲 <strong class="flyer-title-menudo">Menudo Tradicional</strong></span>
+          <span class="dish-item-price printMenudoPriceTarget">$120</span>
+        </div>
+        <div class="flyer-dish-row">
+          <span class="dish-item-name">🫓 <strong class="flyer-title-gorditas">Gorditas de Guisado</strong></span>
+          <span class="dish-item-price printGorditaPriceTarget">$25 c/u</span>
+        </div>
+        <div class="flyer-dish-row">
+          <span class="dish-item-name">🌯 <strong class="flyer-title-burritos">Burritos Norteños</strong></span>
+          <span class="dish-item-price printBurritoPriceTarget">$35 c/u</span>
+        </div>
+        <div class="flyer-dish-row">
+          <span class="dish-item-name">☕ <strong class="flyer-title-cafe">Café de Olla</strong></span>
+          <span class="dish-item-price printCafePriceTarget">$25</span>
+        </div>
+      </div>
+
+      <div class="flyer-qr-section">
+        <div class="flyer-qr-box">
+          <div id="flyerQr1" class="flyer-qr-img"></div>
+        </div>
+        <div class="flyer-qr-text">
+          <strong>📲 Escanea el Código QR</strong>
+          <small>¡Para consultar los guisados del día en tu celular!</small>
+        </div>
+      </div>
+
+      <div class="flyer-footer">
+        <div class="flyer-meta-row">
+          <span><i class="fa-regular fa-clock"></i> <strong class="printScheduleTarget">Mar-Dom: 7am - 2pm</strong></span>
+        </div>
+        <div class="flyer-address-row printAddressTarget">
+          📍 Av. Hidalgo #104, Col. Centro
+        </div>
+      </div>
+    </div>
+
+    <!-- FLYER 2 -->
+    <div class="street-flyer-card">
+      <div class="flyer-top-badge">🔥 ¡AUTÉNTICO SABOR CASERO!</div>
+      <div class="flyer-header">
+        <h2 class="flyer-title printNameTarget">Menudería y Antojitos</h2>
+        <p class="flyer-slogan-text printSloganTarget">Recién hecho, calientito y con el mejor sazón</p>
+      </div>
+
+      <div class="flyer-menu-highlights">
+        <div class="flyer-dish-row">
+          <span class="dish-item-name">🍲 <strong class="flyer-title-menudo">Menudo Tradicional</strong></span>
+          <span class="dish-item-price printMenudoPriceTarget">$120</span>
+        </div>
+        <div class="flyer-dish-row">
+          <span class="dish-item-name">🫓 <strong class="flyer-title-gorditas">Gorditas de Guisado</strong></span>
+          <span class="dish-item-price printGorditaPriceTarget">$25 c/u</span>
+        </div>
+        <div class="flyer-dish-row">
+          <span class="dish-item-name">🌯 <strong class="flyer-title-burritos">Burritos Norteños</strong></span>
+          <span class="dish-item-price printBurritoPriceTarget">$35 c/u</span>
+        </div>
+        <div class="flyer-dish-row">
+          <span class="dish-item-name">☕ <strong class="flyer-title-cafe">Café de Olla</strong></span>
+          <span class="dish-item-price printCafePriceTarget">$25</span>
+        </div>
+      </div>
+
+      <div class="flyer-qr-section">
+        <div class="flyer-qr-box">
+          <div id="flyerQr2" class="flyer-qr-img"></div>
+        </div>
+        <div class="flyer-qr-text">
+          <strong>📲 Escanea el Código QR</strong>
+          <small>¡Para consultar los guisados del día en tu celular!</small>
+        </div>
+      </div>
+
+      <div class="flyer-footer">
+        <div class="flyer-meta-row">
+          <span><i class="fa-regular fa-clock"></i> <strong class="printScheduleTarget">Mar-Dom: 7am - 2pm</strong></span>
+        </div>
+        <div class="flyer-address-row printAddressTarget">
+          📍 Av. Hidalgo #104, Col. Centro
+        </div>
+      </div>
+    </div>
+
+    <!-- FLYER 3 -->
+    <div class="street-flyer-card">
+      <div class="flyer-top-badge">🔥 ¡AUTÉNTICO SABOR CASERO!</div>
+      <div class="flyer-header">
+        <h2 class="flyer-title printNameTarget">Menudería y Antojitos</h2>
+        <p class="flyer-slogan-text printSloganTarget">Recién hecho, calientito y con el mejor sazón</p>
+      </div>
+
+      <div class="flyer-menu-highlights">
+        <div class="flyer-dish-row">
+          <span class="dish-item-name">🍲 <strong class="flyer-title-menudo">Menudo Tradicional</strong></span>
+          <span class="dish-item-price printMenudoPriceTarget">$120</span>
+        </div>
+        <div class="flyer-dish-row">
+          <span class="dish-item-name">🫓 <strong class="flyer-title-gorditas">Gorditas de Guisado</strong></span>
+          <span class="dish-item-price printGorditaPriceTarget">$25 c/u</span>
+        </div>
+        <div class="flyer-dish-row">
+          <span class="dish-item-name">🌯 <strong class="flyer-title-burritos">Burritos Norteños</strong></span>
+          <span class="dish-item-price printBurritoPriceTarget">$35 c/u</span>
+        </div>
+        <div class="flyer-dish-row">
+          <span class="dish-item-name">☕ <strong class="flyer-title-cafe">Café de Olla</strong></span>
+          <span class="dish-item-price printCafePriceTarget">$25</span>
+        </div>
+      </div>
+
+      <div class="flyer-qr-section">
+        <div class="flyer-qr-box">
+          <div id="flyerQr3" class="flyer-qr-img"></div>
+        </div>
+        <div class="flyer-qr-text">
+          <strong>📲 Escanea el Código QR</strong>
+          <small>¡Para consultar los guisados del día en tu celular!</small>
+        </div>
+      </div>
+
+      <div class="flyer-footer">
+        <div class="flyer-meta-row">
+          <span><i class="fa-regular fa-clock"></i> <strong class="printScheduleTarget">Mar-Dom: 7am - 2pm</strong></span>
+        </div>
+        <div class="flyer-address-row printAddressTarget">
+          📍 Av. Hidalgo #104, Col. Centro
+        </div>
+      </div>
+    </div>
+
+    <!-- FLYER 4 -->
+    <div class="street-flyer-card">
+      <div class="flyer-top-badge">🔥 ¡AUTÉNTICO SABOR CASERO!</div>
+      <div class="flyer-header">
+        <h2 class="flyer-title printNameTarget">Menudería y Antojitos</h2>
+        <p class="flyer-slogan-text printSloganTarget">Recién hecho, calientito y con el mejor sazón</p>
+      </div>
+
+      <div class="flyer-menu-highlights">
+        <div class="flyer-dish-row">
+          <span class="dish-item-name">🍲 <strong class="flyer-title-menudo">Menudo Tradicional</strong></span>
+          <span class="dish-item-price printMenudoPriceTarget">$120</span>
+        </div>
+        <div class="flyer-dish-row">
+          <span class="dish-item-name">🫓 <strong class="flyer-title-gorditas">Gorditas de Guisado</strong></span>
+          <span class="dish-item-price printGorditaPriceTarget">$25 c/u</span>
+        </div>
+        <div class="flyer-dish-row">
+          <span class="dish-item-name">🌯 <strong class="flyer-title-burritos">Burritos Norteños</strong></span>
+          <span class="dish-item-price printBurritoPriceTarget">$35 c/u</span>
+        </div>
+        <div class="flyer-dish-row">
+          <span class="dish-item-name">☕ <strong class="flyer-title-cafe">Café de Olla</strong></span>
+          <span class="dish-item-price printCafePriceTarget">$25</span>
+        </div>
+      </div>
+
+      <div class="flyer-qr-section">
+        <div class="flyer-qr-box">
+          <div id="flyerQr4" class="flyer-qr-img"></div>
+        </div>
+        <div class="flyer-qr-text">
+          <strong>📲 Escanea el Código QR</strong>
+          <small>¡Para consultar los guisados del día en tu celular!</small>
+        </div>
+      </div>
+
+      <div class="flyer-footer">
+        <div class="flyer-meta-row">
+          <span><i class="fa-regular fa-clock"></i> <strong class="printScheduleTarget">Mar-Dom: 7am - 2pm</strong></span>
+        </div>
+        <div class="flyer-address-row printAddressTarget">
+          📍 Av. Hidalgo #104, Col. Centro
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="data.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

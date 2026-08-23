@@ -1,0 +1,13 @@
+# =============================================================
+# ARCHIVOS SENSIBLES — NUNCA SUBIR A GITHUB
+# =============================================================
+.env
+docker/.htpasswd
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
