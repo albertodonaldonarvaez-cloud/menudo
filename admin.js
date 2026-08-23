@@ -158,21 +158,91 @@ function saveTitlesAndDescriptions(e) {
   showToast('¡Títulos y descripciones guardados con éxito!');
 }
 
-function handleImageUpload(event, key) {
+/**
+ * Comprime una imagen usando Canvas antes de subirla.
+ * Reduce fotos de tablet de 8-15MB a ~200-500KB.
+ */
+function compressImage(file, maxWidth, maxHeight, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        // Escalar manteniendo proporción
+        if (w > maxWidth)  { h = Math.round(h * maxWidth  / w); w = maxWidth; }
+        if (h > maxHeight) { w = Math.round(w * maxHeight / h); h = maxHeight; }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob(
+          blob => blob ? resolve(blob) : reject(new Error('Error al comprimir')),
+          'image/jpeg', quality
+        );
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+/**
+ * Sube una foto al servidor:
+ * 1. Comprime a máx 1200×1200px, calidad 0.82 (~200-500KB)
+ * 2. POST a /api/upload-image → servidor guarda en disco
+ * 3. Solo guarda la URL en el config (no el Base64 gigante)
+ */
+async function handleImageUpload(event, key) {
   const file = event.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const dataUrl = e.target.result;
-    
-    if (!storeData.images) storeData.images = {};
-    storeData.images[key] = dataUrl;
+  showToast('⏳ Procesando imagen...');
 
+  try {
+    // Comprimir
+    const compressed = await compressImage(file, 1200, 1200, 0.82);
+    const dataUrl = await blobToDataUrl(compressed);
+
+    // Subir al servidor
+    const res = await fetch('/api/upload-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ key, image: dataUrl })
+    });
+
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+
+    // Guardar URL (con timestamp para romper caché) en storeData
+    if (!storeData.images) storeData.images = {};
+    storeData.images[key] = data.url + '?t=' + Date.now();
+
+    // Actualizar preview inmediatamente
+    const prev = document.getElementById(`prev-${key}`);
+    if (prev) prev.src = storeData.images[key];
+
+    // Guardar config (ahora solo la URL, no MB de Base64)
     saveStoreData();
-    showToast(`¡Foto de ${getDishName(key)} actualizada con éxito!`);
-  };
-  reader.readAsDataURL(file);
+    showToast(`✅ ¡Foto de ${getDishName(key)} actualizada!`);
+
+  } catch (e) {
+    console.error('Error subiendo imagen:', e);
+    showToast('❌ Error al subir. Verifica tu conexión e intenta de nuevo.');
+  }
 }
 
 function resetSingleImage(key) {

@@ -94,6 +94,47 @@ app.get('/admin.js',   requireAuth, (req, res) => {
   sendFile(res, 'admin.js');
 });
 
+// ── API — Subida de imágenes (una a la vez, comprimidas en cliente) ──
+// POST: protegido — guarda imagen en disco
+app.post('/api/upload-image', requireAuth, (req, res) => {
+  try {
+    const { key, image } = req.body;
+    const validKeys = ['menudo', 'gorditas', 'burritos', 'cafeOlla', 'refresco'];
+    if (!validKeys.includes(key) || !image) {
+      return res.status(400).json({ error: 'Clave o imagen inválida' });
+    }
+    // image llega como data URL: "data:image/jpeg;base64,/9j/..."
+    const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    const imgDir = '/data/images';
+    if (!fs.existsSync(imgDir)) fs.mkdirSync(imgDir, { recursive: true });
+
+    const filename = `${key}.jpg`;
+    fs.writeFileSync(path.join(imgDir, filename), buffer);
+    console.log(`[${new Date().toISOString()}] Imagen guardada: ${filename} (${Math.round(buffer.length/1024)}KB)`);
+
+    res.json({ ok: true, url: `/images/${key}` });
+  } catch (e) {
+    console.error('Error guardando imagen:', e);
+    res.status(500).json({ error: 'No se pudo guardar la imagen' });
+  }
+});
+
+// GET: público — sirve imágenes guardadas en disco
+app.get('/images/:key', (req, res) => {
+  const { key } = req.params;
+  const validKeys = ['menudo', 'gorditas', 'burritos', 'cafeOlla', 'refresco'];
+  if (!validKeys.includes(key)) return res.status(404).end();
+
+  const imgPath = path.join('/data/images', `${key}.jpg`);
+  if (!fs.existsSync(imgPath)) return res.status(404).end();
+
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.set('Content-Type', 'image/jpeg');
+  res.sendFile(imgPath);
+});
+
 // ── API — Configuración del menú ─────────────────────────────
 // GET: público (todos los celulares leen la config compartida)
 app.get('/api/config', (req, res) => {
