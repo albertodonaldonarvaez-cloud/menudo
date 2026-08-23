@@ -7,6 +7,11 @@
   <meta name="description" content="Menú digital para consultar en mesa o red local nuestro Menudo, Gorditas, Burritos y Bebidas.">
   <meta name="theme-color" content="#C84B31">
 
+  <!-- ── Anti-caché: fuerza refresco en móviles ── -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +20,8 @@
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <link rel="stylesheet" href="styles.css">
+  <!-- v=20260823 → actualiza este número al hacer cambios para forzar refresco en móviles -->
+  <link rel="stylesheet" href="styles.css?v=20260823">
 </head>
 <body>
 
@@ -181,7 +187,7 @@
   </footer>
 
   <!-- Scripts -->
-  <script src="data.js"></script>
-  <script src="app.js"></script>
+  <script src="data.js?v=20260823"></script>
+  <script src="app.js?v=20260823"></script>
 </body>
 </html>

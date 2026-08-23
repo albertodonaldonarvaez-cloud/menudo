@@ -6,6 +6,11 @@
   <title>Panel de Administración | Menú Digital & Publicidad</title>
   <meta name="theme-color" content="#1E2022">
 
+  <!-- ── Anti-caché: fuerza refresco en móviles ── -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,7 +22,8 @@
   <!-- QRCode Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-  <link rel="stylesheet" href="styles.css">
+  <!-- v=20260823 → actualiza este número al hacer cambios para forzar refresco en móviles -->
+  <link rel="stylesheet" href="styles.css?v=20260823">
 </head>
 <body class="admin-page-body">
 
@@ -812,7 +818,7 @@
   </div>
 
   <!-- Scripts -->
-  <script src="data.js"></script>
-  <script src="admin.js"></script>
+  <script src="data.js?v=20260823"></script>
+  <script src="admin.js?v=20260823"></script>
 </body>
 </html>
