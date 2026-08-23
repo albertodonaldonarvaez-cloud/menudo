@@ -10,7 +10,7 @@ WORKDIR /app
 
 # Instalar dependencias primero (capa cacheada)
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 # Copiar el servidor y archivos estáticos
 COPY server.js     .
