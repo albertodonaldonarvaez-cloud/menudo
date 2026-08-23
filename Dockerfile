@@ -9,13 +9,16 @@ FROM nginx:alpine
 # Instalar apache2-utils para el comando htpasswd
 RUN apk add --no-cache apache2-utils bash
 
-# Copiar archivos estáticos del sitio web
-COPY index.html      /usr/share/nginx/html/index.html
-COPY admin.html      /usr/share/nginx/html/admin.html
-COPY app.js          /usr/share/nginx/html/app.js
-COPY admin.js        /usr/share/nginx/html/admin.js
-COPY data.js         /usr/share/nginx/html/data.js
-COPY styles.css      /usr/share/nginx/html/styles.css
+# Copiar TODOS los archivos estáticos del sitio web de una vez
+# (se evita olvidar archivos nuevos al actualizar)
+COPY --chown=nginx:nginx \
+     index.html \
+     admin.html \
+     app.js \
+     admin.js \
+     data.js \
+     styles.css \
+     /usr/share/nginx/html/
 
 # Copiar configuración de Nginx
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
