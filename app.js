@@ -4,26 +4,53 @@
  */
 
 const STORAGE_KEY = 'menudo_store_config_v1';
-let storeData = loadStoreData();
+// Datos por defecto mientras carga del servidor
+let storeData = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA));
 
-function loadStoreData() {
+/**
+ * Carga la config del servidor compartido (todos los dispositivos
+ * ven los mismos cambios que hizo el admin).
+ * Fallback: localStorage → DEFAULT_STORE_DATA.
+ */
+async function loadStoreDataAsync() {
+  try {
+    const res = await fetch('/api/config', {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.business) {
+        // Migrar campos que podrían no existir en configs antiguas
+        if (!data.titles)       data.titles       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.titles));
+        if (!data.images)       data.images       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.images));
+        if (!data.descriptions) data.descriptions = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.descriptions));
+        if (!data.combos)       data.combos       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.combos));
+        // Sincronizar también en localStorage como caché local
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        return data;
+      }
+    }
+  } catch (e) {
+    console.warn('Servidor no disponible, usando caché local:', e);
+  }
+  // Fallback: localStorage
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      if (!parsed.titles) parsed.titles = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.titles));
-      if (!parsed.images) parsed.images = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.images));
+      if (!parsed.titles)       parsed.titles       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.titles));
+      if (!parsed.images)       parsed.images       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.images));
       if (!parsed.descriptions) parsed.descriptions = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.descriptions));
-      if (!parsed.combos) parsed.combos = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.combos));
+      if (!parsed.combos)       parsed.combos       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.combos));
       return parsed;
-    } catch (e) {
-      console.error('Error parseando datos guardados, usando default', e);
-    }
+    } catch (e) { /* ignorar */ }
   }
   return JSON.parse(JSON.stringify(DEFAULT_STORE_DATA));
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  storeData = await loadStoreDataAsync();
   renderAll();
   initCategoryNav();
 });

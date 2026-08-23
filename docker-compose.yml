@@ -1,26 +1,42 @@
 # =============================================================
 #  DOCKER COMPOSE — Menú Digital
+#  Dos servicios:
+#    backend → Node.js: persiste la config del menú en disco
+#    menu    → Nginx: sirve los archivos estáticos del sitio
 #
-#  ✏️  Para cambiar el puerto edita el archivo .env:
-#       PORT=8080   →  cambia 8080 al puerto que necesites
-#
-#  Comandos de uso rápido:
-#    Iniciar:     docker compose up -d
-#    Detener:     docker compose down
-#    Reiniciar:   docker compose restart
-#    Ver logs:    docker compose logs -f
-#    Actualizar:  git pull && docker compose up -d --build --force-recreate
+#  ✏️  Para cambiar el puerto edita .env: PORT=8080
 # =============================================================
 
 services:
+
+  # ── Backend: guarda y sirve la config del negocio ─────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: menudo_backend
+    restart: unless-stopped
+    volumes:
+      # Persiste la config aunque el contenedor se reinicie
+      - store_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # ── Nginx: sirve el menú estático y proxea al backend ─────
   menu:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: menudo_menu
     restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
     ports:
-      # Puerto externo configurable en .env → Puerto interno fijo 80
       - "${PORT:-8080}:80"
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost/"]
@@ -28,3 +44,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+# Volumen persistente para la configuración del negocio
+volumes:
+  store_data:

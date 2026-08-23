@@ -5,28 +5,58 @@
  */
 
 const STORAGE_KEY = 'menudo_store_config_v1';
-let storeData = loadStoreData();
+let storeData = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA));
 
-function loadStoreData() {
+/** Carga config del servidor → localStorage → defaults */
+async function loadStoreDataAsync() {
+  try {
+    const res = await fetch('/api/config', {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.business) {
+        if (!data.titles)       data.titles       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.titles));
+        if (!data.images)       data.images       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.images));
+        if (!data.descriptions) data.descriptions = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.descriptions));
+        if (!data.business.address) data.business.address = DEFAULT_STORE_DATA.business.address;
+        if (!data.combos)       data.combos       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.combos));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        return data;
+      }
+    }
+  } catch (e) {
+    console.warn('Servidor no disponible, usando localStorage:', e);
+  }
+  // Fallback localStorage
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      if (!parsed.titles) parsed.titles = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.titles));
-      if (!parsed.images) parsed.images = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.images));
+      if (!parsed.titles)       parsed.titles       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.titles));
+      if (!parsed.images)       parsed.images       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.images));
       if (!parsed.descriptions) parsed.descriptions = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.descriptions));
       if (!parsed.business.address) parsed.business.address = DEFAULT_STORE_DATA.business.address;
-      if (!parsed.combos) parsed.combos = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.combos));
+      if (!parsed.combos)       parsed.combos       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.combos));
       return parsed;
-    } catch (e) {
-      console.error('Error parseando datos guardados, usando default', e);
-    }
+    } catch (e) { /* ignorar */ }
   }
   return JSON.parse(JSON.stringify(DEFAULT_STORE_DATA));
 }
 
+/** Guarda en localStorage Y en el servidor para sincronizar todos los dispositivos */
 function saveStoreData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(storeData));
+  // Guardar en servidor → todos los celulares verán el cambio al recargar
+  fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(storeData)
+  })
+  .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); })
+  .catch(e => console.warn('No se pudo sincronizar al servidor:', e));
+
   populateAdminForm();
   populateTitlesAndDescriptionsForm();
   renderAdminGuisados();
@@ -35,7 +65,8 @@ function saveStoreData() {
   populatePrintTargets();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  storeData = await loadStoreDataAsync();
   initTabs();
   renderAdminGuisados();
   renderAdminCombos();

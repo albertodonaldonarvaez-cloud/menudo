@@ -1,8 +1,9 @@
 # =============================================================
-# ARCHIVOS SENSIBLES — NUNCA SUBIR A GITHUB
+# ARCHIVOS SENSIBLES Y DATOS — NUNCA SUBIR A GITHUB
 # =============================================================
 .env
 docker/.htpasswd
+data/
 
 # Logs
 *.log

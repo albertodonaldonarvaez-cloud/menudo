@@ -1,0 +1,19 @@
+# =============================================================
+#  DOCKERFILE BACKEND — Node.js (sin npm, solo stdlib)
+# =============================================================
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copiar el servidor
+COPY server.js .
+
+# Crear directorio de datos persistentes
+RUN mkdir -p /data
+
+EXPOSE 3001
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD wget --spider -q http://localhost:3001/api/health || exit 1
+
+CMD ["node", "server.js"]
