@@ -1,50 +1,38 @@
 # =============================================================
-#  DOCKER COMPOSE — Menú Digital
-#  Dos servicios:
-#    backend → Node.js: persiste la config del menú en disco
-#    menu    → Nginx: sirve los archivos estáticos del sitio
+#  DOCKER COMPOSE — Menú Digital v2.0
 #
-#  ✏️  Para cambiar el puerto edita .env: PORT=8080
+#  Un solo contenedor con Express.js.
+#  ✏️  Edita .env para cambiar puerto y credenciales.
+#
+#  Comandos:
+#    Iniciar:    docker compose up -d
+#    Detener:    docker compose down
+#    Logs:       docker compose logs -f
+#    Actualizar: git pull && docker compose up -d --build --force-recreate
 # =============================================================
 
 services:
-
-  # ── Backend: guarda y sirve la config del negocio ─────────
-  backend:
+  app:
     build:
       context: .
-      dockerfile: Dockerfile.backend
-    container_name: menudo_backend
+      dockerfile: Dockerfile
+    container_name: menudo_app
     restart: unless-stopped
+    ports:
+      - "${PORT:-8070}:3001"
+    environment:
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
+      - SESSION_SECRET=${SESSION_SECRET:-cambiar_esta_clave}
     volumes:
-      # Persiste la config aunque el contenedor se reinicie
+      # Persiste la config del menú entre reinicios
       - store_data:/data
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/api/health"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 5s
+      start_period: 15s
 
-  # ── Nginx: sirve el menú estático y proxea al backend ─────
-  menu:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: menudo_menu
-    restart: unless-stopped
-    depends_on:
-      backend:
-        condition: service_healthy
-    ports:
-      - "${PORT:-8080}:80"
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost/"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-
-# Volumen persistente para la configuración del negocio
 volumes:
   store_data:

@@ -51,10 +51,17 @@ function saveStoreData() {
   // Guardar en servidor → todos los celulares verán el cambio al recargar
   fetch('/api/config', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
     body: JSON.stringify(storeData)
   })
-  .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); })
+  .then(r => {
+    if (r.status === 401) {
+      // Sesión expirada → redirigir al login
+      window.location.href = '/login';
+      return;
+    }
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  })
   .catch(e => console.warn('No se pudo sincronizar al servidor:', e));
 
   populateAdminForm();

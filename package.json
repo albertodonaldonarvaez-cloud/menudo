@@ -1,0 +1,13 @@
+{
+  "name": "menudo-digital",
+  "version": "2.0.0",
+  "description": "Menú Digital con autenticación y datos compartidos en servidor",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-session": "^1.17.3"
+  }
+}

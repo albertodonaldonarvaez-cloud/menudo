@@ -1,34 +1,33 @@
 # =============================================================
-#  DOCKERFILE — Menú Digital
-#  Imagen: nginx:alpine (ligera ~7MB)
-#  Incluye apache2-utils para generar .htpasswd en el entrypoint
+#  DOCKERFILE — Menú Digital v2.0
+#  Un solo contenedor: Express.js sirve todo (auth + API + archivos)
 # =============================================================
 
-FROM nginx:alpine
+FROM node:18-alpine
 
-# Instalar apache2-utils para el comando htpasswd
-RUN apk add --no-cache apache2-utils bash
+# Crear directorio de la app
+WORKDIR /app
 
-# Copiar TODOS los archivos estáticos del sitio web de una vez
-# (se evita olvidar archivos nuevos al actualizar)
-COPY --chown=nginx:nginx \
-     index.html \
-     admin.html \
-     app.js \
-     admin.js \
-     data.js \
-     styles.css \
-     /usr/share/nginx/html/
+# Instalar dependencias primero (capa cacheada)
+COPY package*.json ./
+RUN npm ci --only=production
 
-# Copiar configuración de Nginx
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+# Copiar el servidor y archivos estáticos
+COPY server.js     .
+COPY index.html    .
+COPY admin.html    .
+COPY login.html    .
+COPY app.js        .
+COPY admin.js      .
+COPY data.js       .
+COPY styles.css    .
 
-# Copiar el script de entrypoint que genera el .htpasswd
-COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Directorio de datos persistentes (se monta como volumen)
+RUN mkdir -p /data
 
-# Exponer el puerto interno 80 (el externo se define en docker-compose.yml)
-EXPOSE 80
+EXPOSE 3001
 
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["nginx", "-g", "daemon off;"]
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD wget --spider -q http://localhost:3001/api/health || exit 1
+
+CMD ["node", "server.js"]
