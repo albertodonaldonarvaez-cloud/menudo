@@ -18,8 +18,9 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'changeme';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'cambiar_esta_clave_secreta';
 
 // ── Middlewares ───────────────────────────────────────────────
-app.use(express.json({ limit: '15mb' }));
-app.use(express.urlencoded({ extended: true }));
+// 50mb para soportar múltiples fotos en Base64 (cada foto ~4-7mb en Base64)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
