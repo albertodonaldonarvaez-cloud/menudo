@@ -61,6 +61,9 @@
       <button class="dashboard-tab" data-tab="tab-volantes">
         <i class="fa-solid fa-bullhorn"></i> Volantes Calle (4x Hoja)
       </button>
+      <button class="dashboard-tab" data-tab="tab-combos">
+        <i class="fa-solid fa-gift"></i> Combos
+      </button>
     </div>
 
     <!-- TAB CONTENTS -->
@@ -436,6 +439,60 @@
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. COMBOS ESPECIALES -->
+      <section class="tab-pane" id="tab-combos">
+        <div class="admin-panel-card">
+          <div class="card-header-styled">
+            <h3><i class="fa-solid fa-gift"></i> Combos Especiales del Menú</h3>
+            <p>Crea y administra los combos que verán tus clientes en el menú. Actívalos o desactívalos según el día. Cada combo puede tener nombre, precio, descripción, una etiqueta llamativa y la lista de lo que incluye.</p>
+          </div>
+
+          <!-- Formulario para nuevo combo -->
+          <div class="combo-admin-add-box">
+            <h4><i class="fa-solid fa-plus-circle"></i> Agregar Nuevo Combo</h4>
+            <form id="addComboForm" class="combo-add-form">
+              <div class="form-row-2">
+                <div class="field-item">
+                  <label for="newComboName">Nombre del Combo:</label>
+                  <input type="text" id="newComboName" class="form-input" placeholder="Ej: Combo Mañanero" required>
+                </div>
+                <div class="field-item">
+                  <label for="newComboPrice">Precio ($MXN):</label>
+                  <div class="input-prefix-group">
+                    <span class="prefix">$</span>
+                    <input type="number" id="newComboPrice" class="form-input" min="0" step="1" placeholder="150" required>
+                  </div>
+                </div>
+              </div>
+              <div class="form-row-2">
+                <div class="field-item">
+                  <label for="newComboDesc">Descripción breve:</label>
+                  <input type="text" id="newComboDesc" class="form-input" placeholder="Ej: El desayuno completo para empezar bien el día">
+                </div>
+                <div class="field-item">
+                  <label for="newComboBadge">Etiqueta / Badge (opcional):</label>
+                  <input type="text" id="newComboBadge" class="form-input" placeholder="Ej: ⭐ Más Popular, 🔥 Oferta, 👨‍👩‍👧 Para 2">
+                </div>
+              </div>
+              <div class="field-item">
+                <label for="newComboIncludes">¿Qué incluye? <small style="color:#888">(una línea por elemento, Enter para separar)</small></label>
+                <textarea id="newComboIncludes" rows="4" class="form-input" placeholder="1 Plato de Menudo Tradicional&#10;2 Gorditas de Guisado (a elegir)&#10;1 Café de Olla Artesanal"></textarea>
+              </div>
+              <div class="admin-form-actions" style="margin-top: 10px;">
+                <button type="submit" class="btn-save-admin" style="max-width:260px;">
+                  <i class="fa-solid fa-plus"></i> Agregar Combo
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Lista de combos existentes -->
+          <div class="admin-combos-list" id="adminCombosList">
+            <!-- Renderizado dinámico desde admin.js -->
           </div>
         </div>
       </section>

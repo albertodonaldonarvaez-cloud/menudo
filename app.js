@@ -14,6 +14,7 @@ function loadStoreData() {
       if (!parsed.titles) parsed.titles = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.titles));
       if (!parsed.images) parsed.images = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.images));
       if (!parsed.descriptions) parsed.descriptions = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.descriptions));
+      if (!parsed.combos) parsed.combos = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.combos));
       return parsed;
     } catch (e) {
       console.error('Error parseando datos guardados, usando default', e);
@@ -33,6 +34,7 @@ function renderAll() {
   renderGorditasSection();
   renderBurritosSection();
   renderDrinksSection();
+  renderCombosSection();
 }
 
 // ==========================================
@@ -264,6 +266,57 @@ function renderDrinksSection() {
   `;
 }
 
+// 5. Combos Especiales
+function renderCombosSection() {
+  const container = document.getElementById('combosGrid');
+  if (!container) return;
+
+  const combos = (storeData.combos && storeData.combos.length > 0)
+    ? storeData.combos
+    : DEFAULT_STORE_DATA.combos;
+
+  if (!combos || combos.length === 0) {
+    container.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#888;padding:30px;">No hay combos disponibles en este momento.</p>`;
+    return;
+  }
+
+  container.innerHTML = combos.map(combo => {
+    const includesList = (combo.includes || [])
+      .map(item => `<li><i class="fa-solid fa-circle-check" style="color:var(--color-accent-green-dark);font-size:0.75rem;"></i> ${item}</li>`)
+      .join('');
+
+    const badgeHtml = combo.badge
+      ? `<span class="combo-badge">${combo.badge}</span>`
+      : '';
+
+    const soldOutClass = combo.available ? '' : 'combo-card--soldout';
+    const soldOutBanner = !combo.available
+      ? `<div class="combo-soldout-banner"><i class="fa-solid fa-ban"></i> No disponible por hoy</div>`
+      : '';
+
+    return `
+      <div class="combo-card ${soldOutClass}">
+        ${badgeHtml}
+        ${soldOutBanner}
+        <div class="combo-header">
+          <h3 class="combo-name">${combo.name}</h3>
+          <p class="combo-description">${combo.description}</p>
+        </div>
+        <ul class="combo-includes-list">
+          ${includesList}
+        </ul>
+        <div class="combo-footer">
+          <div class="combo-price-wrap">
+            <span class="combo-price-label">Precio del combo</span>
+            <span class="combo-price">$${combo.price} <small>MXN</small></span>
+          </div>
+          <span class="combo-tag"><i class="fa-solid fa-gift"></i> Combo</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
 // ==========================================
 // FILTRO DE CATEGORÍAS
 // ==========================================
@@ -285,13 +338,15 @@ function filterSections(cat) {
     menudo: document.getElementById('section-menudo'),
     gorditas: document.getElementById('section-gorditas'),
     burritos: document.getElementById('section-burritos'),
-    bebidas: document.getElementById('section-bebidas')
+    bebidas: document.getElementById('section-bebidas'),
+    combos: document.getElementById('section-combos')
   };
 
   if (cat === 'all') {
-    Object.values(sections).forEach(sec => sec.style.display = 'block');
+    Object.values(sections).forEach(sec => { if (sec) sec.style.display = 'block'; });
   } else {
     Object.keys(sections).forEach(key => {
+      if (!sections[key]) return;
       if (key === cat) {
         sections[key].style.display = 'block';
         sections[key].scrollIntoView({ behavior: 'smooth', block: 'start' });

@@ -16,6 +16,7 @@ function loadStoreData() {
       if (!parsed.images) parsed.images = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.images));
       if (!parsed.descriptions) parsed.descriptions = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.descriptions));
       if (!parsed.business.address) parsed.business.address = DEFAULT_STORE_DATA.business.address;
+      if (!parsed.combos) parsed.combos = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.combos));
       return parsed;
     } catch (e) {
       console.error('Error parseando datos guardados, usando default', e);
@@ -29,6 +30,7 @@ function saveStoreData() {
   populateAdminForm();
   populateTitlesAndDescriptionsForm();
   renderAdminGuisados();
+  renderAdminCombos();
   renderImagePreviews();
   populatePrintTargets();
 }
@@ -36,6 +38,7 @@ function saveStoreData() {
 document.addEventListener('DOMContentLoaded', () => {
   initTabs();
   renderAdminGuisados();
+  renderAdminCombos();
   populateAdminForm();
   populateTitlesAndDescriptionsForm();
   renderImagePreviews();
@@ -368,6 +371,81 @@ function initQRCode() {
 }
 
 // ==========================================
+// COMBOS ESPECIALES — CRUD
+// ==========================================
+function renderAdminCombos() {
+  const container = document.getElementById('adminCombosList');
+  if (!container) return;
+
+  if (!storeData.combos) storeData.combos = [];
+
+  if (storeData.combos.length === 0) {
+    container.innerHTML = `<p style="color:#888;text-align:center;padding:24px;">Aún no tienes combos. Usa el formulario de arriba para agregar el primero.</p>`;
+    return;
+  }
+
+  container.innerHTML = storeData.combos.map(combo => {
+    const includesHtml = (combo.includes || []).map(item => `<li>${item}</li>`).join('');
+    const badgeText = combo.badge ? `<span class="admin-combo-badge">${combo.badge}</span>` : '<span style="color:#aaa;font-size:0.8rem;">Sin etiqueta</span>';
+    return `
+      <div class="admin-combo-row">
+        <div class="admin-combo-info">
+          <div class="admin-combo-top">
+            <strong class="admin-combo-name">🎁 ${combo.name}</strong>
+            ${badgeText}
+            <span class="admin-combo-price">$${combo.price} MXN</span>
+          </div>
+          ${combo.description ? `<p class="admin-combo-desc">${combo.description}</p>` : ''}
+          <ul class="admin-combo-includes">${includesHtml}</ul>
+        </div>
+        <div class="admin-combo-controls">
+          <label class="switch-label" title="${combo.available ? 'Disponible' : 'No disponible'}">
+            <input type="checkbox" ${combo.available ? 'checked' : ''} onchange="toggleComboAvailability('${combo.id}')">
+            <span class="switch-slider"></span>
+          </label>
+          <button type="button" class="btn-del-guisado" onclick="deleteCombo('${combo.id}')" title="Eliminar combo">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function addCombo({ name, price, description, badge, includes }) {
+  if (!storeData.combos) storeData.combos = [];
+  storeData.combos.push({
+    id: 'c_' + Date.now(),
+    name,
+    price,
+    description: description || '',
+    badge: badge || '',
+    includes: includes || [],
+    available: true
+  });
+  saveStoreData();
+  showToast(`¡Combo "${name}" agregado con éxito!`);
+}
+
+function toggleComboAvailability(id) {
+  const combo = storeData.combos.find(c => c.id === id);
+  if (combo) {
+    combo.available = !combo.available;
+    saveStoreData();
+    showToast(`Combo "${combo.name}" ${combo.available ? 'activado' : 'desactivado'}`);
+  }
+}
+
+function deleteCombo(id) {
+  const combo = storeData.combos.find(c => c.id === id);
+  if (confirm(`¿Eliminar el combo "${combo ? combo.name : ''}"?`)) {
+    storeData.combos = storeData.combos.filter(c => c.id !== id);
+    saveStoreData();
+    showToast('Combo eliminado');
+  }
+}
+
+// ==========================================
 // ACCIONES DE IMPRESIÓN SEPARADAS
 // ==========================================
 function printTableCards() {
@@ -393,6 +471,22 @@ function initAdminEvents() {
     if (input.value.trim()) {
       addGuisado(input.value);
       input.value = '';
+    }
+  });
+
+  // Formulario Agregar Combo
+  document.getElementById('addComboForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name  = document.getElementById('newComboName').value.trim();
+    const price = Number(document.getElementById('newComboPrice').value) || 0;
+    const desc  = document.getElementById('newComboDesc').value.trim();
+    const badge = document.getElementById('newComboBadge').value.trim();
+    const raw   = document.getElementById('newComboIncludes').value;
+    const includes = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+    if (name && price > 0) {
+      addCombo({ name, price, description: desc, badge, includes });
+      document.getElementById('addComboForm').reset();
     }
   });
 

@@ -51,5 +51,48 @@ const DEFAULT_STORE_DATA = {
     { id: "g6", name: "Frijolitos Refritos con Queso", available: true },
     { id: "g7", name: "Chicharrón en Salsa Verde", available: true },
     { id: "g8", name: "Huevo con Chorizo Casero", available: true }
+  ],
+
+  // Combos especiales del negocio
+  combos: [
+    {
+      id: "c1",
+      name: "Combo Mañanero",
+      description: "El desayuno completo para empezar bien el día con sabor casero",
+      price: 155,
+      badge: "⭐ Más Popular",
+      includes: [
+        "1 Plato de Menudo Tradicional",
+        "2 Gorditas de Guisado (a elegir)",
+        "1 Café de Olla Artesanal"
+      ],
+      available: true
+    },
+    {
+      id: "c2",
+      name: "Combo Familiar",
+      description: "Ideal para compartir en familia, viene con todo lo necesario",
+      price: 290,
+      badge: "👨‍👩‍👧 Para 2",
+      includes: [
+        "2 Platos de Menudo Tradicional",
+        "4 Gorditas de Guisado (a elegir)",
+        "2 Refrescos de Vidrio"
+      ],
+      available: true
+    },
+    {
+      id: "c3",
+      name: "Combo Antojero",
+      description: "Para quien quiere probar de todo sin quedarse con las ganas",
+      price: 120,
+      badge: "🌯 Mix",
+      includes: [
+        "2 Gorditas de Guisado (a elegir)",
+        "2 Burritos de Guisado (a elegir)",
+        "1 Refresco de Vidrio"
+      ],
+      available: true
+    }
   ]
 };
