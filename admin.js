@@ -1,100 +1,89 @@
+'use strict';
 /**
- * LÓGICA DEL PANEL DE ADMINISTRACIÓN (admin.js)
- * Administra títulos de platillos, guisados, fotos reales, descripciones, precios, datos,
- * carteles para mesas (3x Hoja) y volantes publicitarios para calle (4x Hoja).
+ * ADMIN.JS — Panel de Administración v2.0
+ * Gestión de productos, horario automático y módulo de caja/ventas.
  */
 
-const STORAGE_KEY = 'menudo_store_config_v1';
+const STORAGE_KEY = 'menudo_store_config_v2';
 let storeData = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA));
 
-/** Carga config del servidor → localStorage → defaults */
+const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas'];
+
+// ── Migración ─────────────────────────────────────────────────
+function migrateData(data) {
+  if (!data) return JSON.parse(JSON.stringify(DEFAULT_STORE_DATA));
+  if (data.products && data.products.menudo !== undefined) {
+    return ensureAllFields(data);
+  }
+  const fresh = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA));
+  if (data.business) {
+    fresh.business.name   = data.business.name   || fresh.business.name;
+    fresh.business.slogan = data.business.slogan || fresh.business.slogan;
+  }
+  return fresh;
+}
+
+function ensureAllFields(data) {
+  const def = DEFAULT_STORE_DATA;
+  if (!data.schedule || !Array.isArray(data.schedule.days)) {
+    data.schedule = JSON.parse(JSON.stringify(def.schedule));
+  }
+  PRODUCT_KEYS.forEach(k => {
+    if (!data.products[k]) data.products[k] = JSON.parse(JSON.stringify(def.products[k]));
+    if (typeof data.products[k].enabled === 'undefined') data.products[k].enabled = true;
+  });
+  if (!Array.isArray(data.caja)) data.caja = [];
+  return data;
+}
+
+// ── Carga del servidor ────────────────────────────────────────
 async function loadStoreDataAsync() {
   try {
     const res = await fetch('/api/config', {
       cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' }
+      headers: { 'Accept': 'application/json' }
     });
+    if (res.status === 401) { window.location.href = '/login'; return DEFAULT_STORE_DATA; }
     if (res.ok) {
-      const data = await res.json();
-      if (data && data.business) {
-        if (!data.titles)       data.titles       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.titles));
-        if (!data.images)       data.images       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.images));
-        if (!data.descriptions) data.descriptions = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.descriptions));
-        if (!data.business.address) data.business.address = DEFAULT_STORE_DATA.business.address;
-        if (!data.combos)       data.combos       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.combos));
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        return data;
+      const raw = await res.json();
+      if (raw && Object.keys(raw).length > 0) {
+        const migrated = migrateData(raw);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+        return migrated;
       }
     }
   } catch (e) {
     console.warn('Servidor no disponible, usando localStorage:', e);
   }
-  // Fallback localStorage
   const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      if (!parsed.titles)       parsed.titles       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.titles));
-      if (!parsed.images)       parsed.images       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.images));
-      if (!parsed.descriptions) parsed.descriptions = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.descriptions));
-      if (!parsed.business.address) parsed.business.address = DEFAULT_STORE_DATA.business.address;
-      if (!parsed.combos)       parsed.combos       = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA.combos));
-      return parsed;
-    } catch (e) { /* ignorar */ }
-  }
+  if (saved) { try { return migrateData(JSON.parse(saved)); } catch { /* */ } }
   return JSON.parse(JSON.stringify(DEFAULT_STORE_DATA));
 }
 
-/** Guarda en localStorage Y en el servidor para sincronizar todos los dispositivos */
+// ── Guardar en servidor ───────────────────────────────────────
 function saveStoreData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(storeData));
-  // Guardar en servidor → todos los celulares verán el cambio al recargar
   fetch('/api/config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
     body: JSON.stringify(storeData)
   })
   .then(r => {
-    if (r.status === 401) {
-      // Sesión expirada → redirigir al login
-      window.location.href = '/login';
-      return;
-    }
+    if (r.status === 401) { window.location.href = '/login'; return; }
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
   })
   .catch(e => console.warn('No se pudo sincronizar al servidor:', e));
-
-  populateAdminForm();
-  populateTitlesAndDescriptionsForm();
-  renderAdminGuisados();
-  renderAdminCombos();
-  renderImagePreviews();
-  populatePrintTargets();
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  storeData = await loadStoreDataAsync();
-  initTabs();
-  renderAdminGuisados();
-  renderAdminCombos();
-  populateAdminForm();
-  populateTitlesAndDescriptionsForm();
-  renderImagePreviews();
-  initAdminEvents();
-  initQRCode();
-  populatePrintTargets();
-});
-
-// ==========================================
-// TABS DE NAVEGACIÓN
-// ==========================================
+// ════════════════════════════════════════════════════════════════
+// TABS
+// ════════════════════════════════════════════════════════════════
 function initTabs() {
   const tabs = document.querySelectorAll('.dashboard-tab');
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       tabs.forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-
       tab.classList.add('active');
       const target = document.getElementById(tab.dataset.tab);
       if (target) target.classList.add('active');
@@ -102,84 +91,114 @@ function initTabs() {
   });
 }
 
-// ==========================================
-// TÍTULOS, FOTOS REALES & DESCRIPCIONES
-// ==========================================
-function renderImagePreviews() {
-  const keys = ['menudo', 'gorditas', 'burritos', 'cafeOlla', 'refresco'];
-  keys.forEach(k => {
-    const el = document.getElementById(`prev-${k}`);
-    if (el) {
-      el.src = (storeData.images && storeData.images[k]) || DEFAULT_STORE_DATA.images[k];
-    }
+// ════════════════════════════════════════════════════════════════
+// TAB: PRODUCTOS
+// ════════════════════════════════════════════════════════════════
+const PRODUCT_NAMES = {
+  menudo:      '🍲 Menudo Tradicional',
+  birria:      '🥩 Birria de Res',
+  tacos:       '🌮 Tacos de Birria',
+  quesadillas: '🧀 Quesadilla Gigante de Birria'
+};
+
+function renderProductEditors() {
+  const container = document.getElementById('productEditorContainer');
+  if (!container) return;
+  container.innerHTML = PRODUCT_KEYS.map(key => {
+    const p = storeData.products[key];
+    return `
+      <div class="admin-panel-card" style="margin-bottom:24px;">
+        <div class="card-header-styled" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <h3 style="margin:0;">${PRODUCT_NAMES[key]}</h3>
+          <label class="switch-label" title="${p.enabled ? 'Visible en menú' : 'Oculto en menú'}">
+            <input type="checkbox" ${p.enabled ? 'checked' : ''}
+              onchange="toggleProductEnabled('${key}', this.checked)">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+        <div class="product-editor-body">
+          <!-- Foto -->
+          <div class="photo-preview-wrap">
+            <img id="prev-${key}" src="${p.image || DEFAULT_STORE_DATA.products[key].image}"
+              alt="${p.title}" onerror="this.src='${DEFAULT_STORE_DATA.products[key].image}'">
+          </div>
+          <div class="dish-editor-controls" style="flex:1;min-width:220px;">
+            <!-- Subir foto -->
+            <div class="photo-card-actions" style="margin-bottom:10px;">
+              <label class="btn-upload-file">
+                <i class="fa-solid fa-camera"></i> Subir Foto
+                <input type="file" accept="image/*" onchange="handleImageUpload(event,'${key}')" style="display:none;">
+              </label>
+              <button type="button" class="btn-reset-img" onclick="resetSingleImage('${key}')" title="Foto predeterminada">
+                <i class="fa-solid fa-rotate-left"></i>
+              </button>
+            </div>
+            <!-- Título -->
+            <div class="field-item">
+              <label>Título</label>
+              <input type="text" id="pt-${key}" class="form-input" value="${p.title}">
+            </div>
+            <!-- Precio -->
+            <div style="display:flex;gap:10px;">
+              <div class="field-item" style="flex:1;">
+                <label>Precio ($)</label>
+                <input type="number" id="pp-${key}" class="form-input" value="${p.price}" min="0" step="0.5">
+              </div>
+              <div class="field-item" style="flex:1;">
+                <label>Nota precio (ej: "por taco")</label>
+                <input type="text" id="pn-${key}" class="form-input" value="${p.priceNote || ''}" placeholder="Opcional">
+              </div>
+            </div>
+            <!-- Badge -->
+            <div class="field-item">
+              <label>Etiqueta / Badge</label>
+              <input type="text" id="pb-${key}" class="form-input" value="${p.badge || ''}" placeholder="Ej: 🍵 Incluye consomé">
+            </div>
+            <!-- Descripción -->
+            <div class="field-item">
+              <label>Descripción</label>
+              <textarea id="pd-${key}" class="form-input" rows="3">${p.description}</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleProductEnabled(key, enabled) {
+  if (storeData.products[key]) storeData.products[key].enabled = enabled;
+}
+
+function saveProductosForm() {
+  PRODUCT_KEYS.forEach(key => {
+    const p = storeData.products[key];
+    p.title       = document.getElementById(`pt-${key}`)?.value.trim() || p.title;
+    p.price       = Number(document.getElementById(`pp-${key}`)?.value) || p.price;
+    p.priceNote   = document.getElementById(`pn-${key}`)?.value.trim() || '';
+    p.badge       = document.getElementById(`pb-${key}`)?.value.trim() || '';
+    p.description = document.getElementById(`pd-${key}`)?.value.trim() || p.description;
   });
-}
-
-function populateTitlesAndDescriptionsForm() {
-  const t = (storeData.titles) || DEFAULT_STORE_DATA.titles;
-  const d = (storeData.descriptions) || DEFAULT_STORE_DATA.descriptions;
-  
-  // Títulos
-  if (document.getElementById('title-menudo')) document.getElementById('title-menudo').value = t.menudo || '';
-  if (document.getElementById('title-gorditas')) document.getElementById('title-gorditas').value = t.gorditas || '';
-  if (document.getElementById('title-burritos')) document.getElementById('title-burritos').value = t.burritos || '';
-  if (document.getElementById('title-cafeOlla')) document.getElementById('title-cafeOlla').value = t.cafeOlla || '';
-  if (document.getElementById('title-refresco')) document.getElementById('title-refresco').value = t.refresco || '';
-
-  // Descripciones
-  if (document.getElementById('desc-menudo')) document.getElementById('desc-menudo').value = d.menudo || '';
-  if (document.getElementById('desc-gorditas')) document.getElementById('desc-gorditas').value = d.gorditas || '';
-  if (document.getElementById('desc-burritos')) document.getElementById('desc-burritos').value = d.burritos || '';
-  if (document.getElementById('desc-cafeOlla')) document.getElementById('desc-cafeOlla').value = d.cafeOlla || '';
-  if (document.getElementById('desc-refresco')) document.getElementById('desc-refresco').value = d.refresco || '';
-}
-
-function saveTitlesAndDescriptions(e) {
-  e.preventDefault();
-
-  if (!storeData.titles) storeData.titles = {};
-  if (!storeData.descriptions) storeData.descriptions = {};
-  
-  // Guardar Títulos
-  storeData.titles.menudo = document.getElementById('title-menudo').value.trim() || DEFAULT_STORE_DATA.titles.menudo;
-  storeData.titles.gorditas = document.getElementById('title-gorditas').value.trim() || DEFAULT_STORE_DATA.titles.gorditas;
-  storeData.titles.burritos = document.getElementById('title-burritos').value.trim() || DEFAULT_STORE_DATA.titles.burritos;
-  storeData.titles.cafeOlla = document.getElementById('title-cafeOlla').value.trim() || DEFAULT_STORE_DATA.titles.cafeOlla;
-  storeData.titles.refresco = document.getElementById('title-refresco').value.trim() || DEFAULT_STORE_DATA.titles.refresco;
-
-  // Guardar Descripciones
-  storeData.descriptions.menudo = document.getElementById('desc-menudo').value.trim();
-  storeData.descriptions.gorditas = document.getElementById('desc-gorditas').value.trim();
-  storeData.descriptions.burritos = document.getElementById('desc-burritos').value.trim();
-  storeData.descriptions.cafeOlla = document.getElementById('desc-cafeOlla').value.trim();
-  storeData.descriptions.refresco = document.getElementById('desc-refresco').value.trim();
-
   saveStoreData();
-  showToast('¡Títulos y descripciones guardados con éxito!');
+  showToast('✅ Productos guardados');
 }
 
-/**
- * Comprime una imagen usando Canvas antes de subirla.
- * Reduce fotos de tablet de 8-15MB a ~200-500KB.
- */
-function compressImage(file, maxWidth, maxHeight, quality) {
+// ════════════════════════════════════════════════════════════════
+// IMÁGENES (upload con compresión)
+// ════════════════════════════════════════════════════════════════
+function compressImage(file, maxW, maxH, q) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = e => {
       const img = new Image();
       img.onload = () => {
         let w = img.width, h = img.height;
-        // Escalar manteniendo proporción
-        if (w > maxWidth)  { h = Math.round(h * maxWidth  / w); w = maxWidth; }
-        if (h > maxHeight) { w = Math.round(w * maxHeight / h); h = maxHeight; }
-
+        if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+        if (h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        canvas.toBlob(
-          blob => blob ? resolve(blob) : reject(new Error('Error al comprimir')),
-          'image/jpeg', quality
-        );
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error('Error')), 'image/jpeg', q);
       };
       img.onerror = reject;
       img.src = e.target.result;
@@ -191,371 +210,168 @@ function compressImage(file, maxWidth, maxHeight, quality) {
 
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
+    const r = new FileReader();
+    r.onload = e => resolve(e.target.result);
+    r.onerror = reject;
+    r.readAsDataURL(blob);
   });
 }
 
-/**
- * Sube una foto al servidor:
- * 1. Comprime a máx 1200×1200px, calidad 0.82 (~200-500KB)
- * 2. POST a /api/upload-image → servidor guarda en disco
- * 3. Solo guarda la URL en el config (no el Base64 gigante)
- */
 async function handleImageUpload(event, key) {
   const file = event.target.files[0];
   if (!file) return;
-
   showToast('⏳ Procesando imagen...');
-
   try {
-    // Comprimir
     const compressed = await compressImage(file, 1200, 1200, 0.82);
-    const dataUrl = await blobToDataUrl(compressed);
-
-    // Subir al servidor
+    const dataUrl    = await blobToDataUrl(compressed);
     const res = await fetch('/api/upload-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({ key, image: dataUrl })
     });
-
     if (res.status === 401) { window.location.href = '/login'; return; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
     const data = await res.json();
-
-    // Guardar URL (con timestamp para romper caché) en storeData
-    if (!storeData.images) storeData.images = {};
-    storeData.images[key] = data.url + '?t=' + Date.now();
-
-    // Actualizar preview inmediatamente
+    storeData.products[key].image = data.url + '?t=' + Date.now();
     const prev = document.getElementById(`prev-${key}`);
-    if (prev) prev.src = storeData.images[key];
-
-    // Guardar config (ahora solo la URL, no MB de Base64)
+    if (prev) prev.src = storeData.products[key].image;
     saveStoreData();
-    showToast(`✅ ¡Foto de ${getDishName(key)} actualizada!`);
-
+    showToast(`✅ Foto de ${PRODUCT_NAMES[key]} actualizada`);
   } catch (e) {
-    console.error('Error subiendo imagen:', e);
-    showToast('❌ Error al subir. Verifica tu conexión e intenta de nuevo.');
+    console.error(e);
+    showToast('❌ Error al subir imagen. Intenta de nuevo.');
   }
 }
 
 function resetSingleImage(key) {
-  if (confirm(`¿Restablecer la foto predeterminada para ${getDishName(key)}?`)) {
-    if (!storeData.images) storeData.images = {};
-    storeData.images[key] = DEFAULT_STORE_DATA.images[key];
+  if (confirm(`¿Restablecer la foto predeterminada de ${PRODUCT_NAMES[key]}?`)) {
+    storeData.products[key].image = DEFAULT_STORE_DATA.products[key].image;
+    const prev = document.getElementById(`prev-${key}`);
+    if (prev) prev.src = storeData.products[key].image;
     saveStoreData();
-    showToast(`Foto de ${getDishName(key)} restablecida`);
+    showToast('Foto restablecida');
   }
 }
 
-function getDishName(key) {
-  const names = {
-    menudo: 'Menudo',
-    gorditas: 'Gorditas',
-    burritos: 'Burritos',
-    cafeOlla: 'Café de Olla',
-    refresco: 'Refrescos'
-  };
-  return names[key] || 'platillo';
-}
-
-// ==========================================
-// GUISADOS DEL DÍA (COMPARTIDOS)
-// ==========================================
-function renderAdminGuisados() {
-  const container = document.getElementById('adminGuisadosList');
-  if (!container) return;
-
-  if (!storeData.guisados || storeData.guisados.length === 0) {
-    container.innerHTML = `<p style="color:#888; text-align:center; padding:20px;">No tienes ningún guisado registrado. Agrega uno arriba.</p>`;
-    return;
-  }
-
-  container.innerHTML = storeData.guisados.map(g => `
-    <div class="admin-guisado-row">
-      <div class="admin-guisado-title">
-        <strong>${g.name}</strong>
-        <span class="guisado-status-tag" style="margin-left: 8px;">
-          ${g.available ? '<i class="fa-solid fa-check" style="color:var(--color-accent-green-dark)"></i> Disponible' : '<i class="fa-solid fa-ban" style="color:var(--color-danger)"></i> Agotado'}
-        </span>
-      </div>
-      <div class="admin-guisado-controls">
-        <label class="switch-label" title="${g.available ? 'Disponible' : 'Agotado'}">
-          <input type="checkbox" ${g.available ? 'checked' : ''} onchange="toggleGuisadoAvailability('${g.id}')">
-          <span class="switch-slider"></span>
-        </label>
-        <button type="button" class="btn-del-guisado" onclick="deleteGuisado('${g.id}')" title="Eliminar guisado">
-          <i class="fa-solid fa-trash-can"></i>
-        </button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function toggleGuisadoAvailability(id) {
-  const g = storeData.guisados.find(x => x.id === id);
-  if (g) {
-    g.available = !g.available;
-    saveStoreData();
-    showToast(`Guisado "${g.name}" ${g.available ? 'marcado como Disponible' : 'marcado como Agotado'}`);
-  }
-}
-
-function addGuisado(name) {
-  const newId = 'g_' + Date.now();
-  storeData.guisados.push({
-    id: newId,
-    name: name.trim(),
-    available: true
+// ════════════════════════════════════════════════════════════════
+// TAB: HORARIO
+// ════════════════════════════════════════════════════════════════
+function populateScheduleForm() {
+  const s = storeData.schedule || DEFAULT_STORE_DATA.schedule;
+  // Marcar días
+  [0,1,2,3,4,5,6].forEach(d => {
+    const el = document.getElementById(`day${d}`);
+    if (el) el.checked = Array.isArray(s.days) && s.days.includes(d);
   });
-  saveStoreData();
-  showToast(`¡Guisado "${name}" agregado con éxito!`);
+  const openEl    = document.getElementById('scheduleOpen');
+  const closeEl   = document.getElementById('scheduleClose');
+  const displayEl = document.getElementById('scheduleDisplay');
+  if (openEl)    openEl.value    = s.openTime    || '08:00';
+  if (closeEl)   closeEl.value   = s.closeTime   || '14:00';
+  if (displayEl) displayEl.value = s.displayText || '';
+  updateSchedulePreview();
 }
 
-function deleteGuisado(id) {
-  const g = storeData.guisados.find(x => x.id === id);
-  if (confirm(`¿Estás seguro de eliminar el guisado "${g ? g.name : ''}"?`)) {
-    storeData.guisados = storeData.guisados.filter(x => x.id !== id);
-    saveStoreData();
-    showToast('Guisado eliminado');
-  }
+function checkIsOpenNow(schedule) {
+  if (!schedule || !Array.isArray(schedule.days)) return false;
+  const now = new Date();
+  const day = now.getDay();
+  if (!schedule.days.includes(day)) return false;
+  const [oh, om] = (schedule.openTime  || '00:00').split(':').map(Number);
+  const [ch, cm] = (schedule.closeTime || '23:59').split(':').map(Number);
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  return nowMin >= (oh * 60 + om) && nowMin < (ch * 60 + cm);
 }
 
-// ==========================================
-// PRECIOS & DATOS DEL NEGOCIO
-// ==========================================
-function populateAdminForm() {
-  const b = storeData.business;
-  const p = storeData.prices;
-
-  // Precios
-  document.getElementById('priceMenudo').value = p.menudo;
-  document.getElementById('priceGordita').value = p.gordita;
-  document.getElementById('priceBurrito').value = p.burrito;
-  document.getElementById('priceCafe').value = p.cafeOlla;
-  document.getElementById('priceRefresco').value = p.refresco;
-
-  // Datos
-  document.getElementById('adminName').value = b.name;
-  document.getElementById('adminSlogan').value = b.slogan;
-  document.getElementById('adminStatus').value = b.isOpen ? 'open' : 'closed';
-  document.getElementById('adminSchedule').value = b.schedule;
-  if (document.getElementById('adminAddress')) {
-    document.getElementById('adminAddress').value = b.address || '';
-  }
+function updateSchedulePreview() {
+  const previewEl = document.getElementById('previewStatus');
+  if (!previewEl) return;
+  const tempSchedule = readScheduleFromForm();
+  const isOpen = checkIsOpenNow(tempSchedule);
+  previewEl.innerHTML = isOpen
+    ? '<span style="color:#16A34A;font-weight:700;">🟢 ABIERTO ahora</span>'
+    : '<span style="color:#DC2626;font-weight:700;">🔴 CERRADO ahora</span>';
 }
 
-function populatePrintTargets() {
-  const b = storeData.business;
-  const p = storeData.prices;
-  const t = (storeData.titles) || DEFAULT_STORE_DATA.titles;
-
-  // Datos de Negocio
-  document.querySelectorAll('.printNameTarget').forEach(el => el.textContent = b.name);
-  document.querySelectorAll('.printSloganTarget').forEach(el => el.textContent = b.slogan);
-  document.querySelectorAll('.printScheduleTarget').forEach(el => el.textContent = b.schedule);
-  document.querySelectorAll('.printAddressTarget').forEach(el => el.textContent = `📍 ${b.address || '¡Visítanos!'}`);
-
-  // Precios
-  document.querySelectorAll('.printMenudoPriceTarget').forEach(el => el.textContent = `$${p.menudo}`);
-  document.querySelectorAll('.printGorditaPriceTarget').forEach(el => el.textContent = `$${p.gordita} c/u`);
-  document.querySelectorAll('.printBurritoPriceTarget').forEach(el => el.textContent = `$${p.burrito} c/u`);
-  document.querySelectorAll('.printCafePriceTarget').forEach(el => el.textContent = `$${p.cafeOlla}`);
-
-  // Títulos en Carteles de Mesa
-  document.querySelectorAll('.chip-title-menudo').forEach(el => el.textContent = `🍲 ${t.menudo || 'Menudo'}`);
-  document.querySelectorAll('.chip-title-gorditas').forEach(el => el.textContent = `🫓 ${t.gorditas || 'Gorditas'}`);
-  document.querySelectorAll('.chip-title-burritos').forEach(el => el.textContent = `🌯 ${t.burritos || 'Burritos'}`);
-  document.querySelectorAll('.chip-title-cafe').forEach(el => el.textContent = `☕ ${t.cafeOlla || 'Café de Olla'}`);
-  document.querySelectorAll('.chip-title-refresco').forEach(el => el.textContent = `🧊 ${t.refresco || 'Refrescos'}`);
-
-  // Títulos en Volantes de Calle
-  document.querySelectorAll('.flyer-title-menudo').forEach(el => el.textContent = t.menudo || 'Menudo Tradicional');
-  document.querySelectorAll('.flyer-title-gorditas').forEach(el => el.textContent = t.gorditas || 'Gorditas de Guisado');
-  document.querySelectorAll('.flyer-title-burritos').forEach(el => el.textContent = t.burritos || 'Burritos Norteños');
-  document.querySelectorAll('.flyer-title-cafe').forEach(el => el.textContent = t.cafeOlla || 'Café de Olla');
+function readScheduleFromForm() {
+  const days = [];
+  [0,1,2,3,4,5,6].forEach(d => {
+    const el = document.getElementById(`day${d}`);
+    if (el?.checked) days.push(d);
+  });
+  return {
+    days,
+    openTime:    document.getElementById('scheduleOpen')?.value  || '08:00',
+    closeTime:   document.getElementById('scheduleClose')?.value || '14:00',
+    displayText: document.getElementById('scheduleDisplay')?.value.trim() || ''
+  };
 }
 
-function saveAdminPricesAndData(e) {
+function saveScheduleForm(e) {
   e.preventDefault();
-
-  // Guardar Precios
-  storeData.prices.menudo = Number(document.getElementById('priceMenudo').value) || 0;
-  storeData.prices.gordita = Number(document.getElementById('priceGordita').value) || 0;
-  storeData.prices.burrito = Number(document.getElementById('priceBurrito').value) || 0;
-  storeData.prices.cafeOlla = Number(document.getElementById('priceCafe').value) || 0;
-  storeData.prices.refresco = Number(document.getElementById('priceRefresco').value) || 0;
-
-  // Guardar Datos
-  storeData.business.name = document.getElementById('adminName').value.trim();
-  storeData.business.slogan = document.getElementById('adminSlogan').value.trim();
-  storeData.business.isOpen = document.getElementById('adminStatus').value === 'open';
-  storeData.business.schedule = document.getElementById('adminSchedule').value.trim();
-  if (document.getElementById('adminAddress')) {
-    storeData.business.address = document.getElementById('adminAddress').value.trim();
-  }
-
+  storeData.schedule = readScheduleFromForm();
   saveStoreData();
-  showToast('¡Precios y datos del negocio guardados!');
+  updateSchedulePreview();
+  showToast('✅ Horario guardado. Se aplica automáticamente en el menú.');
 }
 
-function resetToDefault() {
-  if (confirm('¿Deseas restablecer todos los títulos, precios, fotos, descripciones y guisados a los valores de fábrica?')) {
-    storeData = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA));
-    saveStoreData();
-    showToast('Valores originales restablecidos');
-    initQRCode();
-  }
+// ════════════════════════════════════════════════════════════════
+// TAB: NEGOCIO
+// ════════════════════════════════════════════════════════════════
+function populateNegocioForm() {
+  const b = storeData.business || {};
+  const nameEl   = document.getElementById('adminName');
+  const sloganEl = document.getElementById('adminSlogan');
+  if (nameEl)   nameEl.value   = b.name   || '';
+  if (sloganEl) sloganEl.value = b.slogan || '';
 }
 
-// ==========================================
-// CÓDIGOS QR (CARTELES DE MESA & VOLANTES)
-// ==========================================
+function saveNegocioForm(e) {
+  e.preventDefault();
+  storeData.business.name   = document.getElementById('adminName')?.value.trim()   || storeData.business.name;
+  storeData.business.slogan = document.getElementById('adminSlogan')?.value.trim() || '';
+  saveStoreData();
+  showToast('✅ Datos del negocio guardados');
+}
+
+// ════════════════════════════════════════════════════════════════
+// TAB: CARTELES & QR
+// ════════════════════════════════════════════════════════════════
 function getMenuUrl() {
-  const currentUrl = window.location.href;
-  return currentUrl.replace('admin.html', 'index.html');
+  return window.location.origin + '/';
 }
 
 function initQRCode() {
-  const qrContainer = document.getElementById('qrcodeBox');
   const qrInput = document.getElementById('customQrUrl');
+  if (qrInput && !qrInput.value) qrInput.value = getMenuUrl();
+  const url = qrInput?.value || getMenuUrl();
+  const qrOpts = (w) => ({ text: url, width: w, height: w, colorDark: '#C84B31', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.H });
 
-  if (!qrInput.value) {
-    qrInput.value = getMenuUrl();
-  }
-
-  const urlToUse = qrInput.value || getMenuUrl();
-
-  // 1. Preview en pantalla
-  if (qrContainer) {
-    qrContainer.innerHTML = '';
-    new QRCode(qrContainer, {
-      text: urlToUse,
-      width: 160,
-      height: 160,
-      colorDark: "#C84B31",
-      colorLight: "#FFFFFF",
-      correctLevel: QRCode.CorrectLevel.H
-    });
-  }
-
-  // 2. Carteles de Mesa (3x Hoja)
-  ['printQrImage1', 'printQrImage2', 'printQrImage3'].forEach(id => {
+  const box = document.getElementById('qrcodeBox');
+  if (box) { box.innerHTML = ''; new QRCode(box, qrOpts(160)); }
+  ['printQrImage1','printQrImage2','printQrImage3'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) {
-      el.innerHTML = '';
-      new QRCode(el, {
-        text: urlToUse,
-        width: 125,
-        height: 125,
-        colorDark: "#1E2022",
-        colorLight: "#FFFFFF",
-        correctLevel: QRCode.CorrectLevel.H
-      });
-    }
+    if (el) { el.innerHTML = ''; new QRCode(el, qrOpts(125)); }
   });
-
-  // 3. Volantes de Calle (4x Hoja)
-  ['flyerQr1', 'flyerQr2', 'flyerQr3', 'flyerQr4'].forEach(id => {
+  ['flyerQr1','flyerQr2','flyerQr3','flyerQr4'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) {
-      el.innerHTML = '';
-      new QRCode(el, {
-        text: urlToUse,
-        width: 105,
-        height: 105,
-        colorDark: "#1E2022",
-        colorLight: "#FFFFFF",
-        correctLevel: QRCode.CorrectLevel.H
-      });
-    }
+    if (el) { el.innerHTML = ''; new QRCode(el, qrOpts(105)); }
   });
+  populatePrintTitles();
 }
 
-// ==========================================
-// COMBOS ESPECIALES — CRUD
-// ==========================================
-function renderAdminCombos() {
-  const container = document.getElementById('adminCombosList');
-  if (!container) return;
-
-  if (!storeData.combos) storeData.combos = [];
-
-  if (storeData.combos.length === 0) {
-    container.innerHTML = `<p style="color:#888;text-align:center;padding:24px;">Aún no tienes combos. Usa el formulario de arriba para agregar el primero.</p>`;
-    return;
-  }
-
-  container.innerHTML = storeData.combos.map(combo => {
-    const includesHtml = (combo.includes || []).map(item => `<li>${item}</li>`).join('');
-    const badgeText = combo.badge ? `<span class="admin-combo-badge">${combo.badge}</span>` : '<span style="color:#aaa;font-size:0.8rem;">Sin etiqueta</span>';
-    return `
-      <div class="admin-combo-row">
-        <div class="admin-combo-info">
-          <div class="admin-combo-top">
-            <strong class="admin-combo-name">🎁 ${combo.name}</strong>
-            ${badgeText}
-            <span class="admin-combo-price">$${combo.price} MXN</span>
-          </div>
-          ${combo.description ? `<p class="admin-combo-desc">${combo.description}</p>` : ''}
-          <ul class="admin-combo-includes">${includesHtml}</ul>
-        </div>
-        <div class="admin-combo-controls">
-          <label class="switch-label" title="${combo.available ? 'Disponible' : 'No disponible'}">
-            <input type="checkbox" ${combo.available ? 'checked' : ''} onchange="toggleComboAvailability('${combo.id}')">
-            <span class="switch-slider"></span>
-          </label>
-          <button type="button" class="btn-del-guisado" onclick="deleteCombo('${combo.id}')" title="Eliminar combo">
-            <i class="fa-solid fa-trash-can"></i>
-          </button>
-        </div>
-      </div>
-    `;
-  }).join('');
+function populatePrintTitles() {
+  const p = storeData.products;
+  ['.chip-title-menudo','.flyer-title-menudo']
+    .forEach(s => document.querySelectorAll(s).forEach(el => el.textContent = p?.menudo?.title  || 'Menudo'));
+  ['.chip-title-birria','.flyer-title-birria']
+    .forEach(s => document.querySelectorAll(s).forEach(el => el.textContent = p?.birria?.title  || 'Birria de Res'));
+  ['.chip-title-tacos','.flyer-title-tacos']
+    .forEach(s => document.querySelectorAll(s).forEach(el => el.textContent = p?.tacos?.title   || 'Tacos de Birria'));
+  ['.chip-title-quesadillas','.flyer-title-quesadillas']
+    .forEach(s => document.querySelectorAll(s).forEach(el => el.textContent = p?.quesadillas?.title || 'Quesadillas'));
 }
 
-function addCombo({ name, price, description, badge, includes }) {
-  if (!storeData.combos) storeData.combos = [];
-  storeData.combos.push({
-    id: 'c_' + Date.now(),
-    name,
-    price,
-    description: description || '',
-    badge: badge || '',
-    includes: includes || [],
-    available: true
-  });
-  saveStoreData();
-  showToast(`¡Combo "${name}" agregado con éxito!`);
-}
-
-function toggleComboAvailability(id) {
-  const combo = storeData.combos.find(c => c.id === id);
-  if (combo) {
-    combo.available = !combo.available;
-    saveStoreData();
-    showToast(`Combo "${combo.name}" ${combo.available ? 'activado' : 'desactivado'}`);
-  }
-}
-
-function deleteCombo(id) {
-  const combo = storeData.combos.find(c => c.id === id);
-  if (confirm(`¿Eliminar el combo "${combo ? combo.name : ''}"?`)) {
-    storeData.combos = storeData.combos.filter(c => c.id !== id);
-    saveStoreData();
-    showToast('Combo eliminado');
-  }
-}
-
-// ==========================================
-// ACCIONES DE IMPRESIÓN SEPARADAS
-// ==========================================
 function printTableCards() {
   document.body.classList.remove('print-flyers-mode');
   document.body.classList.add('print-tables-mode');
@@ -568,69 +384,245 @@ function printStreetFlyers() {
   window.print();
 }
 
-// ==========================================
-// EVENT LISTENERS
-// ==========================================
-function initAdminEvents() {
-  // Formulario Agregar Guisado
-  document.getElementById('addGuisadoForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const input = document.getElementById('newGuisadoName');
-    if (input.value.trim()) {
-      addGuisado(input.value);
-      input.value = '';
-    }
-  });
+// ════════════════════════════════════════════════════════════════
+// TAB: CAJA / VENTAS
+// ════════════════════════════════════════════════════════════════
+function renderCajaForm() {
+  const tbody = document.getElementById('cajaTableBody');
+  if (!tbody) return;
 
-  // Formulario Agregar Combo
-  document.getElementById('addComboForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name  = document.getElementById('newComboName').value.trim();
-    const price = Number(document.getElementById('newComboPrice').value) || 0;
-    const desc  = document.getElementById('newComboDesc').value.trim();
-    const badge = document.getElementById('newComboBadge').value.trim();
-    const raw   = document.getElementById('newComboIncludes').value;
-    const includes = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  // Fecha de hoy por defecto
+  const dateInput = document.getElementById('cajaDate');
+  if (dateInput && !dateInput.value) {
+    dateInput.value = new Date().toISOString().slice(0, 10);
+  }
 
-    if (name && price > 0) {
-      addCombo({ name, price, description: desc, badge, includes });
-      document.getElementById('addComboForm').reset();
-    }
-  });
-
-  // Formulario Títulos & Descripciones
-  document.getElementById('descriptionsForm').addEventListener('submit', saveTitlesAndDescriptions);
-
-  // Formulario Precios & Datos
-  document.getElementById('adminPricesForm').addEventListener('submit', saveAdminPricesAndData);
-
-  // Botón Restablecer
-  document.getElementById('resetDataBtn').addEventListener('click', resetToDefault);
-
-  // URL del QR
-  document.getElementById('customQrUrl').addEventListener('input', () => {
-    initQRCode();
-  });
-
-  // Imprimir Carteles de Mesa (3x Hoja)
-  document.getElementById('printTableCardsBtn').addEventListener('click', printTableCards);
-
-  // Imprimir Volantes de Calle (4x Hoja)
-  document.getElementById('printStreetFlyersBtn').addEventListener('click', printStreetFlyers);
+  tbody.innerHTML = PRODUCT_KEYS.map(key => {
+    const p = storeData.products[key];
+    if (!p) return '';
+    const price = Number(p.price) || 0;
+    return `
+      <tr>
+        <td>${p.emoji || ''} ${p.title}</td>
+        <td>${storeData.business.currencySymbol}${price}${p.priceNote ? ' <small>'+p.priceNote+'</small>' : ''}</td>
+        <td>
+          <input type="number" class="caja-qty-input" id="cajaqty-${key}"
+            min="0" value="0" data-price="${price}"
+            oninput="recalculateCaja()">
+        </td>
+        <td class="caja-sub" id="cajasub-${key}">$0</td>
+      </tr>
+    `;
+  }).join('');
 }
 
-// Toast notification
+function recalculateCaja() {
+  let total = 0;
+  PRODUCT_KEYS.forEach(key => {
+    const qtyEl = document.getElementById(`cajaqty-${key}`);
+    const subEl = document.getElementById(`cajasub-${key}`);
+    if (!qtyEl || !subEl) return;
+    const qty   = Math.max(0, parseInt(qtyEl.value) || 0);
+    const price = parseFloat(qtyEl.dataset.price) || 0;
+    const sub   = qty * price;
+    total += sub;
+    subEl.textContent = `$${sub.toLocaleString('es-MX')}`;
+  });
+  const totalEl = document.getElementById('cajaTotalDisplay');
+  if (totalEl) totalEl.textContent = `$${total.toLocaleString('es-MX')}`;
+}
+
+function saveCajaEntry(e) {
+  e.preventDefault();
+  const dateVal = document.getElementById('cajaDate')?.value;
+  if (!dateVal) { showToast('❌ Selecciona una fecha'); return; }
+
+  // Comprobar si ya existe un corte para esa fecha
+  const existing = storeData.caja.findIndex(c => c.date === dateVal);
+
+  const sales = {};
+  let total = 0;
+  PRODUCT_KEYS.forEach(key => {
+    const p     = storeData.products[key];
+    const qty   = Math.max(0, parseInt(document.getElementById(`cajaqty-${key}`)?.value) || 0);
+    const price = Number(p?.price) || 0;
+    const sub   = qty * price;
+    total += sub;
+    sales[key] = { qty, price, subtotal: sub, title: p?.title || key };
+  });
+
+  const d = new Date(dateVal + 'T12:00:00');
+  const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const dateDisplay = `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+
+  const entry = {
+    id:          'k_' + Date.now(),
+    date:        dateVal,
+    dateDisplay,
+    sales,
+    total,
+    notes:       document.getElementById('cajaNotes')?.value.trim() || ''
+  };
+
+  if (existing >= 0) {
+    if (!confirm(`Ya existe un corte para ${dateDisplay}. ¿Sobreescribirlo?`)) return;
+    storeData.caja[existing] = entry;
+  } else {
+    storeData.caja.unshift(entry); // más reciente primero
+  }
+
+  saveStoreData();
+  renderCajaHistorial();
+  renderCajaStats();
+
+  // Reset form
+  document.getElementById('cajaForm')?.reset();
+  const dateInput = document.getElementById('cajaDate');
+  if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+  renderCajaForm(); // recarga la tabla con precios actuales
+
+  showToast(`✅ Corte del ${dateDisplay} guardado — Total: $${total.toLocaleString('es-MX')}`);
+}
+
+function deleteCajaEntry(id) {
+  const entry = storeData.caja.find(c => c.id === id);
+  if (!entry) return;
+  if (!confirm(`¿Eliminar el corte del ${entry.dateDisplay}?`)) return;
+  storeData.caja = storeData.caja.filter(c => c.id !== id);
+  saveStoreData();
+  renderCajaHistorial();
+  renderCajaStats();
+  showToast('Corte eliminado');
+}
+
+function renderCajaStats() {
+  const row = document.getElementById('cajaStatsRow');
+  if (!row || !storeData.caja.length) { if (row) row.innerHTML = ''; return; }
+
+  const totalGeneral = storeData.caja.reduce((s, c) => s + (c.total || 0), 0);
+  const thisMonth    = new Date().toISOString().slice(0, 7);
+  const totalMes     = storeData.caja
+    .filter(c => c.date.startsWith(thisMonth))
+    .reduce((s, c) => s + (c.total || 0), 0);
+  const numCortes    = storeData.caja.length;
+
+  row.innerHTML = `
+    <div class="caja-stat-card">
+      <div class="caja-stat-icon">📅</div>
+      <div class="caja-stat-label">Total del mes</div>
+      <div class="caja-stat-value">$${totalMes.toLocaleString('es-MX')}</div>
+    </div>
+    <div class="caja-stat-card">
+      <div class="caja-stat-icon">💰</div>
+      <div class="caja-stat-label">Total histórico</div>
+      <div class="caja-stat-value">$${totalGeneral.toLocaleString('es-MX')}</div>
+    </div>
+    <div class="caja-stat-card">
+      <div class="caja-stat-icon">📋</div>
+      <div class="caja-stat-label">Días registrados</div>
+      <div class="caja-stat-value">${numCortes}</div>
+    </div>
+  `;
+}
+
+function renderCajaHistorial() {
+  const container = document.getElementById('cajaHistorial');
+  if (!container) return;
+
+  if (!storeData.caja.length) {
+    container.innerHTML = '<p style="text-align:center; color:#9CA3AF; padding:24px;">Aún no hay cortes guardados. ¡Registra las ventas de hoy!</p>';
+    return;
+  }
+
+  container.innerHTML = storeData.caja.map(entry => {
+    const sym = storeData.business.currencySymbol || '$';
+    const rows = PRODUCT_KEYS.map(key => {
+      const s = entry.sales?.[key];
+      if (!s || s.qty === 0) return '';
+      return `
+        <tr>
+          <td>${storeData.products[key]?.emoji || ''} ${s.title || key}</td>
+          <td>${sym}${s.price}</td>
+          <td>${s.qty}</td>
+          <td>${sym}${s.subtotal.toLocaleString('es-MX')}</td>
+        </tr>
+      `;
+    }).join('');
+
+    return `
+      <div class="caja-entry-card">
+        <div class="caja-entry-header">
+          <div>
+            <span class="caja-entry-date">${entry.dateDisplay}</span>
+            ${entry.notes ? `<span class="caja-entry-notes">${entry.notes}</span>` : ''}
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span class="caja-entry-total">${sym}${(entry.total||0).toLocaleString('es-MX')}</span>
+            <button class="btn-del-guisado" onclick="deleteCajaEntry('${entry.id}')" title="Eliminar corte">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+        ${rows ? `
+          <table class="caja-detail-table">
+            <tr><th>Producto</th><th>Precio</th><th>Cant.</th><th>Subtotal</th></tr>
+            ${rows}
+          </table>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════════════════════
 let toastTimer = null;
 function showToast(msg) {
-  const toast = document.getElementById('toast');
+  const toast    = document.getElementById('toast');
   const toastMsg = document.getElementById('toastMsg');
   if (!toast || !toastMsg) return;
-
   toastMsg.textContent = msg;
   toast.classList.remove('hidden');
-
   if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toast.classList.add('hidden');
-  }, 2300);
+  toastTimer = setTimeout(() => toast.classList.add('hidden'), 2800);
 }
+
+// ════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  storeData = await loadStoreDataAsync();
+
+  initTabs();
+
+  // Productos
+  renderProductEditors();
+  document.getElementById('productosForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    saveProductosForm();
+  });
+
+  // Horario
+  populateScheduleForm();
+  document.getElementById('scheduleForm')?.addEventListener('submit', saveScheduleForm);
+  // Preview en tiempo real al cambiar cualquier campo del horario
+  document.querySelectorAll('#daysSelector input, #scheduleOpen, #scheduleClose')
+    .forEach(el => el.addEventListener('change', updateSchedulePreview));
+
+  // Negocio
+  populateNegocioForm();
+  document.getElementById('negocioForm')?.addEventListener('submit', saveNegocioForm);
+
+  // QR
+  document.getElementById('customQrUrl')?.addEventListener('input', initQRCode);
+  document.getElementById('printTableCardsBtn')?.addEventListener('click', printTableCards);
+  document.getElementById('printStreetFlyersBtn')?.addEventListener('click', printStreetFlyers);
+  initQRCode();
+
+  // Caja
+  renderCajaForm();
+  renderCajaStats();
+  renderCajaHistorial();
+  document.getElementById('cajaForm')?.addEventListener('submit', saveCajaEntry);
+});

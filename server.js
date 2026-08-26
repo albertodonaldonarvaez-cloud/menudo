@@ -99,7 +99,7 @@ app.get('/admin.js',   requireAuth, (req, res) => {
 app.post('/api/upload-image', requireAuth, (req, res) => {
   try {
     const { key, image } = req.body;
-    const validKeys = ['menudo', 'gorditas', 'burritos', 'cafeOlla', 'refresco'];
+    const validKeys = ['menudo', 'birria', 'tacos', 'quesadillas'];
     if (!validKeys.includes(key) || !image) {
       return res.status(400).json({ error: 'Clave o imagen inválida' });
     }
@@ -124,7 +124,7 @@ app.post('/api/upload-image', requireAuth, (req, res) => {
 // GET: público — sirve imágenes guardadas en disco
 app.get('/images/:key', (req, res) => {
   const { key } = req.params;
-  const validKeys = ['menudo', 'gorditas', 'burritos', 'cafeOlla', 'refresco'];
+  const validKeys = ['menudo', 'birria', 'tacos', 'quesadillas'];
   if (!validKeys.includes(key)) return res.status(404).end();
 
   const imgPath = path.join('/data/images', `${key}.jpg`);

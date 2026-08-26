@@ -2,192 +2,92 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Menú Digital | Menudo, Gorditas & Burritos</title>
-  <meta name="description" content="Menú digital para consultar en mesa o red local nuestro Menudo, Gorditas, Burritos y Bebidas.">
-  <meta name="theme-color" content="#C84B31">
-
-  <!-- ── Anti-caché: fuerza refresco en móviles ── -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="pageTitle">Menú Digital</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- FontAwesome Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-  <!-- v=20260823 → actualiza este número al hacer cambios para forzar refresco en móviles -->
-  <link rel="stylesheet" href="styles.css?v=20260823">
+  <link rel="stylesheet" href="styles.css?v=20260826">
 </head>
 <body>
 
-  <!-- Top Status Announcement Bar -->
-  <div class="top-announcement">
-    <div class="container announcement-content">
-      <span class="status-pill" id="statusBadge">
-        <span class="status-dot"></span>
-        <span id="statusText">Abierto Ahora</span>
-      </span>
-      <span class="announcement-text" id="headerSchedule">
-        <i class="fa-regular fa-clock"></i> Mar - Dom: 7:00 AM - 2:00 PM
-      </span>
-      <span class="table-badge">
-        <i class="fa-solid fa-wifi"></i> Menú Digital en Mesa
-      </span>
-    </div>
+  <!-- ── Barra de estado: abierto/cerrado + horario ───────────── -->
+  <div class="top-status-bar" id="topStatusBar">
+    <span id="statusBadge" class="status-badge status-loading">
+      <span class="status-dot"></span>
+      <span id="statusText">Verificando...</span>
+    </span>
+    <span class="top-schedule" id="topSchedule">──</span>
+    <span class="top-label">
+      <i class="fa-solid fa-mobile-screen-button"></i> Menú Digital en Mesa
+    </span>
   </div>
 
-  <!-- Hero Header -->
+  <!-- ── Header del negocio ──────────────────────────────────── -->
   <header class="hero-header">
-    <div class="container hero-container">
-      <div class="hero-brand">
-        <div class="brand-avatar">🍲</div>
-        <div class="brand-info">
-          <h1 id="businessName">Menudería y Antojitos "Doña Güera"</h1>
-          <p class="brand-slogan" id="businessSlogan">El auténtico sabor tradicional, recién hecho y bien calientito</p>
-          <div class="brand-welcome-tag">
-            <i class="fa-solid fa-utensils"></i> ¡Bienvenidos! Consulta nuestra carta del día:
-          </div>
-        </div>
+    <div class="hero-brand">
+      <div class="hero-flame">🔥</div>
+      <div class="hero-text">
+        <h1 id="heroName">Birriería &amp; Antojitos</h1>
+        <p id="heroSlogan">La birria más rica, recién hecha y bien calientita 🔥</p>
       </div>
     </div>
   </header>
 
-  <!-- Sticky Category Navigation Bar -->
+  <!-- ── Navegación por categoría ────────────────────────────── -->
   <nav class="category-nav-wrapper" id="categoryNav">
-    <div class="container">
-      <div class="category-nav">
-        <button class="cat-tab active" data-category="all">
-          <span class="cat-icon">🍽️</span> Todos
-        </button>
-        <button class="cat-tab" data-category="menudo">
-          <span class="cat-icon">🍲</span> <span id="tabNavMenudo">Menudo</span>
-        </button>
-        <button class="cat-tab" data-category="gorditas">
-          <span class="cat-icon">🫓</span> <span id="tabNavGorditas">Gorditas</span>
-        </button>
-        <button class="cat-tab" data-category="burritos">
-          <span class="cat-icon">🌯</span> <span id="tabNavBurritos">Burritos</span>
-        </button>
-        <button class="cat-tab" data-category="bebidas">
-          <span class="cat-icon">☕</span> Bebidas & Café
-        </button>
-        <button class="cat-tab" data-category="combos">
-          <span class="cat-icon">🎁</span> Combos
-        </button>
-      </div>
+    <div class="category-nav">
+      <button class="cat-btn active" data-category="all">
+        <span>🍽️</span><span>Todos</span>
+      </button>
+      <button class="cat-btn" data-category="menudo">
+        <span>🍲</span><span>Menudo</span>
+      </button>
+      <button class="cat-btn" data-category="birria">
+        <span>🥩</span><span>Birria</span>
+      </button>
+      <button class="cat-btn" data-category="tacos">
+        <span>🌮</span><span>Tacos</span>
+      </button>
+      <button class="cat-btn" data-category="quesadillas">
+        <span>🧀</span><span>Quesadillas</span>
+      </button>
     </div>
   </nav>
 
-  <!-- Main Menu Content (Visual Only) -->
-  <main class="main-content container">
+  <!-- ── Secciones de productos ───────────────────────────────── -->
+  <main class="menu-main" id="menuMain">
 
-    <!-- SECCIÓN: MENUDO (Medida Única) -->
-    <section class="menu-section" id="section-menudo">
-      <div class="section-title">
-        <div class="title-left">
-          <h2><span class="section-emoji">🍲</span> <span id="secTitleMenudo">Menudo Tradicional</span></h2>
-          <p class="section-subtitle">Receta tradicional de la casa servido bien calientito</p>
-        </div>
-      </div>
-      <div class="menudo-container" id="menudoContainer">
-        <!-- Renderizado dinámico desde app.js -->
-      </div>
+    <section class="product-section" id="section-menudo" data-product="menudo">
+      <div id="card-menudo"></div>
     </section>
 
-    <!-- SECCIÓN: GORDITAS DE GUISADO -->
-    <section class="menu-section" id="section-gorditas">
-      <div class="section-title">
-        <div class="title-left">
-          <h2><span class="section-emoji">🫓</span> <span id="secTitleGorditas">Gorditas de Guisado</span></h2>
-          <p class="section-subtitle" id="gorditaSubtitle">Recién hechas de maíz al comal con guisados del día</p>
-        </div>
-        <div class="price-pill" id="gorditaPricePill">$25 c/u</div>
-      </div>
-
-      <!-- Banner con foto destacada de Gorditas -->
-      <div class="category-banner-card" id="gorditasBanner">
-        <!-- Renderizado dinámico con foto desde app.js -->
-      </div>
-
-      <div class="guisados-heading">
-        <i class="fa-solid fa-list-check"></i> Guisados disponibles hoy para tus Gorditas:
-      </div>
-      <div class="guisados-grid" id="gorditasGrid">
-        <!-- Renderizado dinámico desde app.js -->
-      </div>
+    <section class="product-section" id="section-birria" data-product="birria">
+      <div id="card-birria"></div>
     </section>
 
-    <!-- SECCIÓN: BURRITOS NORTEÑOS -->
-    <section class="menu-section" id="section-burritos">
-      <div class="section-title">
-        <div class="title-left">
-          <h2><span class="section-emoji">🌯</span> <span id="secTitleBurritos">Burritos de Guisado</span></h2>
-          <p class="section-subtitle" id="burritoSubtitle">En tortilla grande de harina casera bien doradita</p>
-        </div>
-        <div class="price-pill" id="burritoPricePill">$35 c/u</div>
-      </div>
-
-      <!-- Banner con foto destacada de Burritos -->
-      <div class="category-banner-card" id="burritosBanner">
-        <!-- Renderizado dinámico con foto desde app.js -->
-      </div>
-
-      <div class="guisados-heading">
-        <i class="fa-solid fa-list-check"></i> Guisados disponibles hoy para tus Burritos:
-      </div>
-      <div class="guisados-grid" id="burritosGrid">
-        <!-- Renderizado dinámico desde app.js -->
-      </div>
+    <section class="product-section" id="section-tacos" data-product="tacos">
+      <div id="card-tacos"></div>
     </section>
 
-    <!-- SECCIÓN: BEBIDAS Y CAFÉ -->
-    <section class="menu-section" id="section-bebidas">
-      <div class="section-title">
-        <div class="title-left">
-          <h2><span class="section-emoji">☕</span> Bebidas & Café de Olla</h2>
-          <p class="section-subtitle">Para acompañar tus alimentos con el mejor sabor</p>
-        </div>
-      </div>
-      <div class="drinks-grid" id="drinksGrid">
-        <!-- Renderizado dinámico desde app.js -->
-      </div>
-    </section>
-
-    <!-- SECCIÓN: COMBOS ESPECIALES -->
-    <section class="menu-section" id="section-combos">
-      <div class="section-title">
-        <div class="title-left">
-          <h2><span class="section-emoji">🎁</span> Combos Especiales</h2>
-          <p class="section-subtitle">¡Ahorra más y disfruta más con nuestros combos del día!</p>
-        </div>
-      </div>
-      <div class="combos-grid" id="combosGrid">
-        <!-- Renderizado dinámico desde app.js -->
-      </div>
+    <section class="product-section" id="section-quesadillas" data-product="quesadillas">
+      <div id="card-quesadillas"></div>
     </section>
 
   </main>
 
-  <!-- Footer -->
-  <footer class="site-footer">
-    <div class="container footer-content">
-      <p id="footerBusinessName">Menudería y Antojitos "Doña Güera"</p>
-      <p class="footer-sub">¡Gracias por visitarnos y buen provecho!</p>
-      <div class="footer-admin-link">
-        <a href="admin.html" class="admin-link-btn">
-          <i class="fa-solid fa-lock"></i> Panel de Administración
-        </a>
-      </div>
-    </div>
+  <!-- ── Footer ───────────────────────────────────────────────── -->
+  <footer class="menu-footer">
+    <p id="footerSchedule"></p>
+    <a href="/admin.html" class="footer-admin-link" aria-label="Panel de administración">
+      <i class="fa-solid fa-gear"></i>
+    </a>
   </footer>
 
-  <!-- Scripts -->
-  <script src="data.js?v=20260823"></script>
-  <script src="app.js?v=20260823"></script>
+  <script src="data.js?v=20260826"></script>
+  <script src="app.js?v=20260826"></script>
 </body>
 </html>

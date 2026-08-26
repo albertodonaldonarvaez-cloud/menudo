@@ -1,98 +1,73 @@
 /**
- * DATA INICIAL POR DEFECTO
- * Estos valores se cargan la primera vez y luego se sincronizan con localStorage.
- * Puedes modificar títulos, precios, fotos, descripciones, dirección y guisados desde admin.html.
+ * DATA.JS — Datos por defecto del Menú Digital
+ * Birriería & Antojitos — todos los campos editables desde el Admin.
  */
 const DEFAULT_STORE_DATA = {
-  business: {
-    name: "Menudería y Antojitos 'Doña Güera'",
-    slogan: "El auténtico sabor tradicional, recién hecho y bien calientito",
-    address: "Av. Hidalgo #104, Col. Centro (Frente a la plaza)",
-    schedule: "Martes a Domingo: 7:00 AM - 2:00 PM",
-    isOpen: true,
-    currency: "MXN",
-    currencySymbol: "$"
-  },
-  prices: {
-    menudo: 120,
-    gordita: 25,
-    burrito: 35,
-    cafeOlla: 25,
-    refresco: 25
-  },
-  titles: {
-    menudo: "Plato de Menudo Tradicional",
-    gorditas: "Gorditas de Guisado al Comal",
-    burritos: "Burritos Norteños de Guisado",
-    cafeOlla: "Café de Olla Artesanal",
-    refresco: "Refresco de Vidrio Bien Helado"
-  },
-  images: {
-    menudo: "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?auto=format&fit=crop&w=900&q=80",
-    gorditas: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=900&q=80",
-    burritos: "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=900&q=80",
-    cafeOlla: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80",
-    refresco: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=800&q=80"
-  },
-  descriptions: {
-    menudo: "Receta casera servida bien calientita. Acompañado con su plato de verdura (cebolla picada, orégano serrano, chile de árbol quebrado, limones) y tortillas calientitas recién hechas.",
-    gorditas: "Gorditas de masa de maíz hechas a mano al comal, rellenas con tus guisados favoritos del día.",
-    burritos: "En tortilla grande de harina casera bien doradita con guisados tradicionales.",
-    cafeOlla: "Hervido en olla de barro tradicional con canela pura de raja y auténtico piloncillo.",
-    refresco: "Coca-Cola de vidrio bien helada, Jarritos de sabores variados y refrescos de 355ml."
-  },
-  // Guisados del día compartidos entre Gorditas y Burritos
-  guisados: [
-    { id: "g1", name: "Chicharrón Prensado en Salsa Roja", available: true },
-    { id: "g2", name: "Deshebrada a la Mexicana", available: true },
-    { id: "g3", name: "Asado de Puerco Tradicional", available: true },
-    { id: "g4", name: "Rajas con Queso y Crema", available: true },
-    { id: "g5", name: "Picadillo Casero con Papitas", available: true },
-    { id: "g6", name: "Frijolitos Refritos con Queso", available: true },
-    { id: "g7", name: "Chicharrón en Salsa Verde", available: true },
-    { id: "g8", name: "Huevo con Chorizo Casero", available: true }
-  ],
 
-  // Combos especiales del negocio
-  combos: [
-    {
-      id: "c1",
-      name: "Combo Mañanero",
-      description: "El desayuno completo para empezar bien el día con sabor casero",
-      price: 155,
-      badge: "⭐ Más Popular",
-      includes: [
-        "1 Plato de Menudo Tradicional",
-        "2 Gorditas de Guisado (a elegir)",
-        "1 Café de Olla Artesanal"
-      ],
-      available: true
+  business: {
+    name:            'Birriería & Antojitos',
+    slogan:          'La birria más rica, recién hecha y bien calientita 🔥',
+    currencySymbol:  '$'
+  },
+
+  // Horario de operación — abierto/cerrado se detecta AUTOMÁTICAMENTE
+  schedule: {
+    days:        [0, 6],      // 0 = Domingo · 1 = Lun … 6 = Sábado (JS getDay())
+    openTime:    '08:00',     // HH:MM formato 24 h
+    closeTime:   '14:00',
+    displayText: 'Sáb - Dom: 8:00 AM – 2:00 PM'
+  },
+
+  // ── Productos del menú ────────────────────────────────────────
+  products: {
+
+    menudo: {
+      enabled:   true,
+      emoji:     '🍲',
+      title:     'Menudo Tradicional',
+      description: 'Receta casera de la abuela, servida bien calientita. Incluye tortillas recién hechas, cebolla, orégano, chile y limón.',
+      price:     100,
+      priceNote: '',
+      badge:     '🌽 Incluye tortillas y verdura',
+      image:     'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?auto=format&fit=crop&w=900&q=80'
     },
-    {
-      id: "c2",
-      name: "Combo Familiar",
-      description: "Ideal para compartir en familia, viene con todo lo necesario",
-      price: 290,
-      badge: "👨‍👩‍👧 Para 2",
-      includes: [
-        "2 Platos de Menudo Tradicional",
-        "4 Gorditas de Guisado (a elegir)",
-        "2 Refrescos de Vidrio"
-      ],
-      available: true
+
+    birria: {
+      enabled:   true,
+      emoji:     '🥩',
+      title:     'Birria de Res',
+      description: 'Birria de res hecha en casa, cocida a fuego lento con especias y chiles tradicionales. Incluye consomé, cebolla y cilantro.',
+      price:     120,
+      priceNote: '',
+      badge:     '🍵 Incluye consomé',
+      image:     'https://images.unsplash.com/photo-1625937286074-9ca519d5d9df?auto=format&fit=crop&w=900&q=80'
     },
-    {
-      id: "c3",
-      name: "Combo Antojero",
-      description: "Para quien quiere probar de todo sin quedarse con las ganas",
-      price: 120,
-      badge: "🌯 Mix",
-      includes: [
-        "2 Gorditas de Guisado (a elegir)",
-        "2 Burritos de Guisado (a elegir)",
-        "1 Refresco de Vidrio"
-      ],
-      available: true
+
+    tacos: {
+      enabled:   true,
+      emoji:     '🌮',
+      title:     'Tacos de Birria',
+      description: 'Tacos en tortilla de maíz rellenos de birria jugosa, bañados en consomé con queso Oaxaca derretido, cebolla y cilantro.',
+      price:     25,
+      priceNote: 'por taco',
+      badge:     '🧀 Queso derretido + consomé',
+      image:     'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=900&q=80'
+    },
+
+    quesadillas: {
+      enabled:   true,
+      emoji:     '🧀',
+      title:     'Quesadilla Gigante de Birria',
+      description: 'Quesadilla casera gigante de tortilla de maíz, rellena de birria y queso Oaxaca derretido. Acompañada de consomé para dipear.',
+      price:     80,
+      priceNote: '',
+      badge:     '🔥 Casera y gigante',
+      image:     'https://images.unsplash.com/photo-1618040996337-56904b7850b9?auto=format&fit=crop&w=900&q=80'
     }
-  ]
+  },
+
+  // ── Historial de cortes de caja ───────────────────────────────
+  // Estructura de cada corte:
+  // { id, date, dateDisplay, sales: { menudo: {qty,price,subtotal}, … }, total, notes }
+  caja: []
 };
