@@ -385,194 +385,215 @@ function printStreetFlyers() {
 }
 
 // ════════════════════════════════════════════════════════════════
-// TAB: CAJA / VENTAS
+// TAB: ANALÍTICA DE VENTAS
 // ════════════════════════════════════════════════════════════════
-function renderCajaForm() {
-  const tbody = document.getElementById('cajaTableBody');
-  if (!tbody) return;
 
-  // Fecha de hoy por defecto
-  const dateInput = document.getElementById('cajaDate');
-  if (dateInput && !dateInput.value) {
-    dateInput.value = new Date().toISOString().slice(0, 10);
+/** Carga transacciones del servidor y renderiza toda la analítica */
+async function loadAnalytics() {
+  const monthEl = document.getElementById('analyticsMonth');
+  const month   = monthEl?.value || new Date().toISOString().slice(0, 7);
+  if (monthEl && !monthEl.value) monthEl.value = month;
+
+  try {
+    const [monthRes, allRes] = await Promise.all([
+      fetch(`/api/transactions?month=${month}`, { cache: 'no-store', headers: { Accept: 'application/json' } }),
+      fetch('/api/transactions', { cache: 'no-store', headers: { Accept: 'application/json' } })
+    ]);
+    if (monthRes.status === 401 || allRes.status === 401) { window.location.href = '/login'; return; }
+    const monthTxs = monthRes.ok ? await monthRes.json() : [];
+    const allTxs   = allRes.ok  ? await allRes.json()   : [];
+
+    renderKpis(monthTxs, allTxs);
+    renderHourChart(monthTxs);
+    renderProductBreakdown(monthTxs);
+    renderDailyTable(monthTxs);
+    renderTransactionList(monthTxs);
+  } catch (e) {
+    console.error('Error cargando analítica:', e);
+    showToast('❌ No se pudo cargar la analítica. Verifica conexión.');
   }
-
-  tbody.innerHTML = PRODUCT_KEYS.map(key => {
-    const p = storeData.products[key];
-    if (!p) return '';
-    const price = Number(p.price) || 0;
-    return `
-      <tr>
-        <td>${p.emoji || ''} ${p.title}</td>
-        <td>${storeData.business.currencySymbol}${price}${p.priceNote ? ' <small>'+p.priceNote+'</small>' : ''}</td>
-        <td>
-          <input type="number" class="caja-qty-input" id="cajaqty-${key}"
-            min="0" value="0" data-price="${price}"
-            oninput="recalculateCaja()">
-        </td>
-        <td class="caja-sub" id="cajasub-${key}">$0</td>
-      </tr>
-    `;
-  }).join('');
 }
 
-function recalculateCaja() {
-  let total = 0;
-  PRODUCT_KEYS.forEach(key => {
-    const qtyEl = document.getElementById(`cajaqty-${key}`);
-    const subEl = document.getElementById(`cajasub-${key}`);
-    if (!qtyEl || !subEl) return;
-    const qty   = Math.max(0, parseInt(qtyEl.value) || 0);
-    const price = parseFloat(qtyEl.dataset.price) || 0;
-    const sub   = qty * price;
-    total += sub;
-    subEl.textContent = `$${sub.toLocaleString('es-MX')}`;
-  });
-  const totalEl = document.getElementById('cajaTotalDisplay');
-  if (totalEl) totalEl.textContent = `$${total.toLocaleString('es-MX')}`;
+function renderKpis(monthTxs, allTxs) {
+  const monthTotal  = monthTxs.reduce((s, t) => s + (t.total || 0), 0);
+  const allTotal    = allTxs.reduce((s, t) => s + (t.total || 0), 0);
+  const avg         = monthTxs.length ? monthTotal / monthTxs.length : 0;
+  setText('kpiMonth',   `$${monthTotal.toLocaleString('es-MX')}`);
+  setText('kpiTotal',   `$${allTotal.toLocaleString('es-MX')}`);
+  setText('kpiAvg',     `$${Math.round(avg).toLocaleString('es-MX')}`);
+  setText('kpiClients', monthTxs.length);
 }
 
-function saveCajaEntry(e) {
-  e.preventDefault();
-  const dateVal = document.getElementById('cajaDate')?.value;
-  if (!dateVal) { showToast('❌ Selecciona una fecha'); return; }
+function renderHourChart(txs) {
+  const el = document.getElementById('analyticsHours');
+  if (!el) return;
+  if (!txs.length) { el.innerHTML = '<p style="color:#9CA3AF;text-align:center;padding:16px;">Sin datos para este mes.</p>'; return; }
 
-  // Comprobar si ya existe un corte para esa fecha
-  const existing = storeData.caja.findIndex(c => c.date === dateVal);
+  // Contar clientes por hora
+  const counts = Array(24).fill(0);
+  txs.forEach(t => { if (t.hour >= 0 && t.hour <= 23) counts[t.hour]++; });
+  const max = Math.max(...counts, 1);
 
-  const sales = {};
-  let total = 0;
-  PRODUCT_KEYS.forEach(key => {
-    const p     = storeData.products[key];
-    const qty   = Math.max(0, parseInt(document.getElementById(`cajaqty-${key}`)?.value) || 0);
-    const price = Number(p?.price) || 0;
-    const sub   = qty * price;
-    total += sub;
-    sales[key] = { qty, price, subtotal: sub, title: p?.title || key };
-  });
+  // Solo mostrar horas con actividad (o rango 6-18)
+  const hours = [];
+  for (let h = 6; h <= 18; h++) hours.push(h);
 
-  const d = new Date(dateVal + 'T12:00:00');
-  const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const dateDisplay = `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
-
-  const entry = {
-    id:          'k_' + Date.now(),
-    date:        dateVal,
-    dateDisplay,
-    sales,
-    total,
-    notes:       document.getElementById('cajaNotes')?.value.trim() || ''
-  };
-
-  if (existing >= 0) {
-    if (!confirm(`Ya existe un corte para ${dateDisplay}. ¿Sobreescribirlo?`)) return;
-    storeData.caja[existing] = entry;
-  } else {
-    storeData.caja.unshift(entry); // más reciente primero
-  }
-
-  saveStoreData();
-  renderCajaHistorial();
-  renderCajaStats();
-
-  // Reset form
-  document.getElementById('cajaForm')?.reset();
-  const dateInput = document.getElementById('cajaDate');
-  if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
-  renderCajaForm(); // recarga la tabla con precios actuales
-
-  showToast(`✅ Corte del ${dateDisplay} guardado — Total: $${total.toLocaleString('es-MX')}`);
-}
-
-function deleteCajaEntry(id) {
-  const entry = storeData.caja.find(c => c.id === id);
-  if (!entry) return;
-  if (!confirm(`¿Eliminar el corte del ${entry.dateDisplay}?`)) return;
-  storeData.caja = storeData.caja.filter(c => c.id !== id);
-  saveStoreData();
-  renderCajaHistorial();
-  renderCajaStats();
-  showToast('Corte eliminado');
-}
-
-function renderCajaStats() {
-  const row = document.getElementById('cajaStatsRow');
-  if (!row || !storeData.caja.length) { if (row) row.innerHTML = ''; return; }
-
-  const totalGeneral = storeData.caja.reduce((s, c) => s + (c.total || 0), 0);
-  const thisMonth    = new Date().toISOString().slice(0, 7);
-  const totalMes     = storeData.caja
-    .filter(c => c.date.startsWith(thisMonth))
-    .reduce((s, c) => s + (c.total || 0), 0);
-  const numCortes    = storeData.caja.length;
-
-  row.innerHTML = `
-    <div class="caja-stat-card">
-      <div class="caja-stat-icon">📅</div>
-      <div class="caja-stat-label">Total del mes</div>
-      <div class="caja-stat-value">$${totalMes.toLocaleString('es-MX')}</div>
-    </div>
-    <div class="caja-stat-card">
-      <div class="caja-stat-icon">💰</div>
-      <div class="caja-stat-label">Total histórico</div>
-      <div class="caja-stat-value">$${totalGeneral.toLocaleString('es-MX')}</div>
-    </div>
-    <div class="caja-stat-card">
-      <div class="caja-stat-icon">📋</div>
-      <div class="caja-stat-label">Días registrados</div>
-      <div class="caja-stat-value">${numCortes}</div>
+  el.innerHTML = `
+    <div class="hours-chart">
+      ${hours.map(h => {
+        const c    = counts[h];
+        const pct  = Math.round((c / max) * 100);
+        const label = h >= 12 ? `${h === 12 ? 12 : h - 12}PM` : `${h}AM`;
+        return `
+          <div class="hour-bar-wrap" title="${label}: ${c} clientes">
+            <div class="hour-bar-track">
+              <div class="hour-bar-fill ${c > 0 ? (pct >= 80 ? 'bar-hot' : pct >= 40 ? 'bar-mid' : 'bar-low') : ''}"
+                style="height:${pct}%"></div>
+            </div>
+            <div class="hour-bar-label">${label}</div>
+            ${c > 0 ? `<div class="hour-bar-count">${c}</div>` : ''}
+          </div>
+        `;
+      }).join('')}
     </div>
   `;
 }
 
-function renderCajaHistorial() {
-  const container = document.getElementById('cajaHistorial');
-  if (!container) return;
+function renderProductBreakdown(txs) {
+  const el = document.getElementById('analyticsProducts');
+  if (!el) return;
+  if (!txs.length) { el.innerHTML = '<p style="color:#9CA3AF;text-align:center;padding:16px;">Sin datos.</p>'; return; }
 
-  if (!storeData.caja.length) {
-    container.innerHTML = '<p style="text-align:center; color:#9CA3AF; padding:24px;">Aún no hay cortes guardados. ¡Registra las ventas de hoy!</p>';
+  const totals = {};
+  const qtys   = {};
+  txs.forEach(t => {
+    (t.items || []).forEach(item => {
+      totals[item.key] = (totals[item.key] || 0) + (item.subtotal || 0);
+      qtys[item.key]   = (qtys[item.key]   || 0) + (item.qty     || 0);
+    });
+  });
+
+  const grandTotal = Object.values(totals).reduce((s, v) => s + v, 0) || 1;
+  const sym = storeData.business?.currencySymbol || '$';
+
+  el.innerHTML = `
+    <div class="product-breakdown">
+      ${PRODUCT_KEYS.map(key => {
+        const p    = storeData.products?.[key];
+        const amt  = totals[key]  || 0;
+        const qty  = qtys[key]    || 0;
+        const pct  = Math.round((amt / grandTotal) * 100);
+        if (!qty) return '';
+        return `
+          <div class="prod-breakdown-row">
+            <div class="prod-breakdown-label">
+              <span>${p?.emoji || ''} ${p?.title || key}</span>
+              <span class="prod-breakdown-qty">${qty} uds.</span>
+            </div>
+            <div class="prod-breakdown-bar-wrap">
+              <div class="prod-breakdown-bar" style="width:${pct}%"></div>
+            </div>
+            <div class="prod-breakdown-right">
+              <span class="prod-breakdown-pct">${pct}%</span>
+              <span class="prod-breakdown-total">${sym}${amt.toLocaleString('es-MX')}</span>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderDailyTable(txs) {
+  const tbody = document.getElementById('analyticsDailyBody');
+  if (!tbody) return;
+  if (!txs.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#9CA3AF;padding:20px;">Sin ventas en este mes.</td></tr>';
     return;
   }
 
-  container.innerHTML = storeData.caja.map(entry => {
-    const sym = storeData.business.currencySymbol || '$';
-    const rows = PRODUCT_KEYS.map(key => {
-      const s = entry.sales?.[key];
-      if (!s || s.qty === 0) return '';
+  // Agrupar por fecha
+  const byDate = {};
+  txs.forEach(t => {
+    if (!byDate[t.date]) byDate[t.date] = { date: t.date, txs: [] };
+    byDate[t.date].txs.push(t);
+  });
+
+  const sym = storeData.business?.currencySymbol || '$';
+  const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  tbody.innerHTML = Object.values(byDate)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .map(day => {
+      const total  = day.txs.reduce((s, t) => s + (t.total || 0), 0);
+      const avg    = day.txs.length ? Math.round(total / day.txs.length) : 0;
+      const d      = new Date(day.date + 'T12:00:00');
+      const label  = `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
       return `
         <tr>
-          <td>${storeData.products[key]?.emoji || ''} ${s.title || key}</td>
-          <td>${sym}${s.price}</td>
-          <td>${s.qty}</td>
-          <td>${sym}${s.subtotal.toLocaleString('es-MX')}</td>
+          <td style="font-weight:600;">${label}</td>
+          <td>${day.txs.length}</td>
+          <td>${sym}${avg.toLocaleString('es-MX')}</td>
+          <td style="font-weight:700;color:var(--color-primary);">${sym}${total.toLocaleString('es-MX')}</td>
         </tr>
       `;
     }).join('');
+}
 
-    return `
-      <div class="caja-entry-card">
-        <div class="caja-entry-header">
-          <div>
-            <span class="caja-entry-date">${entry.dateDisplay}</span>
-            ${entry.notes ? `<span class="caja-entry-notes">${entry.notes}</span>` : ''}
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;">
-            <span class="caja-entry-total">${sym}${(entry.total||0).toLocaleString('es-MX')}</span>
-            <button class="btn-del-guisado" onclick="deleteCajaEntry('${entry.id}')" title="Eliminar corte">
+function renderTransactionList(txs) {
+  const el = document.getElementById('analyticsTransactions');
+  if (!el) return;
+  if (!txs.length) {
+    el.innerHTML = '<p style="color:#9CA3AF;text-align:center;padding:16px;">Sin transacciones este mes.</p>';
+    return;
+  }
+
+  const sym = storeData.business?.currencySymbol || '$';
+  const methodLabel = { efectivo: '💵', tarjeta: '💳', transferencia: '📱' };
+
+  el.innerHTML = `
+    <div class="tx-list">
+      ${txs.slice(0, 100).map(t => {
+        const ts    = new Date(t.timestamp);
+        const time  = ts.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+        const icon  = methodLabel[t.paymentMethod] || '💰';
+        const items = (t.items || []).map(i => `${i.qty}× ${storeData.products?.[i.key]?.emoji || ''} ${i.title || i.key}`).join(', ');
+        return `
+          <div class="tx-row">
+            <div class="tx-time">${time}</div>
+            <div class="tx-items">${items}</div>
+            <div class="tx-method">${icon}</div>
+            <div class="tx-total">${sym}${(t.total||0).toLocaleString('es-MX')}</div>
+            <button class="tx-delete-btn" onclick="deleteTx('${t.id}')" title="Eliminar">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </div>
-        </div>
-        ${rows ? `
-          <table class="caja-detail-table">
-            <tr><th>Producto</th><th>Precio</th><th>Cant.</th><th>Subtotal</th></tr>
-            ${rows}
-          </table>` : ''}
-      </div>
-    `;
-  }).join('');
+        `;
+      }).join('')}
+      ${txs.length > 100 ? `<p style="text-align:center;color:#9CA3AF;font-size:0.8rem;padding:8px;">Mostrando primeras 100 de ${txs.length} transacciones.</p>` : ''}
+    </div>
+  `;
 }
+
+async function deleteTx(id) {
+  if (!confirm('¿Eliminar esta transacción?')) return;
+  try {
+    const res = await fetch(`/api/transactions/${id}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    if (!res.ok) throw new Error();
+    loadAnalytics();
+    showToast('Transacción eliminada');
+  } catch {
+    showToast('❌ Error al eliminar');
+  }
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
 
 // ════════════════════════════════════════════════════════════════
 // TOAST
@@ -620,9 +641,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('printStreetFlyersBtn')?.addEventListener('click', printStreetFlyers);
   initQRCode();
 
-  // Caja
-  renderCajaForm();
-  renderCajaStats();
-  renderCajaHistorial();
-  document.getElementById('cajaForm')?.addEventListener('submit', saveCajaEntry);
+  // Analítica
+  loadAnalytics();
+  document.getElementById('analyticsMonth')?.addEventListener('change', loadAnalytics);
 });

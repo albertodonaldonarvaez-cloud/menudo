@@ -57,8 +57,8 @@
       <button class="dashboard-tab" data-tab="tab-volantes">
         <i class="fa-solid fa-scroll"></i> Volantes Calle
       </button>
-      <button class="dashboard-tab" data-tab="tab-caja">
-        <i class="fa-solid fa-cash-register"></i> Caja / Ventas
+      <button class="dashboard-tab" data-tab="tab-analitica">
+        <i class="fa-solid fa-chart-line"></i> Analítica
       </button>
     </div>
 
@@ -271,73 +271,99 @@
     </section>
 
     <!-- ════════════════════════════════════════════════════════ -->
-    <!-- TAB 6: CAJA / VENTAS                                    -->
+    <!-- TAB 6: ANALÍTICA DE VENTAS                              -->
     <!-- ════════════════════════════════════════════════════════ -->
-    <section class="tab-pane" id="tab-caja">
+    <section class="tab-pane" id="tab-analitica">
 
-      <!-- Nuevo corte -->
-      <div class="admin-panel-card">
-        <div class="card-header-styled">
-          <h3><i class="fa-solid fa-cash-register"></i> Nuevo Corte de Caja</h3>
-          <p>Registra las ventas del día al terminar tu jornada.</p>
+      <!-- Controles de filtro + enlace a caja -->
+      <div class="analytics-top-bar">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <label class="schedule-label" style="margin:0;">Filtrar por mes:</label>
+          <input type="month" id="analyticsMonth" class="form-input" style="max-width:180px;">
+          <button class="btn-primary" onclick="loadAnalytics()">
+            <i class="fa-solid fa-rotate"></i> Actualizar
+          </button>
         </div>
-
-        <form id="cajaForm" class="caja-form">
-          <div class="field-item" style="max-width:260px;">
-            <label for="cajaDate"><i class="fa-solid fa-calendar"></i> Fecha del corte</label>
-            <input type="date" id="cajaDate" class="form-input" required>
-          </div>
-
-          <div class="caja-table-wrapper">
-            <table class="caja-table" id="cajaTable">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Precio</th>
-                  <th>Cantidad vendida</th>
-                  <th>Subtotal</th>
-                </tr>
-              </thead>
-              <tbody id="cajaTableBody">
-                <!-- Renderizado por admin.js -->
-              </tbody>
-              <tfoot>
-                <tr class="caja-total-row">
-                  <td colspan="3"><strong>TOTAL DEL DÍA</strong></td>
-                  <td><strong id="cajaTotalDisplay">$0</strong></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          <div class="field-item">
-            <label for="cajaNotes"><i class="fa-regular fa-comment-dots"></i> Notas del día (opcional)</label>
-            <textarea id="cajaNotes" class="form-input" rows="2"
-              placeholder="Ej: Se acabó la birria a las 12pm, mucha afluencia..."></textarea>
-          </div>
-
-          <div style="text-align:center; margin-top:16px;">
-            <button type="submit" class="btn-primary btn-lg">
-              <i class="fa-solid fa-floppy-disk"></i> Guardar Corte del Día
-            </button>
-          </div>
-        </form>
+        <a href="/caja" target="_blank" class="btn-primary" style="background:#16A34A; text-decoration:none;">
+          <i class="fa-solid fa-cash-register"></i> Abrir Caja (POS)
+        </a>
       </div>
 
-      <!-- Resumen total -->
-      <div class="caja-stats-row" id="cajaStatsRow">
-        <!-- Renderizado por admin.js -->
+      <!-- Métricas principales -->
+      <div class="analytics-kpi-row" id="analyticsKpis">
+        <div class="caja-stat-card">
+          <div class="caja-stat-icon">📅</div>
+          <div class="caja-stat-label">Ingresos del mes</div>
+          <div class="caja-stat-value" id="kpiMonth">$0</div>
+        </div>
+        <div class="caja-stat-card">
+          <div class="caja-stat-icon">💰</div>
+          <div class="caja-stat-label">Total histórico</div>
+          <div class="caja-stat-value" id="kpiTotal">$0</div>
+        </div>
+        <div class="caja-stat-card">
+          <div class="caja-stat-icon">🧾</div>
+          <div class="caja-stat-label">Ticket promedio</div>
+          <div class="caja-stat-value" id="kpiAvg">$0</div>
+        </div>
+        <div class="caja-stat-card">
+          <div class="caja-stat-icon">👥</div>
+          <div class="caja-stat-label">Clientes (mes)</div>
+          <div class="caja-stat-value" id="kpiClients">0</div>
+        </div>
       </div>
 
-      <!-- Historial -->
+      <!-- Horas pico -->
       <div class="admin-panel-card">
         <div class="card-header-styled">
-          <h3><i class="fa-solid fa-chart-bar"></i> Historial de Cortes</h3>
+          <h3><i class="fa-solid fa-clock"></i> Horas Pico del Mes</h3>
+          <p>Número de clientes atendidos por hora.</p>
         </div>
-        <div id="cajaHistorial">
-          <p style="text-align:center; color:#9CA3AF; padding:24px;">
-            Aún no hay cortes guardados. ¡Registra las ventas de hoy!
-          </p>
+        <div class="analytics-hours-chart" id="analyticsHours">
+          <p style="color:#9CA3AF;text-align:center;padding:16px;">Cargando...</p>
+        </div>
+      </div>
+
+      <!-- Desglose por producto -->
+      <div class="admin-panel-card">
+        <div class="card-header-styled">
+          <h3><i class="fa-solid fa-bowl-food"></i> Ventas por Producto</h3>
+        </div>
+        <div id="analyticsProducts">
+          <p style="color:#9CA3AF;text-align:center;padding:16px;">Cargando...</p>
+        </div>
+      </div>
+
+      <!-- Tabla diaria -->
+      <div class="admin-panel-card">
+        <div class="card-header-styled">
+          <h3><i class="fa-solid fa-calendar-days"></i> Resumen por Día</h3>
+        </div>
+        <div class="caja-table-wrapper">
+          <table class="caja-table" id="analyticsDailyTable">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Clientes</th>
+                <th>Ticket Prom.</th>
+                <th>Ingresos</th>
+              </tr>
+            </thead>
+            <tbody id="analyticsDailyBody">
+              <tr><td colspan="4" style="text-align:center;color:#9CA3AF;padding:20px;">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Historial de transacciones individuales -->
+      <div class="admin-panel-card">
+        <div class="card-header-styled">
+          <h3><i class="fa-solid fa-list"></i> Transacciones del Mes</h3>
+          <p>Cada fila es un cliente atendido.</p>
+        </div>
+        <div id="analyticsTransactions">
+          <p style="color:#9CA3AF;text-align:center;padding:16px;">Cargando...</p>
         </div>
       </div>
 

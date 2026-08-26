@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Caja — Menú Digital</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="styles.css?v=20260826">
+</head>
+<body class="pos-body">
+
+  <!-- Header de la caja -->
+  <header class="pos-header">
+    <div class="pos-header-brand">
+      <i class="fa-solid fa-cash-register"></i>
+      <span id="posBusinessName">Caja</span>
+    </div>
+    <div class="pos-header-right">
+      <span class="pos-time" id="posTime">--:--</span>
+      <a href="/logout" class="pos-logout-btn" title="Cerrar sesión">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </a>
+    </div>
+  </header>
+
+  <!-- Layout principal del POS -->
+  <div class="pos-layout">
+
+    <!-- Panel izquierdo: botones de productos -->
+    <div class="pos-products-panel">
+      <div class="pos-products-grid" id="posProductsGrid">
+        <!-- Renderizado por caja.js -->
+      </div>
+    </div>
+
+    <!-- Panel derecho: ticket actual + pago -->
+    <div class="pos-ticket-panel">
+
+      <!-- Ticket actual -->
+      <div class="pos-ticket-header">
+        <span><i class="fa-solid fa-receipt"></i> Ticket</span>
+        <button class="pos-clear-btn" onclick="clearTicket()" title="Limpiar ticket">
+          <i class="fa-solid fa-trash"></i> Limpiar
+        </button>
+      </div>
+
+      <div class="pos-ticket-items" id="posTicketItems">
+        <p class="pos-ticket-empty">Sin artículos.<br>Toca un producto para agregar.</p>
+      </div>
+
+      <!-- Total -->
+      <div class="pos-ticket-total">
+        <span>TOTAL</span>
+        <span id="posTicketTotal">$0</span>
+      </div>
+
+      <!-- Método de pago -->
+      <div class="pos-payment-methods">
+        <button class="pos-pay-btn active" id="payEfectivo" onclick="selectPayment('efectivo', this)">
+          <i class="fa-solid fa-money-bills"></i> Efectivo
+        </button>
+        <button class="pos-pay-btn" id="payTarjeta" onclick="selectPayment('tarjeta', this)">
+          <i class="fa-solid fa-credit-card"></i> Tarjeta
+        </button>
+        <button class="pos-pay-btn" id="payTransferencia" onclick="selectPayment('transferencia', this)">
+          <i class="fa-solid fa-mobile-screen-button"></i> Transfer
+        </button>
+      </div>
+
+      <!-- Botón cobrar -->
+      <button class="pos-cobrar-btn" id="posCobrarBtn" onclick="completeSale()" disabled>
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="posCobrarLabel">Cobrar $0</span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- Modal de confirmación -->
+  <div class="pos-modal-overlay hidden" id="posModal">
+    <div class="pos-modal">
+      <div class="pos-modal-icon">✅</div>
+      <h2 class="pos-modal-title">¡Venta registrada!</h2>
+      <p class="pos-modal-total" id="modalTotal">$0</p>
+      <p class="pos-modal-method" id="modalMethod">Efectivo</p>
+      <button class="pos-cobrar-btn" onclick="closeModal()" style="margin-top:16px;">
+        <i class="fa-solid fa-plus"></i> Nuevo Cliente
+      </button>
+    </div>
+  </div>
+
+  <script src="data.js?v=20260826"></script>
+  <script src="caja.js?v=20260826"></script>
+</body>
+</html>

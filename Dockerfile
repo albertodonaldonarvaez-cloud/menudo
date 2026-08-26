@@ -16,9 +16,11 @@ RUN npm install --omit=dev
 COPY server.js     .
 COPY index.html    .
 COPY admin.html    .
+COPY caja.html     .
 COPY login.html    .
 COPY app.js        .
 COPY admin.js      .
+COPY caja.js       .
 COPY data.js       .
 COPY styles.css    .
 
