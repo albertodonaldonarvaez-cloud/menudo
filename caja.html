@@ -472,21 +472,116 @@
     }
     .modal-new-btn:hover { background: #EA6C0C; }
 
-    /* ── RESPONSIVE ─────────────────────────────────── */
-    @media (max-width: 640px) {
-      .pos-root { flex-direction: column; overflow: visible; height: auto; }
-      .pos-left  { overflow: visible; flex: none; min-height: auto; }
-      .pos-right {
-        width: 100%; min-width: unset;
-        border-left: none;
-        border-top: 1px solid var(--border);
+    /* ── BARRA DE TABS MÓVIL (solo <640px) ─────────────── */
+    .pos-mobile-tabs {
+      display: none;
+    }
+
+    @media (max-width: 639px) {
+      /* Barra de tabs sticky debajo del header */
+      .pos-mobile-tabs {
+        display: flex;
+        background: var(--bg2);
+        border-bottom: 2px solid var(--border);
+        position: sticky;
+        top: 54px;
+        z-index: 9;
+        flex-shrink: 0;
       }
+
+      .pos-mtab {
+        flex: 1;
+        padding: 10px 8px;
+        border: none;
+        background: transparent;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--muted);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border-bottom: 3px solid transparent;
+        transition: color 0.15s, border-color 0.15s;
+        position: relative;
+      }
+
+      .pos-mtab.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+        background: rgba(200,75,49,0.04);
+      }
+
+      /* Badge de cantidad en el tab Ticket */
+      .pos-mtab-badge {
+        background: var(--primary);
+        color: #fff;
+        font-size: 0.65rem;
+        font-weight: 800;
+        min-width: 18px;
+        height: 18px;
+        border-radius: 9px;
+        padding: 0 4px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+      .pos-mtab-badge.show { display: flex; }
+
+      /* Layout: cada panel ocupa exactamente el espacio disponible */
+      .pos-root {
+        flex-direction: column;
+        /* altura = pantalla - header (54px) - tab bar (~44px) */
+        height: calc(100vh - 54px - 44px);
+        overflow: hidden;
+      }
+
+      /* Los paneles ocupan todo el espacio y tienen scroll interno */
+      .pos-left, .pos-right {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Ocultar el panel inactivo */
+      .pos-left.mobile-hidden,
+      .pos-right.mobile-hidden {
+        display: none;
+      }
+
+      /* Panel de productos */
+      .pos-left {
+        padding: 10px;
+        border-right: none;
+      }
+
+      /* Panel del ticket: debe tener flex column para que el cobrar quede abajo */
+      .pos-right {
+        width: 100%;
+        min-width: unset;
+        border-left: none;
+        border-top: none;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* El ticket-list crece para llenar espacio disponible */
+      .ticket-list { flex: 1; overflow-y: auto; max-height: none; }
+
+      /* Botones más fáciles de tocar */
       .pos-grid  { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-      .pos-btn   { padding: 14px 8px; min-height: 100px; }
+      .pos-btn   { padding: 14px 8px; min-height: 95px; }
       .pos-btn-emoji { font-size: 1.8rem; }
-      .ticket-list { max-height: 200px; }
-      .ticket-total-amount { font-size: 1.5rem; }
-      .cobrar-btn { font-size: 0.95rem; padding: 14px; }
+      .qty-btn   { width: 34px; height: 34px; font-size: 1.1rem; }
+      .cobrar-btn { font-size: 1rem; padding: 16px; }
+    }
+
+    /* ── TABLET 640–900px: dos columnas balanceadas ──── */
+    @media (min-width: 640px) and (max-width: 900px) {
+      .pos-grid { grid-template-columns: repeat(2, 1fr); }
+      .pos-right { width: 300px; }
     }
 
     @media (min-width: 900px) {
@@ -512,11 +607,24 @@
     </div>
   </header>
 
+  <!-- Barra de tabs (solo visible en móvil <640px) -->
+  <div class="pos-mobile-tabs" id="posMobileTabs">
+    <button class="pos-mtab active" id="mtabProductos" onclick="switchMobileTab('productos')">
+      <i class="fa-solid fa-bowl-food"></i>
+      Productos
+    </button>
+    <button class="pos-mtab" id="mtabTicket" onclick="switchMobileTab('ticket')">
+      <i class="fa-solid fa-receipt"></i>
+      Ticket
+      <span class="pos-mtab-badge" id="mtabBadge">0</span>
+    </button>
+  </div>
+
   <!-- Layout principal -->
   <div class="pos-root">
 
     <!-- PANEL: Productos -->
-    <div class="pos-left">
+    <div class="pos-left" id="posLeftPanel">
       <p class="pos-section-label">Toca para agregar al ticket</p>
       <div class="pos-grid" id="posProductsGrid">
         <!-- Renderizado por caja.js -->
@@ -524,7 +632,7 @@
     </div>
 
     <!-- PANEL: Ticket -->
-    <div class="pos-right">
+    <div class="pos-right" id="posRightPanel">
 
       <div class="ticket-head">
         <span class="ticket-head-title">

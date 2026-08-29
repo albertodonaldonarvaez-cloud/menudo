@@ -9,6 +9,38 @@ const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco'];
 let storeConfig   = {};
 let ticket        = [];       // [{ key, title, emoji, price, priceNote, qty }]
 let paymentMethod = 'efectivo';
+let mobileTab     = 'productos'; // 'productos' | 'ticket'
+
+// ── Tabs móvil ────────────────────────────────────────────────
+function switchMobileTab(tab) {
+  mobileTab = tab;
+  const left  = document.getElementById('posLeftPanel');
+  const right = document.getElementById('posRightPanel');
+  const tProd = document.getElementById('mtabProductos');
+  const tTick = document.getElementById('mtabTicket');
+
+  if (!left || !right) return;
+
+  if (tab === 'productos') {
+    left.classList.remove('mobile-hidden');
+    right.classList.add('mobile-hidden');
+    tProd?.classList.add('active');
+    tTick?.classList.remove('active');
+  } else {
+    left.classList.add('mobile-hidden');
+    right.classList.remove('mobile-hidden');
+    tTick?.classList.add('active');
+    tProd?.classList.remove('active');
+  }
+}
+
+function updateMobileTabBadge() {
+  const badge = document.getElementById('mtabBadge');
+  if (!badge) return;
+  const total = ticket.reduce((s, t) => s + t.qty, 0);
+  badge.textContent = total;
+  badge.classList.toggle('show', total > 0);
+}
 
 // ── Config ────────────────────────────────────────────────────
 async function loadConfig() {
@@ -204,6 +236,7 @@ function renderTicket() {
     : 'Cobrar $0';
 
   updateBadges();
+  updateMobileTabBadge();
 }
 
 // ── Pago ──────────────────────────────────────────────────────
