@@ -70,6 +70,10 @@
         <i class="fa-solid fa-tags"></i>
         <span class="tab-label">Promos</span>
       </button>
+      <button class="dashboard-tab" data-tab="tab-usuarios">
+        <i class="fa-solid fa-users"></i>
+        <span class="tab-label">Usuarios</span>
+      </button>
     </div>
 
     <!-- ════════════════════════════════════════════════════════ -->
@@ -416,6 +420,52 @@
         <!-- Lista de promos -->
         <div id="promosList">
           <!-- Renderizado por admin.js -->
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- TAB: USUARIOS CAJERO                                    -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="tab-pane" id="tab-usuarios">
+
+      <div class="admin-panel-card">
+        <div class="card-header-styled">
+          <h3><i class="fa-solid fa-users"></i> Usuarios de Caja</h3>
+          <p>Gestiona las cuentas del personal de caja. El administrador se configura en el servidor y no aparece aquí.</p>
+        </div>
+
+        <!-- Formulario: nuevo usuario -->
+        <div class="user-add-form">
+          <div class="user-form-fields">
+            <div class="field-item" style="flex:1; min-width:120px;">
+              <label><i class="fa-solid fa-user"></i> Usuario (sin espacios)</label>
+              <input type="text" id="newUsername" class="form-input" placeholder="cajero1" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="field-item" style="flex:1; min-width:140px;">
+              <label><i class="fa-solid fa-id-card"></i> Nombre (opcional)</label>
+              <input type="text" id="newUserName" class="form-input" placeholder="Juan López">
+            </div>
+            <div class="field-item" style="flex:1; min-width:140px;">
+              <label><i class="fa-solid fa-lock"></i> Contraseña</label>
+              <div class="pass-wrap">
+                <input type="password" id="newPassword" class="form-input" placeholder="Mínimo 4 caracteres" autocomplete="new-password">
+                <button type="button" class="pass-toggle" onclick="togglePassVis('newPassword', this)" tabindex="-1">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="addUser()">
+            <i class="fa-solid fa-user-plus"></i> Agregar Usuario
+          </button>
+        </div>
+
+        <!-- Lista de usuarios -->
+        <div id="usersList">
+          <p style="text-align:center;padding:24px;color:#9CA3AF;">Cargando usuarios...</p>
         </div>
 
       </div>

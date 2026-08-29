@@ -741,4 +741,174 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Promos
   renderPromosList();
+
+  // Usuarios
+  loadUsersList();
 });
+
+// ════════════════════════════════════════════════════════════════
+// TAB: USUARIOS CAJERO
+// ════════════════════════════════════════════════════════════════
+
+async function loadUsersList() {
+  const container = document.getElementById('usersList');
+  if (!container) return;
+
+  try {
+    const res = await fetch('/api/users', {
+      headers: { 'Accept': 'application/json' },
+      cache: 'no-store'
+    });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    if (!res.ok) throw new Error(await res.text());
+
+    const users = await res.json();
+    renderUsersList(users);
+  } catch (e) {
+    container.innerHTML = `<p style="color:#DC2626;padding:16px;">Error cargando usuarios: ${e.message}</p>`;
+  }
+}
+
+function renderUsersList(users) {
+  const container = document.getElementById('usersList');
+  if (!container) return;
+
+  if (!users.length) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:32px;color:#9CA3AF;">
+        <i class="fa-solid fa-user-slash" style="font-size:2rem;margin-bottom:8px;display:block;opacity:0.3;"></i>
+        Aún no hay usuarios de caja. Agrega uno arriba.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="users-list-header">
+      <span>Usuario</span>
+      <span>Nombre</span>
+      <span>Estado</span>
+      <span>Creado</span>
+      <span></span>
+    </div>
+    ${users.map(u => `
+      <div class="user-row" id="userrow-${u.username}">
+        <div class="user-row-username">
+          <i class="fa-solid fa-user-tie" style="color:#6B7280;"></i>
+          <strong>${u.username}</strong>
+        </div>
+        <div class="user-row-name">${u.name || '<span style="color:#9CA3AF;font-size:0.8rem;">Sin nombre</span>'}</div>
+        <div class="user-row-status">
+          <label class="switch-label" title="${u.active ? 'Activo' : 'Inactivo'}">
+            <input type="checkbox" ${u.active ? 'checked' : ''}
+              onchange="toggleUserActive('${u.username}', this.checked)">
+            <span class="switch-slider"></span>
+          </label>
+          <span class="user-status-label ${u.active ? 'active' : ''}">${u.active ? 'Activo' : 'Inactivo'}</span>
+        </div>
+        <div class="user-row-date">${u.createdAt || '—'}</div>
+        <div class="user-row-actions">
+          <button class="btn-change-pass" onclick="promptChangePassword('${u.username}')" title="Cambiar contraseña">
+            <i class="fa-solid fa-key"></i>
+          </button>
+          <button class="btn-del-guisado" onclick="deleteUser('${u.username}')" title="Eliminar usuario">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+
+async function addUser() {
+  const usernameEl = document.getElementById('newUsername');
+  const nameEl     = document.getElementById('newUserName');
+  const passwordEl = document.getElementById('newPassword');
+
+  const username = usernameEl?.value.trim();
+  const name     = nameEl?.value.trim() || '';
+  const password = passwordEl?.value;
+
+  if (!username) { showToast('❌ Escribe un nombre de usuario'); usernameEl?.focus(); return; }
+  if (!password) { showToast('❌ Escribe una contraseña'); passwordEl?.focus(); return; }
+
+  try {
+    const res = await fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ username, name, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(`❌ ${data.error}`); return; }
+
+    showToast(`✅ Usuario "${data.username}" creado`);
+    if (usernameEl) usernameEl.value = '';
+    if (nameEl)     nameEl.value     = '';
+    if (passwordEl) passwordEl.value = '';
+    usernameEl?.focus();
+    loadUsersList();
+  } catch (e) {
+    showToast('❌ Error de conexión');
+  }
+}
+
+async function toggleUserActive(username, active) {
+  try {
+    const res = await fetch(`/api/users/${username}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ active })
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(`❌ ${data.error}`); loadUsersList(); return; }
+    showToast(active ? `✅ ${username} activado` : `${username} desactivado`);
+    loadUsersList();
+  } catch {
+    showToast('❌ Error de conexión');
+  }
+}
+
+async function deleteUser(username) {
+  if (!confirm(`¿Eliminar al usuario "${username}"? Esta acción no se puede deshacer.`)) return;
+  try {
+    const res = await fetch(`/api/users/${username}`, {
+      method: 'DELETE',
+      headers: { 'Accept': 'application/json' }
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(`❌ ${data.error}`); return; }
+    showToast(`Usuario "${username}" eliminado`);
+    loadUsersList();
+  } catch {
+    showToast('❌ Error de conexión');
+  }
+}
+
+async function promptChangePassword(username) {
+  const newPass = prompt(`Nueva contraseña para "${username}":\n(mínimo 4 caracteres)`);
+  if (!newPass) return;
+  if (newPass.length < 4) { showToast('❌ La contraseña debe tener al menos 4 caracteres'); return; }
+
+  try {
+    const res = await fetch(`/api/users/${username}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ password: newPass })
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(`❌ ${data.error}`); return; }
+    showToast(`✅ Contraseña de "${username}" actualizada`);
+  } catch {
+    showToast('❌ Error de conexión');
+  }
+}
+
+function togglePassVis(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const isPass = input.type === 'password';
+  input.type = isPass ? 'text' : 'password';
+  btn.innerHTML = isPass
+    ? '<i class="fa-solid fa-eye-slash"></i>'
+    : '<i class="fa-solid fa-eye"></i>';
+}
