@@ -39,8 +39,16 @@
       background: var(--bg);
       color: var(--text);
       height: 100%;
+      height: 100dvh;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
+
+    /* La tab bar y el root son hijos directos de body */
+    body > * { flex-shrink: 0; }
+    /* El pos-root sí puede crecer */
+    .pos-root { flex: 1 1 0; min-height: 0; }
 
     /* ── HEADER ─────────────────────────────────────── */
     .pos-bar {
@@ -478,114 +486,140 @@
     }
 
     @media (max-width: 639px) {
-      /* Barra de tabs sticky debajo del header */
+
+      /* ─── Tab bar sticky ─── */
       .pos-mobile-tabs {
         display: flex;
         background: var(--bg2);
         border-bottom: 2px solid var(--border);
-        position: sticky;
-        top: 54px;
-        z-index: 9;
         flex-shrink: 0;
       }
 
       .pos-mtab {
         flex: 1;
-        padding: 10px 8px;
+        padding: 11px 8px;
         border: none;
         background: transparent;
         font-family: 'Outfit', sans-serif;
-        font-size: 0.82rem;
+        font-size: 0.85rem;
         font-weight: 700;
         color: var(--muted);
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 6px;
+        gap: 7px;
         border-bottom: 3px solid transparent;
         transition: color 0.15s, border-color 0.15s;
-        position: relative;
       }
 
       .pos-mtab.active {
         color: var(--primary);
         border-bottom-color: var(--primary);
-        background: rgba(200,75,49,0.04);
       }
 
-      /* Badge de cantidad en el tab Ticket */
       .pos-mtab-badge {
         background: var(--primary);
         color: #fff;
-        font-size: 0.65rem;
+        font-size: 0.68rem;
         font-weight: 800;
-        min-width: 18px;
-        height: 18px;
-        border-radius: 9px;
-        padding: 0 4px;
+        min-width: 20px;
+        height: 20px;
+        border-radius: 10px;
+        padding: 0 5px;
         display: none;
         align-items: center;
         justify-content: center;
+        line-height: 1;
       }
       .pos-mtab-badge.show { display: flex; }
 
-      /* Layout: cada panel ocupa exactamente el espacio disponible */
+      /* ─── Root: ocupa el espacio restante tras header + tabs ─── */
       .pos-root {
         flex-direction: column;
-        /* altura = pantalla - header (54px) - tab bar (~44px) */
-        height: calc(100vh - 54px - 44px);
+        flex: 1 1 0;   /* hereda del body flex column */
+        min-height: 0;
         overflow: hidden;
+        height: auto;  /* body flex lo controla */
       }
 
-      /* Los paneles ocupan todo el espacio y tienen scroll interno */
+      /* ─── Ambos paneles llenan el contenedor ─── */
       .pos-left, .pos-right {
-        flex: 1;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        flex: 1 1 0;
+      }
+
+      /* ─── Panel de productos: scroll interno ─── */
+      .pos-left {
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-      }
-
-      /* Ocultar el panel inactivo */
-      .pos-left.mobile-hidden,
-      .pos-right.mobile-hidden {
-        display: none;
-      }
-
-      /* Panel de productos */
-      .pos-left {
         padding: 10px;
         border-right: none;
       }
 
-      /* Panel del ticket: debe tener flex column para que el cobrar quede abajo */
+      /* ─── Panel del ticket: columna con fondo fijo abajo ─── */
       .pos-right {
-        width: 100%;
-        min-width: unset;
-        border-left: none;
-        border-top: none;
+        width: 100% !important;
+        min-width: unset !important;
+        border-left: none !important;
+        border-top: none !important;
+        box-shadow: none !important;
         display: flex;
         flex-direction: column;
+        overflow: hidden;  /* MUY importante: evita que el panel crezca */
       }
 
-      /* El ticket-list crece para llenar espacio disponible */
-      .ticket-list { flex: 1; overflow-y: auto; max-height: none; }
+      /* ─── La lista de items: la única parte que hace scroll ─── */
+      .ticket-list {
+        flex: 1 1 0;          /* crece hasta el espacio disponible */
+        min-height: 0;        /* permite que flex shrink funcione  */
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        max-height: none !important;
+      }
 
-      /* Botones más fáciles de tocar */
-      .pos-grid  { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-      .pos-btn   { padding: 14px 8px; min-height: 95px; }
-      .pos-btn-emoji { font-size: 1.8rem; }
-      .qty-btn   { width: 34px; height: 34px; font-size: 1.1rem; }
-      .cobrar-btn { font-size: 1rem; padding: 16px; }
-    }
+      /* ─── Sección de pago: NO hace scroll, siempre visible ─── */
+      .ticket-total,
+      .payment-section,
+      .cobrar-wrap {
+        flex-shrink: 0;       /* nunca se comprime */
+      }
 
-    /* ── TABLET 640–900px: dos columnas balanceadas ──── */
-    @media (min-width: 640px) and (max-width: 900px) {
-      .pos-grid { grid-template-columns: repeat(2, 1fr); }
-      .pos-right { width: 300px; }
+      /* ─── Tamaños touch-friendly en móvil ─── */
+      .pos-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .pos-btn  { padding: 12px 8px; min-height: 90px; }
+      .pos-btn-emoji { font-size: 1.7rem; }
+
+      /* Botones de cantidad más grandes */
+      .qty-btn  { width: 36px; height: 36px; font-size: 1.1rem; }
+
+      /* Total más compacto */
+      .ticket-total { padding: 8px 14px; }
+      .ticket-total-amount { font-size: 1.5rem; }
+
+      /* Métodos de pago: botones más altos para dedo */
+      .pay-btn { min-height: 56px; font-size: 0.78rem; }
+
+      /* Cobrar: grande y fácil de tocar */
+      .cobrar-btn { padding: 18px; font-size: 1.05rem; border-radius: 12px; }
+      .cobrar-wrap { padding: 8px 10px 12px; }
+
+      /* Ocultar panel inactivo */
+      .pos-left.mobile-hidden,
+      .pos-right.mobile-hidden { display: none !important; }
+
+    } /* fin @media 639px */
+
+    /* ── TABLET 640–900px: layout dos columnas ──── */
+    @media (min-width: 640px) and (max-width: 899px) {
+      .pos-grid  { grid-template-columns: repeat(2, 1fr); }
+      .pos-right { width: 290px; }
     }
 
     @media (min-width: 900px) {
-      .pos-grid { grid-template-columns: repeat(2, 1fr); }
+      .pos-grid  { grid-template-columns: repeat(2, 1fr); }
       .pos-right { width: 340px; }
     }
   </style>
