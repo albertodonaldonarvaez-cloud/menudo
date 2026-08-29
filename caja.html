@@ -22,16 +22,16 @@
     }
 
     :root {
-      --bg:      #0F172A;
-      --bg2:     #1E293B;
-      --bg3:     #263347;
-      --border:  #334155;
-      --text:    #F1F5F9;
-      --muted:   #94A3B8;
-      --primary: #F97316;   /* naranja cálido */
-      --green:   #22C55E;
-      --red:     #EF4444;
-      --amber:   #F59E0B;
+      --bg:      #F5F6FA;
+      --bg2:     #FFFFFF;
+      --bg3:     #F0F0F3;
+      --border:  #E2E4EC;
+      --text:    #1F2937;
+      --muted:   #6B7280;
+      --primary: #C84B31;   /* terracota del menú */
+      --green:   #16A34A;
+      --red:     #DC2626;
+      --amber:   #D97706;
     }
 
     html, body {
@@ -96,7 +96,7 @@
       cursor: pointer;
       transition: color 0.2s, border-color 0.2s;
     }
-    .pos-bar-action:hover { color: var(--text); border-color: #64748B; }
+    .pos-bar-action:hover { color: var(--text); border-color: var(--muted); }
 
     /* ── LAYOUT ─────────────────────────────────────── */
     .pos-root {
@@ -192,6 +192,7 @@
       border-left: 1px solid var(--border);
       display: flex;
       flex-direction: column;
+      box-shadow: -4px 0 16px rgba(0,0,0,0.06);
     }
 
     /* Cabecera del ticket */
@@ -373,11 +374,11 @@
     }
     .pay-btn i { font-size: 1.1rem; }
     .pay-btn.active {
-      background: rgba(34,197,94,0.15);
+      background: rgba(22,163,74,0.1);
       border-color: var(--green);
-      color: #4ADE80;
+      color: var(--green);
     }
-    .pay-btn:not(.active):hover { border-color: #64748B; color: var(--text); }
+    .pay-btn:not(.active):hover { border-color: var(--muted); color: var(--text); }
 
     /* Botón cobrar */
     .cobrar-wrap { padding: 10px; }
@@ -394,7 +395,7 @@
       cursor: pointer;
       display: flex; align-items: center; justify-content: center; gap: 8px;
       transition: all 0.2s;
-      box-shadow: 0 4px 20px rgba(22,163,74,0.35);
+      box-shadow: 0 4px 20px rgba(22,163,74,0.25);
       position: relative;
       overflow: hidden;
     }
@@ -405,11 +406,11 @@
       background: rgba(255,255,255,0);
       transition: background 0.1s;
     }
-    .cobrar-btn:hover:not(:disabled)::after { background: rgba(255,255,255,0.05); }
+    .cobrar-btn:hover:not(:disabled)::after { background: rgba(255,255,255,0.08); }
     .cobrar-btn:active:not(:disabled) { transform: scale(0.98); }
     .cobrar-btn:disabled {
-      background: var(--bg3);
-      color: #475569;
+      background: #E5E7EB;
+      color: #9CA3AF;
       cursor: not-allowed;
       box-shadow: none;
     }
