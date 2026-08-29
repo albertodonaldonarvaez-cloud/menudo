@@ -63,6 +63,28 @@ const DEFAULT_STORE_DATA = {
       priceNote: '',
       badge:     '🔥 Casera y gigante',
       image:     'https://images.unsplash.com/photo-1618040996337-56904b7850b9?auto=format&fit=crop&w=900&q=80'
+    },
+
+    refresco: {
+      enabled:   true,
+      emoji:     '🥤',
+      title:     'Refresco / Agua Fresca',
+      description: 'Refrescos de lata y aguas frescas del día para acompañar tus alimentos.',
+      price:     20,
+      priceNote: '',
+      badge:     '🧊 Bien frío',
+      image:     'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=900&q=80'
+    },
+
+    promos: {
+      enabled:   true,
+      emoji:     '🎉',
+      title:     'Promos del Día',
+      description: 'Consulta nuestras promociones y combos especiales del fin de semana. ¡Aprovecha y ahorra!',
+      price:     0,
+      priceNote: 'Ver con el cajero',
+      badge:     '🔥 Oferta especial',
+      image:     'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=900&q=80'
     }
   },
 

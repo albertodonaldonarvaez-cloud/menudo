@@ -4,7 +4,7 @@
  * Rediseñado: badge en botones, animación de total, IDs nuevos.
  */
 
-const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas'];
+const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco', 'promos'];
 
 let storeConfig   = {};
 let ticket        = [];       // [{ key, title, emoji, price, priceNote, qty }]

@@ -7,7 +7,7 @@
 const STORAGE_KEY = 'menudo_store_config_v2';
 let storeData = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA));
 
-const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas'];
+const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco', 'promos'];
 
 // ── Migración ─────────────────────────────────────────────────
 function migrateData(data) {

@@ -2,92 +2,169 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title id="pageTitle">Menú Digital</title>
+  <meta name="description" content="Menú digital para consultar en mesa nuestros platillos de birria, menudo, refrescos y promos.">
+  <meta name="theme-color" content="#C84B31">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=20260829">
+  <link rel="stylesheet" href="styles.css?v=20260829b">
 </head>
 <body>
 
-  <!-- ── Barra de estado: abierto/cerrado + horario ───────────── -->
-  <div class="top-status-bar" id="topStatusBar">
-    <span id="statusBadge" class="status-badge status-loading">
-      <span class="status-dot"></span>
-      <span id="statusText">Verificando...</span>
-    </span>
-    <span class="top-schedule" id="topSchedule">──</span>
-    <span class="top-label">
-      <i class="fa-solid fa-mobile-screen-button"></i> Menú Digital en Mesa
-    </span>
+  <!-- ── Barra de estado: abierto/cerrado ───────────────────── -->
+  <div class="top-announcement">
+    <div class="container announcement-content">
+      <span class="status-pill" id="statusBadge">
+        <span class="status-dot"></span>
+        <span id="statusText">Verificando...</span>
+      </span>
+      <span class="announcement-text" id="headerSchedule">
+        <i class="fa-regular fa-clock"></i> Cargando horario...
+      </span>
+      <span class="table-badge">
+        <i class="fa-solid fa-wifi"></i> Menú Digital en Mesa
+      </span>
+    </div>
   </div>
 
-  <!-- ── Header del negocio ──────────────────────────────────── -->
+  <!-- ── Hero Header ─────────────────────────────────────────── -->
   <header class="hero-header">
-    <div class="hero-brand">
-      <div class="hero-flame">🔥</div>
-      <div class="hero-text">
-        <h1 id="heroName">Birriería &amp; Antojitos</h1>
-        <p id="heroSlogan">La birria más rica, recién hecha y bien calientita 🔥</p>
+    <div class="container hero-container">
+      <div class="hero-brand">
+        <div class="brand-avatar" id="heroAvatar">🔥</div>
+        <div class="brand-info">
+          <h1 id="businessName">Birriería &amp; Antojitos</h1>
+          <p class="brand-slogan" id="businessSlogan">La birria más rica, recién hecha y bien calientita 🔥</p>
+          <div class="brand-welcome-tag">
+            <i class="fa-solid fa-utensils"></i> ¡Bienvenidos! Consulta nuestra carta:
+          </div>
+        </div>
       </div>
     </div>
   </header>
 
-  <!-- ── Navegación por categoría ────────────────────────────── -->
+  <!-- ── Navegación por categoría ──────────────────────────── -->
   <nav class="category-nav-wrapper" id="categoryNav">
-    <div class="category-nav">
-      <button class="cat-btn active" data-category="all">
-        <span>🍽️</span><span>Todos</span>
-      </button>
-      <button class="cat-btn" data-category="menudo">
-        <span>🍲</span><span>Menudo</span>
-      </button>
-      <button class="cat-btn" data-category="birria">
-        <span>🥩</span><span>Birria</span>
-      </button>
-      <button class="cat-btn" data-category="tacos">
-        <span>🌮</span><span>Tacos</span>
-      </button>
-      <button class="cat-btn" data-category="quesadillas">
-        <span>🧀</span><span>Quesadillas</span>
-      </button>
+    <div class="container">
+      <div class="category-nav">
+        <button class="cat-tab active" data-category="all">
+          <span class="cat-icon">🍽️</span> Todos
+        </button>
+        <button class="cat-tab" data-category="menudo">
+          <span class="cat-icon">🍲</span> Menudo
+        </button>
+        <button class="cat-tab" data-category="birria">
+          <span class="cat-icon">🥩</span> Birria
+        </button>
+        <button class="cat-tab" data-category="tacos">
+          <span class="cat-icon">🌮</span> Tacos
+        </button>
+        <button class="cat-tab" data-category="quesadillas">
+          <span class="cat-icon">🧀</span> Quesadillas
+        </button>
+        <button class="cat-tab" data-category="refresco">
+          <span class="cat-icon">🥤</span> Bebidas
+        </button>
+        <button class="cat-tab" data-category="promos">
+          <span class="cat-icon">🎉</span> Promos
+        </button>
+      </div>
     </div>
   </nav>
 
-  <!-- ── Secciones de productos ───────────────────────────────── -->
-  <main class="menu-main" id="menuMain">
+  <!-- ── Contenido del menú ─────────────────────────────────── -->
+  <main class="main-content container">
 
-    <section class="product-section" id="section-menudo" data-product="menudo">
+    <!-- MENUDO -->
+    <section class="menu-section" id="section-menudo" data-product="menudo">
+      <div class="section-title">
+        <div class="title-left">
+          <h2><span class="section-emoji">🍲</span> Menudo Tradicional</h2>
+          <p class="section-subtitle">Receta tradicional de la casa, servido bien calientito</p>
+        </div>
+      </div>
       <div id="card-menudo"></div>
     </section>
 
-    <section class="product-section" id="section-birria" data-product="birria">
+    <!-- BIRRIA -->
+    <section class="menu-section" id="section-birria" data-product="birria">
+      <div class="section-title">
+        <div class="title-left">
+          <h2><span class="section-emoji">🥩</span> Birria de Res</h2>
+          <p class="section-subtitle">Cocida a fuego lento con especias y chiles tradicionales</p>
+        </div>
+      </div>
       <div id="card-birria"></div>
     </section>
 
-    <section class="product-section" id="section-tacos" data-product="tacos">
+    <!-- TACOS -->
+    <section class="menu-section" id="section-tacos" data-product="tacos">
+      <div class="section-title">
+        <div class="title-left">
+          <h2><span class="section-emoji">🌮</span> Tacos de Birria</h2>
+          <p class="section-subtitle">Tacos dorados bañados en consomé con queso Oaxaca</p>
+        </div>
+      </div>
       <div id="card-tacos"></div>
     </section>
 
-    <section class="product-section" id="section-quesadillas" data-product="quesadillas">
+    <!-- QUESADILLAS -->
+    <section class="menu-section" id="section-quesadillas" data-product="quesadillas">
+      <div class="section-title">
+        <div class="title-left">
+          <h2><span class="section-emoji">🧀</span> Quesadillas Gigantes</h2>
+          <p class="section-subtitle">Caseras, gigantes y rellenas de birria con queso Oaxaca</p>
+        </div>
+      </div>
       <div id="card-quesadillas"></div>
+    </section>
+
+    <!-- REFRESCO / BEBIDAS -->
+    <section class="menu-section" id="section-refresco" data-product="refresco">
+      <div class="section-title">
+        <div class="title-left">
+          <h2><span class="section-emoji">🥤</span> Bebidas</h2>
+          <p class="section-subtitle">Para acompañar tus alimentos con el mejor sabor</p>
+        </div>
+      </div>
+      <div id="card-refresco"></div>
+    </section>
+
+    <!-- PROMOS / COMBOS -->
+    <section class="menu-section" id="section-promos" data-product="promos">
+      <div class="section-title">
+        <div class="title-left">
+          <h2><span class="section-emoji">🎉</span> Promos del Día</h2>
+          <p class="section-subtitle">¡Aprovecha nuestros combos especiales del fin de semana!</p>
+        </div>
+      </div>
+      <div id="card-promos"></div>
     </section>
 
   </main>
 
-  <!-- ── Footer ───────────────────────────────────────────────── -->
-  <footer class="menu-footer">
-    <p id="footerSchedule"></p>
-    <a href="/admin.html" class="footer-admin-link" aria-label="Panel de administración">
-      <i class="fa-solid fa-gear"></i>
-    </a>
+  <!-- ── Footer ──────────────────────────────────────────────── -->
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <p id="footerBusinessName">Birriería &amp; Antojitos</p>
+      <p class="footer-sub" id="footerSchedule"></p>
+      <p class="footer-sub">¡Gracias por visitarnos y buen provecho! 🙏</p>
+      <div class="footer-admin-link">
+        <a href="/login" class="admin-link-btn">
+          <i class="fa-solid fa-lock"></i> Panel de Administración
+        </a>
+      </div>
+    </div>
   </footer>
 
-  <script src="data.js?v=20260829"></script>
-  <script src="app.js?v=20260829"></script>
+  <script src="data.js?v=20260829b"></script>
+  <script src="app.js?v=20260829b"></script>
 </body>
 </html>
