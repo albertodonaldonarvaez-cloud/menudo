@@ -4,7 +4,7 @@
  * Rediseñado: badge en botones, animación de total, IDs nuevos.
  */
 
-const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco', 'promos'];
+const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco'];
 
 let storeConfig   = {};
 let ticket        = [];       // [{ key, title, emoji, price, priceNote, qty }]
@@ -37,20 +37,38 @@ function renderProductButtons() {
   const grid = document.getElementById('posProductsGrid');
   if (!grid) return;
 
-  grid.innerHTML = PRODUCT_KEYS.map(key => {
+  // Botones de productos fijos
+  const productBtns = PRODUCT_KEYS.map(key => {
     const p = storeConfig.products?.[key] || DEFAULT_STORE_DATA.products[key];
     if (!p?.enabled) return '';
-
     return `
       <button class="pos-btn" id="posbtn-${key}" onclick="addToTicket('${key}')">
         <div class="pos-btn-qty-badge" id="posbadge-${key}">0</div>
         <div class="pos-btn-emoji">${p.emoji || '🍽️'}</div>
         <div class="pos-btn-name">${p.title}</div>
-        <div class="pos-btn-price">$${p.price}${p.priceNote ? '' : ''}</div>
+        <div class="pos-btn-price">$${p.price}</div>
         ${p.priceNote ? `<div class="pos-btn-note">${p.priceNote}</div>` : ''}
       </button>
     `;
   }).join('');
+
+  // Botones de promos dinámicas
+  const activePromos = (storeConfig.promos || DEFAULT_STORE_DATA.promos || []).filter(p => p.enabled);
+  const promoBtns = activePromos.length ? `
+    <div class="pos-promos-divider" style="grid-column:1/-1;">
+      <i class="fa-solid fa-tags"></i> Promos del Día
+    </div>
+    ${activePromos.map(p => `
+      <button class="pos-btn pos-btn-promo" id="posbtn-${p.id}" onclick="addPromoToTicket('${p.id}')">
+        <div class="pos-btn-qty-badge" id="posbadge-${p.id}">0</div>
+        <div class="pos-btn-emoji">🎉</div>
+        <div class="pos-btn-name">${p.title}</div>
+        <div class="pos-btn-price">$${Number(p.price).toLocaleString('es-MX')}</div>
+      </button>
+    `).join('')}
+  ` : '';
+
+  grid.innerHTML = productBtns + promoBtns;
 }
 
 // ── Ticket ────────────────────────────────────────────────────
@@ -74,6 +92,29 @@ function addToTicket(key) {
 
   renderTicket();
   flashBtn(key);
+}
+
+function addPromoToTicket(id) {
+  const promos = storeConfig.promos || DEFAULT_STORE_DATA.promos || [];
+  const p = promos.find(pr => pr.id === id);
+  if (!p) return;
+
+  const existing = ticket.find(t => t.key === id);
+  if (existing) {
+    existing.qty++;
+  } else {
+    ticket.push({
+      key:      id,
+      title:    p.title,
+      emoji:    '🎉',
+      price:    Number(p.price) || 0,
+      priceNote: '',
+      qty:      1
+    });
+  }
+
+  renderTicket();
+  flashBtn(id);
 }
 
 function changeQty(key, delta) {

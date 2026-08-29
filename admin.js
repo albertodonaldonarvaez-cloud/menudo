@@ -7,7 +7,7 @@
 const STORAGE_KEY = 'menudo_store_config_v2';
 let storeData = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA));
 
-const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco', 'promos'];
+const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco'];
 
 // ── Migración ─────────────────────────────────────────────────
 function migrateData(data) {
@@ -32,7 +32,8 @@ function ensureAllFields(data) {
     if (!data.products[k]) data.products[k] = JSON.parse(JSON.stringify(def.products[k]));
     if (typeof data.products[k].enabled === 'undefined') data.products[k].enabled = true;
   });
-  if (!Array.isArray(data.caja)) data.caja = [];
+  if (!Array.isArray(data.caja))   data.caja   = [];
+  if (!Array.isArray(data.promos)) data.promos = JSON.parse(JSON.stringify(def.promos));
   return data;
 }
 
@@ -385,6 +386,99 @@ function printStreetFlyers() {
 }
 
 // ════════════════════════════════════════════════════════════════
+// TAB: PROMOS / PAQUETES
+// ════════════════════════════════════════════════════════════════
+
+function renderPromosList() {
+  const container = document.getElementById('promosList');
+  if (!container) return;
+
+  const promos = storeData.promos || [];
+
+  if (!promos.length) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:32px;color:#9CA3AF;">
+        <i class="fa-solid fa-tags" style="font-size:2rem;margin-bottom:8px;display:block;opacity:0.3;"></i>
+        Aún no hay promos. Agrega una arriba.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = promos.map(p => `
+    <div class="promo-row" id="promorow-${p.id}">
+      <div class="promo-row-info">
+        <div class="promo-row-title">
+          <label class="switch-label" title="${p.enabled ? 'Activa — toca para desactivar' : 'Inactiva — toca para activar'}">
+            <input type="checkbox" ${p.enabled ? 'checked' : ''} onchange="togglePromo('${p.id}', this.checked)">
+            <span class="switch-slider"></span>
+          </label>
+          <span class="promo-name ${p.enabled ? '' : 'promo-disabled'}">${p.title}</span>
+        </div>
+        ${p.description ? `<div class="promo-desc">${p.description}</div>` : ''}
+      </div>
+      <div class="promo-row-right">
+        <span class="promo-price">$${Number(p.price).toLocaleString('es-MX')}</span>
+        <button class="btn-del-guisado" onclick="deletePromo('${p.id}')" title="Eliminar promo">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addPromo() {
+  const titleEl = document.getElementById('promoTitle');
+  const priceEl = document.getElementById('promoPrice');
+  const descEl  = document.getElementById('promoDesc');
+
+  const title = titleEl?.value.trim();
+  const price = parseFloat(priceEl?.value) || 0;
+  const desc  = descEl?.value.trim() || '';
+
+  if (!title) { showToast('❌ Escribe el nombre de la promo'); titleEl?.focus(); return; }
+  if (price <= 0) { showToast('❌ Agrega un precio mayor a $0'); priceEl?.focus(); return; }
+
+  if (!storeData.promos) storeData.promos = [];
+  storeData.promos.push({
+    id:          'promo_' + Date.now(),
+    title,
+    description: desc,
+    price,
+    enabled:     true
+  });
+
+  saveStoreData();
+  renderPromosList();
+  showToast(`✅ Promo "${title}" agregada`);
+
+  // Limpiar form
+  if (titleEl) titleEl.value = '';
+  if (priceEl) priceEl.value = '';
+  if (descEl)  descEl.value  = '';
+  titleEl?.focus();
+}
+
+function togglePromo(id, enabled) {
+  const promo = (storeData.promos || []).find(p => p.id === id);
+  if (!promo) return;
+  promo.enabled = enabled;
+  saveStoreData();
+  renderPromosList();
+  showToast(enabled ? '✅ Promo activada' : 'Promo desactivada');
+}
+
+function deletePromo(id) {
+  const promo = (storeData.promos || []).find(p => p.id === id);
+  if (!promo) return;
+  if (!confirm(`¿Eliminar la promo "${promo.title}"?`)) return;
+  storeData.promos = storeData.promos.filter(p => p.id !== id);
+  saveStoreData();
+  renderPromosList();
+  showToast('Promo eliminada');
+}
+
+// ════════════════════════════════════════════════════════════════
 // TAB: ANALÍTICA DE VENTAS
 // ════════════════════════════════════════════════════════════════
 
@@ -644,4 +738,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Analítica
   loadAnalytics();
   document.getElementById('analyticsMonth')?.addEventListener('change', loadAnalytics);
+
+  // Promos
+  renderPromosList();
 });

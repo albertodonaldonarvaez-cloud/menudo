@@ -2943,3 +2943,171 @@ button, .btn-primary, .btn-back-menu,
   z-index: 50;
   border-bottom: 1px solid rgba(255,255,255,0.1);
 }
+
+/* ==========================================================
+   PROMOS — Admin editor + menú público + POS divider
+   ========================================================== */
+
+/* Admin: form para agregar promo */
+.promo-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #F9F7F4;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.promo-form-fields { display: flex; flex-direction: column; gap: 10px; }
+
+.promo-form-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.promo-form-row .field-item { flex: 1; min-width: 120px; }
+
+/* Admin: fila de promo en la lista */
+.promo-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  background: #FAFAFA;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: 8px;
+}
+
+.promo-row-info { flex: 1; min-width: 0; }
+
+.promo-row-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.promo-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.promo-disabled {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.promo-desc {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  padding-left: 58px;
+}
+
+.promo-row-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.promo-price {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  font-family: var(--font-heading);
+}
+
+/* Menú público: card de promo */
+.promo-pub-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, #FFF8F3, #FFFFFF);
+  border: 1.5px solid #FBBF24;
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.promo-pub-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary);
+}
+
+.promo-pub-icon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.promo-pub-body { flex: 1; min-width: 0; }
+
+.promo-pub-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.promo-pub-title {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.promo-pub-price {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.promo-pub-desc {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* POS: separador de promos en el grid */
+.pos-promos-divider {
+  padding: 8px 4px 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pos-promos-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* POS: botón de promo — borde dorado para distinguirlo */
+.pos-btn-promo {
+  border-color: #F59E0B !important;
+  background: #FFFBEB !important;
+}
+.pos-btn-promo .pos-btn-price { color: #D97706 !important; }
+.pos-btn-promo:active, .pos-btn-promo.flash {
+  border-color: #D97706 !important;
+  background: #FEF3C7 !important;
+}
+
+@media (max-width: 479px) {
+  .promo-form-row { flex-direction: column; }
+  .promo-pub-header { flex-direction: column; align-items: flex-start; gap: 2px; }
+}

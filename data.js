@@ -74,22 +74,22 @@ const DEFAULT_STORE_DATA = {
       priceNote: '',
       badge:     '🧊 Bien frío',
       image:     'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=900&q=80'
-    },
-
-    promos: {
-      enabled:   true,
-      emoji:     '🎉',
-      title:     'Promos del Día',
-      description: 'Consulta nuestras promociones y combos especiales del fin de semana. ¡Aprovecha y ahorra!',
-      price:     0,
-      priceNote: 'Ver con el cajero',
-      badge:     '🔥 Oferta especial',
-      image:     'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=900&q=80'
     }
   },
 
+  // ── Promos / Paquetes del día ──────────────────────────────────
+  // Cada promo tiene: id, title, description, price, enabled
+  // Se crean y editan desde el Admin → pestaña Promos
+  promos: [
+    {
+      id:          'promo_default1',
+      title:       'Combo Birria para 2',
+      description: '2 porciones de birria de res, consomé grande, tortillas recién hechas, cebolla, cilantro y salsas.',
+      price:       220,
+      enabled:     true
+    }
+  ],
+
   // ── Historial de cortes de caja ───────────────────────────────
-  // Estructura de cada corte:
-  // { id, date, dateDisplay, sales: { menudo: {qty,price,subtotal}, … }, total, notes }
   caja: []
 };

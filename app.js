@@ -5,7 +5,7 @@
  * Auto-detecta abierto/cerrado según horario configurado en admin.
  */
 
-const PRODUCT_KEYS_PUBLIC = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco', 'promos'];
+const PRODUCT_KEYS_PUBLIC = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco'];
 const STORAGE_KEY = 'menudo_store_config_v2';
 let storeData = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA));
 let statusTimer = null;
@@ -34,7 +34,8 @@ function ensureAllFields(data) {
   Object.keys(def.products).forEach(k => {
     if (!data.products[k]) data.products[k] = JSON.parse(JSON.stringify(def.products[k]));
   });
-  if (!Array.isArray(data.caja)) data.caja = [];
+  if (!Array.isArray(data.caja))   data.caja   = [];
+  if (!Array.isArray(data.promos)) data.promos = JSON.parse(JSON.stringify(def.promos));
   return data;
 }
 
@@ -145,6 +146,34 @@ function renderAllProducts() {
   PRODUCT_KEYS_PUBLIC.forEach(renderProductCard);
 }
 
+// ── Renderizado de Promos (array independiente) ──────────────
+function renderPromos() {
+  const container = document.getElementById('card-promos');
+  const section   = document.getElementById('section-promos');
+  if (!container || !section) return;
+
+  const promos = (storeData.promos || []).filter(p => p.enabled);
+
+  if (!promos.length) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = '';
+  container.innerHTML = promos.map(p => `
+    <article class="promo-pub-card">
+      <div class="promo-pub-icon">🎉</div>
+      <div class="promo-pub-body">
+        <div class="promo-pub-header">
+          <h3 class="promo-pub-title">${p.title}</h3>
+          <span class="promo-pub-price">$${Number(p.price).toLocaleString('es-MX')}</span>
+        </div>
+        ${p.description ? `<p class="promo-pub-desc">${p.description}</p>` : ''}
+      </div>
+    </article>
+  `).join('');
+}
+
 // ── Cabecera del negocio ─────────────────────────────────────
 function updateBusinessHeader() {
   const b = storeData.business || {};
@@ -192,9 +221,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   storeData = await loadStoreDataAsync();
   updateBusinessHeader();
   renderAllProducts();
+  renderPromos();
   updateStatusBadge();
   initCategoryNav();
 
-  // Actualiza el badge cada 60 s (detecta apertura/cierre en tiempo real)
   statusTimer = setInterval(updateStatusBadge, 60 * 1000);
 });
