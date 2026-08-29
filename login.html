@@ -24,11 +24,19 @@
     .login-card {
       background: #fff;
       border-radius: 20px;
-      padding: 48px 40px 40px;
+      padding: 40px 32px 36px;
       width: 100%;
       max-width: 400px;
       box-shadow: 0 24px 60px rgba(0,0,0,0.5);
       text-align: center;
+    }
+
+    @media (max-width: 479px) {
+      .login-card {
+        padding: 28px 20px 24px;
+        border-radius: 16px;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+      }
     }
 
     .login-icon {
@@ -153,9 +161,9 @@
 </head>
 <body>
   <div class="login-card">
-    <div class="login-icon">🍲</div>
-    <h1 class="login-title">Panel de Administración</h1>
-    <p class="login-subtitle">Inicia sesión para gestionar el menú del día</p>
+    <div class="login-icon">🔥</div>
+    <h1 class="login-title">Acceso al Sistema</h1>
+    <p class="login-subtitle">Ingresa con tu cuenta de <strong>administrador</strong> o <strong>cajero</strong></p>
 
     <!-- Error de credenciales -->
     <div class="error-box" id="errorBox" style="display:none;">

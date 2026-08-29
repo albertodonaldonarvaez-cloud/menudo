@@ -2256,3 +2256,415 @@ input:checked + .switch-slider:before {
 .tx-total  { font-weight:800;color:var(--color-primary);text-align:right; }
 .tx-delete-btn { background:none;border:none;color:#E5E7EB;cursor:pointer;font-size:0.8rem;padding:4px;border-radius:4px;transition:color 0.15s; }
 .tx-delete-btn:hover { color:#DC2626; }
+
+/* ============================================================
+   RESPONSIVE — MÓVIL Y TABLET (Birriería Menu Digital)
+   Breakpoints: xs=375 sm=480 md=640 lg=768 xl=900
+   ============================================================ */
+
+/* ── Inputs / botones touch-friendly ───────────────────────── */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="url"],
+input[type="password"],
+input[type="date"],
+input[type="month"],
+input[type="time"],
+textarea,
+select,
+.form-input {
+  min-height: 44px;
+  font-size: 1rem !important;
+  -webkit-appearance: none;
+  border-radius: var(--radius-sm);
+}
+
+button, .btn-primary, .btn-back-menu,
+.dashboard-tab, .cat-btn, .cat-tab {
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+/* ── Admin: header sticky + tabs scroll ─────────────────────── */
+.admin-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #1E2022;
+  color: #FFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 52px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.admin-brand {
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-back-menu {
+  font-size: 0.78rem;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.admin-main-container {
+  padding-top: 16px;
+  padding-bottom: 80px;
+}
+
+/* Tabs en admin: scroll horizontal sin corte */
+.dashboard-tabs-wrapper {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 0 4px 8px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid var(--color-border);
+}
+.dashboard-tabs-wrapper::-webkit-scrollbar { display: none; }
+
+.dashboard-tab {
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  padding: 8px 12px;
+  white-space: nowrap;
+  border-radius: 8px;
+  min-height: 40px;
+}
+
+.dashboard-tab i {
+  font-size: 0.9rem;
+}
+
+/* Ocultar welcome box en pantallas pequeñas */
+@media (max-width: 480px) {
+  .admin-welcome-box { display: none; }
+}
+
+/* ── Productos: editor de productos en móvil ────────────────── */
+.product-editor-body {
+  flex-direction: column;
+}
+
+.product-editor-body .photo-preview-wrap {
+  width: 100%;
+  height: 200px;
+}
+
+.dish-editor-controls {
+  gap: 10px;
+}
+
+.photo-card-actions {
+  flex-wrap: wrap;
+}
+
+.btn-upload-file {
+  min-height: 44px;
+  font-size: 0.9rem;
+}
+
+.btn-reset-img {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Precio + nota de precio en fila */
+@media (max-width: 479px) {
+  .field-item > div[style*="display:flex"],
+  .field-item + .field-item { margin-top: 8px; }
+}
+
+/* ── Horario: días de la semana wrap ──────────────────────────*/
+.days-selector {
+  gap: 6px;
+}
+
+.day-chip span {
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.schedule-times {
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Tabla caja / analítica en móvil ─────────────────────────*/
+.caja-table-wrapper {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.caja-table th,
+.caja-table td {
+  padding: 10px 8px;
+  font-size: 0.83rem;
+}
+
+.caja-qty-input {
+  width: 72px;
+  font-size: 0.95rem;
+}
+
+/* Transacciones: colapsar columna de items en móvil */
+@media (max-width: 540px) {
+  .tx-row {
+    grid-template-columns: 46px 1fr 24px 60px 24px;
+    gap: 4px;
+    font-size: 0.75rem;
+    padding: 8px;
+  }
+  .tx-items { font-size: 0.73rem; }
+}
+
+/* Horas pico: hacerlo scrollable en móvil */
+.hours-chart {
+  overflow-x: auto;
+  min-width: max-content;
+  padding-bottom: 4px;
+}
+
+/* Stats de analítica: grid 2x2 en móvil */
+@media (max-width: 540px) {
+  .analytics-kpi-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .caja-stat-value { font-size: 1.1rem; }
+}
+
+/* ── Menú público: status bar en móvil ───────────────────────*/
+@media (max-width: 479px) {
+  .top-status-bar {
+    font-size: 0.72rem;
+    padding: 6px 12px;
+    gap: 4px;
+  }
+  .top-label { display: none; }
+}
+
+/* Hero header compacto en móvil */
+@media (max-width: 479px) {
+  .hero-header { padding: 20px 12px 18px; }
+  .hero-flame  { font-size: 2.4rem; }
+  .hero-text h1 { font-size: 1.3rem; }
+  .hero-text p  { font-size: 0.82rem; }
+}
+
+/* Cards de productos en móvil */
+.product-card-img-wrap {
+  aspect-ratio: 16/9;
+}
+
+@media (max-width: 479px) {
+  .product-card-body { padding: 12px 14px; }
+  .product-card-title { font-size: 1.1rem; }
+  .product-card-price { font-size: 1.25rem; }
+  .product-card-desc  { font-size: 0.82rem; }
+}
+
+/* ── POS / CAJA en móvil ─────────────────────────────────────*/
+@media (max-width: 640px) {
+  /* En móvil: productos arriba, ticket abajo */
+  .pos-layout {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 52px);
+    overflow: visible;
+  }
+
+  .pos-products-panel {
+    flex: none;
+    max-height: none;
+    border-right: none;
+    border-bottom: 2px solid #374151;
+    padding: 8px;
+  }
+
+  .pos-products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .pos-product-btn {
+    padding: 14px 8px;
+    min-height: 100px;
+    border-radius: 12px;
+  }
+
+  .pos-prod-emoji { font-size: 2rem; }
+  .pos-prod-name  { font-size: 0.75rem; }
+  .pos-prod-price { font-size: 0.9rem; }
+
+  .pos-ticket-panel {
+    width: 100%;
+    min-width: unset;
+    border-left: none;
+    /* No max-height — dejar que crezca */
+    flex: 1;
+  }
+
+  .pos-ticket-items {
+    max-height: 220px;
+    overflow-y: auto;
+  }
+
+  .pos-cobrar-btn {
+    font-size: 1rem;
+    padding: 14px;
+    margin: 8px;
+  }
+}
+
+/* En tablet (641-900): dos columnas balanceadas */
+@media (min-width: 641px) and (max-width: 900px) {
+  .pos-products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .pos-ticket-panel {
+    width: 280px;
+    min-width: 240px;
+  }
+}
+
+/* ── Login en móvil ───────────────────────────────────────────*/
+.login-card {
+  margin: 20px 16px;
+}
+
+@media (max-width: 479px) {
+  .login-card {
+    padding: 24px 16px;
+    border-radius: var(--radius-md);
+  }
+}
+
+/* ── Admin panel card: menos padding en móvil ───────────────*/
+@media (max-width: 479px) {
+  .admin-panel-card {
+    padding: 16px 12px;
+  }
+  .card-header-styled {
+    margin-bottom: 12px;
+  }
+}
+
+/* ── Botones de acción grandes para touch ────────────────────*/
+.btn-primary {
+  min-height: 44px;
+  font-size: 0.9rem;
+  padding: 10px 20px;
+}
+
+.btn-primary.btn-lg {
+  min-height: 50px;
+  font-size: 1rem;
+  padding: 12px 24px;
+  width: 100%;
+  max-width: 360px;
+}
+
+/* ── Analítica top bar en móvil ─────────────────────────────*/
+@media (max-width: 600px) {
+  .analytics-top-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .analytics-top-bar > div,
+  .analytics-top-bar > a {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+/* ── Product breakdown: columna en móvil ────────────────────*/
+@media (max-width: 540px) {
+  .prod-breakdown-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+  }
+  .prod-breakdown-bar-wrap {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+  .prod-breakdown-right { order: 2; }
+}
+
+/* ── Scroll suave en todo ───────────────────────────────────*/
+* { -webkit-overflow-scrolling: touch; }
+
+/* ── Fix: evitar zoom en inputs iOS ─────────────────────────*/
+@media (max-width: 768px) {
+  input, select, textarea { font-size: 16px !important; }
+}
+
+/* ── Admin tabs: icono en xs, icono+texto en sm+ ─────────────*/
+.dashboard-tab {
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.68rem;
+  padding: 8px 10px;
+  min-width: 56px;
+}
+.dashboard-tab .tab-label {
+  display: block;
+  font-size: 0.68rem;
+  line-height: 1;
+}
+.dashboard-tab i { font-size: 1.1rem; }
+
+@media (min-width: 600px) {
+  .dashboard-tab {
+    flex-direction: row;
+    font-size: 0.83rem;
+    padding: 10px 14px;
+    gap: 6px;
+  }
+  .dashboard-tab .tab-label { font-size: 0.83rem; }
+  .dashboard-tab i { font-size: 0.9rem; }
+}
+
+/* Fix: el editor de productos en tablet muestra foto al lado */
+@media (min-width: 580px) {
+  .product-editor-body {
+    flex-direction: row;
+  }
+  .product-editor-body .photo-preview-wrap {
+    width: 160px;
+    height: 130px;
+    flex-shrink: 0;
+  }
+}
+
+/* Fix: horario en tablet — tiempos en fila */
+@media (min-width: 480px) {
+  .schedule-times { flex-direction: row; }
+}
+
+/* Fix: POS en tablets medianas (ej: iPad mini 768px) */
+@media (min-width: 641px) {
+  .pos-layout { flex-direction: row; height: calc(100vh - 52px); overflow: hidden; }
+  .pos-products-panel { flex: 1; max-height: unset; border-right: 2px solid #374151; border-bottom: none; }
+  .pos-ticket-panel { width: 300px; }
+}
+
+@media (min-width: 641px) and (max-width: 900px) {
+  .pos-products-grid { grid-template-columns: repeat(2, 1fr); }
+}

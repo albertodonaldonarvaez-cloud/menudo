@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=20260826">
+  <link rel="stylesheet" href="styles.css?v=20260829">
   <!-- QR Code lib -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
@@ -41,24 +41,30 @@
     </div>
 
     <!-- ── Tabs de navegación ──────────────────────────────── -->
-    <div class="dashboard-tabs-wrapper">
+    <div class="dashboard-tabs-wrapper" id="adminTabs">
       <button class="dashboard-tab active" data-tab="tab-productos">
-        <i class="fa-solid fa-bowl-food"></i> Productos
+        <i class="fa-solid fa-bowl-food"></i>
+        <span class="tab-label">Productos</span>
       </button>
       <button class="dashboard-tab" data-tab="tab-horario">
-        <i class="fa-solid fa-clock"></i> Horario
+        <i class="fa-solid fa-clock"></i>
+        <span class="tab-label">Horario</span>
       </button>
       <button class="dashboard-tab" data-tab="tab-negocio">
-        <i class="fa-solid fa-store"></i> Negocio
+        <i class="fa-solid fa-store"></i>
+        <span class="tab-label">Negocio</span>
       </button>
       <button class="dashboard-tab" data-tab="tab-carteles">
-        <i class="fa-solid fa-qrcode"></i> Carteles Mesa
+        <i class="fa-solid fa-qrcode"></i>
+        <span class="tab-label">Carteles</span>
       </button>
       <button class="dashboard-tab" data-tab="tab-volantes">
-        <i class="fa-solid fa-scroll"></i> Volantes Calle
+        <i class="fa-solid fa-scroll"></i>
+        <span class="tab-label">Volantes</span>
       </button>
       <button class="dashboard-tab" data-tab="tab-analitica">
-        <i class="fa-solid fa-chart-line"></i> Analítica
+        <i class="fa-solid fa-chart-line"></i>
+        <span class="tab-label">Analítica</span>
       </button>
     </div>
 
@@ -377,7 +383,7 @@
     <span id="toastMsg"></span>
   </div>
 
-  <script src="data.js?v=20260826"></script>
-  <script src="admin.js?v=20260826"></script>
+  <script src="data.js?v=20260829"></script>
+  <script src="admin.js?v=20260829"></script>
 </body>
 </html>
