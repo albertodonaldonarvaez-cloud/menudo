@@ -1,16 +1,16 @@
 'use strict';
 /**
- * CAJA.JS — Terminal POS
- * Gestiona el ticket del cliente actual y envía la transacción al servidor.
+ * CAJA.JS — Terminal POS v2.1
+ * Rediseñado: badge en botones, animación de total, IDs nuevos.
  */
 
 const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas'];
 
-let storeConfig    = {};  // config del servidor (precios, títulos, imágenes)
-let ticket         = [];  // items del ticket actual  [{key, title, price, qty, emoji}]
-let paymentMethod  = 'efectivo';
+let storeConfig   = {};
+let ticket        = [];       // [{ key, title, emoji, price, priceNote, qty }]
+let paymentMethod = 'efectivo';
 
-// ── Carga de config (precios actualizados) ───────────────────
+// ── Config ────────────────────────────────────────────────────
 async function loadConfig() {
   try {
     const res = await fetch('/api/config', { cache: 'no-store' });
@@ -18,67 +18,69 @@ async function loadConfig() {
       const data = await res.json();
       if (data?.products) return data;
     }
-  } catch { /* sin conexión: usar defaults */ }
+  } catch { /* offline */ }
   return { products: DEFAULT_STORE_DATA.products, business: DEFAULT_STORE_DATA.business };
 }
 
-// ── Reloj en tiempo real ─────────────────────────────────────
+// ── Reloj ─────────────────────────────────────────────────────
 function updateClock() {
-  const el = document.getElementById('posTime');
+  const el = document.getElementById('posClock');
   if (!el) return;
   const now = new Date();
-  el.textContent = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
+  el.textContent = now.toLocaleTimeString('es-MX', {
+    hour: '2-digit', minute: '2-digit', hour12: true
+  });
 }
 
-// ── Renderizado de botones de productos ──────────────────────
+// ── Renderizado de botones de producto ────────────────────────
 function renderProductButtons() {
   const grid = document.getElementById('posProductsGrid');
   if (!grid) return;
+
   grid.innerHTML = PRODUCT_KEYS.map(key => {
     const p = storeConfig.products?.[key] || DEFAULT_STORE_DATA.products[key];
     if (!p?.enabled) return '';
-    const priceLabel = p.priceNote ? `$${p.price} ${p.priceNote}` : `$${p.price}`;
+
     return `
-      <button class="pos-product-btn" onclick="addToTicket('${key}')" data-key="${key}">
-        <div class="pos-prod-emoji">${p.emoji || '🍽️'}</div>
-        <div class="pos-prod-name">${p.title}</div>
-        <div class="pos-prod-price">${priceLabel}</div>
+      <button class="pos-btn" id="posbtn-${key}" onclick="addToTicket('${key}')">
+        <div class="pos-btn-qty-badge" id="posbadge-${key}">0</div>
+        <div class="pos-btn-emoji">${p.emoji || '🍽️'}</div>
+        <div class="pos-btn-name">${p.title}</div>
+        <div class="pos-btn-price">$${p.price}${p.priceNote ? '' : ''}</div>
+        ${p.priceNote ? `<div class="pos-btn-note">${p.priceNote}</div>` : ''}
       </button>
     `;
   }).join('');
 }
 
-// ── Gestión del ticket ───────────────────────────────────────
+// ── Ticket ────────────────────────────────────────────────────
 function addToTicket(key) {
   const p = storeConfig.products?.[key] || DEFAULT_STORE_DATA.products[key];
   if (!p) return;
+
   const existing = ticket.find(t => t.key === key);
   if (existing) {
     existing.qty++;
   } else {
     ticket.push({
       key,
-      title: p.title,
-      emoji: p.emoji || '',
-      price: Number(p.price) || 0,
+      title:     p.title,
+      emoji:     p.emoji || '',
+      price:     Number(p.price) || 0,
       priceNote: p.priceNote || '',
-      qty: 1
+      qty:       1
     });
   }
+
   renderTicket();
-  // Animación del botón
-  const btn = document.querySelector(`[data-key="${key}"]`);
-  if (btn) {
-    btn.classList.add('pos-btn-flash');
-    setTimeout(() => btn.classList.remove('pos-btn-flash'), 200);
-  }
+  flashBtn(key);
 }
 
 function changeQty(key, delta) {
   const item = ticket.find(t => t.key === key);
   if (!item) return;
-  item.qty += delta;
-  if (item.qty <= 0) ticket = ticket.filter(t => t.key !== key);
+  item.qty = Math.max(0, item.qty + delta);
+  if (item.qty === 0) ticket = ticket.filter(t => t.key !== key);
   renderTicket();
 }
 
@@ -88,99 +90,127 @@ function clearTicket() {
 }
 
 function getTotal() {
-  return ticket.reduce((sum, t) => sum + t.price * t.qty, 0);
+  return ticket.reduce((s, t) => s + t.price * t.qty, 0);
+}
+
+function flashBtn(key) {
+  const btn = document.getElementById(`posbtn-${key}`);
+  if (!btn) return;
+  btn.classList.add('flash');
+  setTimeout(() => btn.classList.remove('flash'), 160);
+}
+
+function updateBadges() {
+  PRODUCT_KEYS.forEach(key => {
+    const badge = document.getElementById(`posbadge-${key}`);
+    if (!badge) return;
+    const item = ticket.find(t => t.key === key);
+    if (item && item.qty > 0) {
+      badge.textContent = item.qty;
+      badge.classList.add('show');
+    } else {
+      badge.classList.remove('show');
+    }
+  });
 }
 
 function renderTicket() {
-  const container = document.getElementById('posTicketItems');
-  const totalEl   = document.getElementById('posTicketTotal');
-  const cobrarBtn = document.getElementById('posCobrarBtn');
-  const cobrarLbl = document.getElementById('posCobrarLabel');
-  if (!container) return;
+  const list      = document.getElementById('ticketList');
+  const totalEl   = document.getElementById('ticketTotal');
+  const cobrarBtn = document.getElementById('cobrarBtn');
+  const cobrarLbl = document.getElementById('cobrarLabel');
+  if (!list) return;
 
   const total = getTotal();
 
   if (ticket.length === 0) {
-    container.innerHTML = '<p class="pos-ticket-empty">Sin artículos.<br>Toca un producto para agregar.</p>';
+    list.innerHTML = `
+      <div class="ticket-empty">
+        <i class="fa-regular fa-receipt"></i>
+        <span>Ticket vacío<br>Toca un producto</span>
+      </div>
+    `;
   } else {
-    container.innerHTML = ticket.map(item => `
-      <div class="pos-ticket-item">
-        <div class="pos-ticket-item-info">
-          <span class="pos-ticket-emoji">${item.emoji}</span>
-          <div>
-            <div class="pos-ticket-name">${item.title}</div>
-            <div class="pos-ticket-unit">$${item.price}${item.priceNote ? ' '+item.priceNote : ''} c/u</div>
-          </div>
+    list.innerHTML = ticket.map(item => `
+      <div class="ticket-row">
+        <div class="ticket-row-emoji">${item.emoji}</div>
+        <div class="ticket-row-info">
+          <div class="ticket-row-name">${item.title}</div>
+          <div class="ticket-row-unit">$${item.price}${item.priceNote ? ' '+item.priceNote : ''} c/u</div>
         </div>
-        <div class="pos-ticket-controls">
-          <button class="pos-qty-btn" onclick="changeQty('${item.key}', -1)">−</button>
-          <span class="pos-ticket-qty">${item.qty}</span>
-          <button class="pos-qty-btn" onclick="changeQty('${item.key}', 1)">+</button>
-          <span class="pos-ticket-sub">$${(item.price * item.qty).toLocaleString('es-MX')}</span>
+        <div class="ticket-row-ctrl">
+          <button class="qty-btn minus" onclick="changeQty('${item.key}', -1)" title="Quitar uno">−</button>
+          <span class="ticket-qty">${item.qty}</span>
+          <button class="qty-btn" onclick="changeQty('${item.key}', 1)" title="Agregar uno">+</button>
+          <span class="ticket-sub">$${(item.price * item.qty).toLocaleString('es-MX')}</span>
         </div>
       </div>
     `).join('');
   }
 
-  if (totalEl) totalEl.textContent = `$${total.toLocaleString('es-MX')}`;
+  // Total con animación
+  if (totalEl) {
+    totalEl.textContent = `$${total.toLocaleString('es-MX')}`;
+    totalEl.classList.remove('pop');
+    void totalEl.offsetWidth; // reflow
+    totalEl.classList.add('pop');
+  }
+
+  // Botón cobrar
   if (cobrarBtn) cobrarBtn.disabled = ticket.length === 0;
-  if (cobrarLbl) cobrarLbl.textContent = `Cobrar $${total.toLocaleString('es-MX')}`;
+  if (cobrarLbl) cobrarLbl.textContent = ticket.length
+    ? `Cobrar $${total.toLocaleString('es-MX')}`
+    : 'Cobrar $0';
+
+  updateBadges();
 }
 
-// ── Método de pago ───────────────────────────────────────────
+// ── Pago ──────────────────────────────────────────────────────
 function selectPayment(method, btn) {
   paymentMethod = method;
-  document.querySelectorAll('.pos-pay-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
 }
 
-// ── Completar venta ──────────────────────────────────────────
+// ── Completar venta ───────────────────────────────────────────
 async function completeSale() {
   if (ticket.length === 0) return;
-
   const now   = new Date();
-  const dateStr = now.toISOString().slice(0, 10);
-  const total  = getTotal();
+  const total = getTotal();
 
   const tx = {
     id:            'tx_' + Date.now(),
     timestamp:     now.toISOString(),
-    date:          dateStr,
+    date:          now.toISOString().slice(0, 10),
     hour:          now.getHours(),
     items:         ticket.map(t => ({
-      key:         t.key,
-      title:       t.title,
-      price:       t.price,
-      qty:         t.qty,
-      subtotal:    t.price * t.qty
+      key:      t.key,
+      title:    t.title,
+      price:    t.price,
+      qty:      t.qty,
+      subtotal: t.price * t.qty
     })),
     total,
     paymentMethod
   };
 
-  try {
-    const res = await fetch('/api/transactions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(tx)
-    });
-    if (res.status === 401) { window.location.href = '/login'; return; }
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  } catch (e) {
-    console.error('Error guardando transacción:', e);
-    // Aunque falle el servidor, mostramos éxito (se perderá sync — offline fallback)
-  }
+  // Enviar al servidor (sin bloquear la UI)
+  fetch('/api/transactions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(tx)
+  }).then(r => {
+    if (r.status === 401) window.location.href = '/login';
+  }).catch(e => console.warn('Tx sync error:', e));
 
-  // Mostrar modal de confirmación
-  const modalTotal  = document.getElementById('modalTotal');
-  const modalMethod = document.getElementById('modalMethod');
-  const modal       = document.getElementById('posModal');
-  if (modalTotal)  modalTotal.textContent  = `$${total.toLocaleString('es-MX')}`;
-  if (modalMethod) modalMethod.textContent  = {
-    efectivo: '💵 Efectivo',
-    tarjeta: '💳 Tarjeta',
-    transferencia: '📱 Transferencia'
-  }[paymentMethod] || paymentMethod;
+  // Mostrar modal
+  const methodIcons = { efectivo: '💵 Efectivo', tarjeta: '💳 Tarjeta', transferencia: '📱 Transferencia' };
+  const amountEl = document.getElementById('modalAmount');
+  const methodEl = document.getElementById('modalMethod');
+  if (amountEl) amountEl.textContent = `$${total.toLocaleString('es-MX')}`;
+  if (methodEl) methodEl.textContent = methodIcons[paymentMethod] || paymentMethod;
+
+  const modal = document.getElementById('posModal');
   if (modal) modal.classList.remove('hidden');
 }
 
@@ -190,18 +220,18 @@ function closeModal() {
   clearTicket();
 }
 
-// ── Inicialización ───────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   storeConfig = await loadConfig();
 
-  // Nombre del negocio en el header
+  // Nombre del negocio
   const nameEl = document.getElementById('posBusinessName');
   if (nameEl && storeConfig.business?.name) {
-    nameEl.textContent = storeConfig.business.name + ' — Caja';
+    nameEl.textContent = storeConfig.business.name;
   }
 
   renderProductButtons();
   renderTicket();
   updateClock();
-  setInterval(updateClock, 30 * 1000); // actualiza cada 30s
+  setInterval(updateClock, 30_000);
 });

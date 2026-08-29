@@ -2,92 +2,589 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Caja — Menú Digital</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Caja — POS</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=20260829">
-</head>
-<body class="pos-body">
 
-  <!-- Header de la caja -->
-  <header class="pos-header">
-    <div class="pos-header-brand">
-      <i class="fa-solid fa-cash-register"></i>
-      <span id="posBusinessName">Caja</span>
+  <style>
+    /* ══════════════════════════════════════════════════
+       POS — ESTILOS PROPIOS (independientes del menú)
+       ══════════════════════════════════════════════════ */
+    *, *::before, *::after {
+      box-sizing: border-box; margin: 0; padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    :root {
+      --bg:      #0F172A;
+      --bg2:     #1E293B;
+      --bg3:     #263347;
+      --border:  #334155;
+      --text:    #F1F5F9;
+      --muted:   #94A3B8;
+      --primary: #F97316;   /* naranja cálido */
+      --green:   #22C55E;
+      --red:     #EF4444;
+      --amber:   #F59E0B;
+    }
+
+    html, body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* ── HEADER ─────────────────────────────────────── */
+    .pos-bar {
+      height: 54px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      position: sticky; top: 0; z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .pos-bar-left {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .pos-logo {
+      width: 34px; height: 34px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    .pos-biz-name {
+      font-size: 0.95rem; font-weight: 700;
+      color: var(--text);
+      max-width: 160px;
+      overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    }
+
+    .pos-bar-right {
+      display: flex; align-items: center; gap: 12px;
+    }
+
+    .pos-clock {
+      font-size: 1rem; font-weight: 700;
+      color: var(--primary); letter-spacing: 1px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .pos-bar-action {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem; font-weight: 600;
+      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 6px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .pos-bar-action:hover { color: var(--text); border-color: #64748B; }
+
+    /* ── LAYOUT ─────────────────────────────────────── */
+    .pos-root {
+      display: flex;
+      height: calc(100vh - 54px);
+      overflow: hidden;
+    }
+
+    /* ── PANEL IZQUIERDO: Productos ─────────────────── */
+    .pos-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 10px;
+      overflow-y: auto;
+      background: var(--bg);
+    }
+
+    .pos-section-label {
+      font-size: 0.7rem; font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      padding: 0 4px;
+    }
+
+    .pos-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .pos-btn {
+      background: var(--bg2);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: transform 0.12s, background 0.12s, border-color 0.12s, box-shadow 0.12s;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      min-height: 110px;
+      user-select: none;
+    }
+
+    .pos-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(249,115,22,0.15) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .pos-btn:active, .pos-btn.flash {
+      transform: scale(0.95);
+      background: var(--bg3);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(249,115,22,0.3);
+    }
+    .pos-btn:active::before, .pos-btn.flash::before { opacity: 1; }
+
+    .pos-btn-emoji  { font-size: 2.2rem; line-height: 1; }
+    .pos-btn-name   { font-size: 0.82rem; font-weight: 700; color: var(--text); line-height: 1.3; }
+    .pos-btn-price  { font-size: 1.05rem; font-weight: 900; color: var(--primary); }
+    .pos-btn-note   { font-size: 0.65rem; color: var(--muted); font-weight: 500; }
+
+    /* Badge de cantidad sobre el botón */
+    .pos-btn-qty-badge {
+      position: absolute;
+      top: 8px; right: 8px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 0.7rem; font-weight: 800;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      display: none;
+    }
+    .pos-btn-qty-badge.show { display: flex; }
+
+    /* ── PANEL DERECHO: Ticket ──────────────────────── */
+    .pos-right {
+      width: 320px;
+      min-width: 290px;
+      background: var(--bg2);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Cabecera del ticket */
+    .ticket-head {
+      padding: 12px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ticket-head-title {
+      font-size: 0.82rem; font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .ticket-clear {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      font-family: 'Outfit', sans-serif;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .ticket-clear:hover { color: var(--red); border-color: var(--red); }
+
+    /* Lista de items */
+    .ticket-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .ticket-empty {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--border);
+      font-size: 0.88rem;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .ticket-empty i { font-size: 2.5rem; opacity: 0.4; }
+
+    .ticket-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 8px;
+      border-radius: 10px;
+      border-bottom: 1px solid rgba(51,65,85,0.5);
+      transition: background 0.1s;
+    }
+    .ticket-row:hover { background: var(--bg3); }
+
+    .ticket-row-emoji { font-size: 1.6rem; flex-shrink: 0; }
+
+    .ticket-row-info { flex: 1; min-width: 0; }
+    .ticket-row-name { font-size: 0.82rem; font-weight: 700; color: var(--text); }
+    .ticket-row-unit { font-size: 0.68rem; color: var(--muted); }
+
+    .ticket-row-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .qty-btn {
+      width: 28px; height: 28px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.1s, border-color 0.1s;
+      font-family: 'Outfit', sans-serif;
+    }
+    .qty-btn:hover { background: var(--primary); border-color: var(--primary); }
+    .qty-btn.minus:hover { background: var(--red); border-color: var(--red); }
+
+    .ticket-qty { 
+      font-size: 0.9rem; font-weight: 800; 
+      color: var(--text); min-width: 20px; text-align: center;
+    }
+    .ticket-sub {
+      font-size: 0.88rem; font-weight: 800;
+      color: var(--primary);
+      min-width: 52px; text-align: right;
+    }
+
+    /* Línea separadora con texto */
+    .ticket-separator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 6px 8px 2px;
+      color: var(--border);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .ticket-separator::before,
+    .ticket-separator::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Total del ticket */
+    .ticket-total {
+      padding: 12px 16px;
+      border-top: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .ticket-total-label {
+      font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px; color: var(--muted);
+    }
+    .ticket-total-amount {
+      font-size: 1.8rem; font-weight: 900;
+      color: var(--primary);
+      font-variant-numeric: tabular-nums;
+      transition: transform 0.15s;
+    }
+    .ticket-total-amount.pop {
+      animation: amountPop 0.25s ease;
+    }
+    @keyframes amountPop {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.12); }
+      100% { transform: scale(1); }
+    }
+
+    /* Método de pago */
+    .payment-section {
+      padding: 10px 10px 6px;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+    }
+    .payment-label {
+      font-size: 0.65rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    .payment-btns {
+      display: flex; gap: 6px;
+    }
+    .pay-btn {
+      flex: 1;
+      background: var(--bg2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 4px;
+      color: var(--muted);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.72rem; font-weight: 700;
+      cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      transition: all 0.15s;
+      min-height: 52px;
+    }
+    .pay-btn i { font-size: 1.1rem; }
+    .pay-btn.active {
+      background: rgba(34,197,94,0.15);
+      border-color: var(--green);
+      color: #4ADE80;
+    }
+    .pay-btn:not(.active):hover { border-color: #64748B; color: var(--text); }
+
+    /* Botón cobrar */
+    .cobrar-wrap { padding: 10px; }
+
+    .cobrar-btn {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #16A34A, #15803D);
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.05rem; font-weight: 800;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 20px rgba(22,163,74,0.35);
+      position: relative;
+      overflow: hidden;
+    }
+    .cobrar-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0);
+      transition: background 0.1s;
+    }
+    .cobrar-btn:hover:not(:disabled)::after { background: rgba(255,255,255,0.05); }
+    .cobrar-btn:active:not(:disabled) { transform: scale(0.98); }
+    .cobrar-btn:disabled {
+      background: var(--bg3);
+      color: #475569;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* ── MODAL CONFIRMACIÓN ─────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+      opacity: 1;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.hidden { display: none; }
+
+    .modal-box {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 28px 28px;
+      text-align: center;
+      max-width: 340px;
+      width: 92%;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-check {
+      width: 72px; height: 72px;
+      background: rgba(34,197,94,0.15);
+      border: 2px solid var(--green);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 2rem;
+    }
+
+    .modal-title  { font-size: 1.3rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .modal-amount { font-size: 2.4rem; font-weight: 900; color: var(--green); margin: 8px 0 4px; }
+    .modal-method { font-size: 0.88rem; color: var(--muted); margin-bottom: 20px; }
+
+    .modal-new-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem; font-weight: 800;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.15s;
+    }
+    .modal-new-btn:hover { background: #EA6C0C; }
+
+    /* ── RESPONSIVE ─────────────────────────────────── */
+    @media (max-width: 640px) {
+      .pos-root { flex-direction: column; overflow: visible; height: auto; }
+      .pos-left  { overflow: visible; flex: none; min-height: auto; }
+      .pos-right {
+        width: 100%; min-width: unset;
+        border-left: none;
+        border-top: 1px solid var(--border);
+      }
+      .pos-grid  { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .pos-btn   { padding: 14px 8px; min-height: 100px; }
+      .pos-btn-emoji { font-size: 1.8rem; }
+      .ticket-list { max-height: 200px; }
+      .ticket-total-amount { font-size: 1.5rem; }
+      .cobrar-btn { font-size: 0.95rem; padding: 14px; }
+    }
+
+    @media (min-width: 900px) {
+      .pos-grid { grid-template-columns: repeat(2, 1fr); }
+      .pos-right { width: 340px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="pos-bar">
+    <div class="pos-bar-left">
+      <div class="pos-logo">🔥</div>
+      <span class="pos-biz-name" id="posBusinessName">Caja</span>
     </div>
-    <div class="pos-header-right">
-      <span class="pos-time" id="posTime">--:--</span>
-      <a href="/logout" class="pos-logout-btn" title="Cerrar sesión">
+    <div class="pos-bar-right">
+      <span class="pos-clock" id="posClock">--:--</span>
+      <a href="/logout" class="pos-bar-action" title="Cerrar sesión">
         <i class="fa-solid fa-right-from-bracket"></i>
+        <span class="pos-logout-text">Salir</span>
       </a>
     </div>
   </header>
 
-  <!-- Layout principal del POS -->
-  <div class="pos-layout">
+  <!-- Layout principal -->
+  <div class="pos-root">
 
-    <!-- Panel izquierdo: botones de productos -->
-    <div class="pos-products-panel">
-      <div class="pos-products-grid" id="posProductsGrid">
+    <!-- PANEL: Productos -->
+    <div class="pos-left">
+      <p class="pos-section-label">Toca para agregar al ticket</p>
+      <div class="pos-grid" id="posProductsGrid">
         <!-- Renderizado por caja.js -->
       </div>
     </div>
 
-    <!-- Panel derecho: ticket actual + pago -->
-    <div class="pos-ticket-panel">
+    <!-- PANEL: Ticket -->
+    <div class="pos-right">
 
-      <!-- Ticket actual -->
-      <div class="pos-ticket-header">
-        <span><i class="fa-solid fa-receipt"></i> Ticket</span>
-        <button class="pos-clear-btn" onclick="clearTicket()" title="Limpiar ticket">
-          <i class="fa-solid fa-trash"></i> Limpiar
+      <div class="ticket-head">
+        <span class="ticket-head-title">
+          <i class="fa-solid fa-receipt"></i> Ticket actual
+        </span>
+        <button class="ticket-clear" onclick="clearTicket()">
+          <i class="fa-solid fa-xmark"></i> Vaciar
         </button>
       </div>
 
-      <div class="pos-ticket-items" id="posTicketItems">
-        <p class="pos-ticket-empty">Sin artículos.<br>Toca un producto para agregar.</p>
+      <div class="ticket-list" id="ticketList">
+        <div class="ticket-empty">
+          <i class="fa-regular fa-receipt"></i>
+          <span>Ticket vacío<br>Toca un producto</span>
+        </div>
       </div>
 
-      <!-- Total -->
-      <div class="pos-ticket-total">
-        <span>TOTAL</span>
-        <span id="posTicketTotal">$0</span>
+      <div class="ticket-total">
+        <span class="ticket-total-label">Total</span>
+        <span class="ticket-total-amount" id="ticketTotal">$0</span>
       </div>
 
       <!-- Método de pago -->
-      <div class="pos-payment-methods">
-        <button class="pos-pay-btn active" id="payEfectivo" onclick="selectPayment('efectivo', this)">
-          <i class="fa-solid fa-money-bills"></i> Efectivo
-        </button>
-        <button class="pos-pay-btn" id="payTarjeta" onclick="selectPayment('tarjeta', this)">
-          <i class="fa-solid fa-credit-card"></i> Tarjeta
-        </button>
-        <button class="pos-pay-btn" id="payTransferencia" onclick="selectPayment('transferencia', this)">
-          <i class="fa-solid fa-mobile-screen-button"></i> Transfer
-        </button>
+      <div class="payment-section">
+        <p class="payment-label">Forma de pago</p>
+        <div class="payment-btns">
+          <button class="pay-btn active" id="payEfectivo" onclick="selectPayment('efectivo', this)">
+            <i class="fa-solid fa-money-bills"></i>
+            Efectivo
+          </button>
+          <button class="pay-btn" id="payTarjeta" onclick="selectPayment('tarjeta', this)">
+            <i class="fa-solid fa-credit-card"></i>
+            Tarjeta
+          </button>
+          <button class="pay-btn" id="payTransfer" onclick="selectPayment('transferencia', this)">
+            <i class="fa-solid fa-mobile-screen-button"></i>
+            Transfer
+          </button>
+        </div>
       </div>
 
-      <!-- Botón cobrar -->
-      <button class="pos-cobrar-btn" id="posCobrarBtn" onclick="completeSale()" disabled>
-        <i class="fa-solid fa-circle-check"></i>
-        <span id="posCobrarLabel">Cobrar $0</span>
-      </button>
+      <!-- Cobrar -->
+      <div class="cobrar-wrap">
+        <button class="cobrar-btn" id="cobrarBtn" onclick="completeSale()" disabled>
+          <i class="fa-solid fa-circle-check"></i>
+          <span id="cobrarLabel">Cobrar $0</span>
+        </button>
+      </div>
 
     </div>
   </div>
 
   <!-- Modal de confirmación -->
-  <div class="pos-modal-overlay hidden" id="posModal">
-    <div class="pos-modal">
-      <div class="pos-modal-icon">✅</div>
-      <h2 class="pos-modal-title">¡Venta registrada!</h2>
-      <p class="pos-modal-total" id="modalTotal">$0</p>
-      <p class="pos-modal-method" id="modalMethod">Efectivo</p>
-      <button class="pos-cobrar-btn" onclick="closeModal()" style="margin-top:16px;">
-        <i class="fa-solid fa-plus"></i> Nuevo Cliente
+  <div class="modal-overlay hidden" id="posModal">
+    <div class="modal-box">
+      <div class="modal-check">✅</div>
+      <h2 class="modal-title">¡Venta registrada!</h2>
+      <div class="modal-amount" id="modalAmount">$0</div>
+      <p class="modal-method" id="modalMethod">💵 Efectivo</p>
+      <button class="modal-new-btn" onclick="closeModal()">
+        <i class="fa-solid fa-plus"></i> Siguiente cliente
       </button>
     </div>
   </div>
