@@ -364,13 +364,11 @@ function initQRCode() {
 function populatePrintTitles() {
   const p = storeData.products;
   ['.chip-title-menudo','.flyer-title-menudo']
-    .forEach(s => document.querySelectorAll(s).forEach(el => el.textContent = p?.menudo?.title  || 'Menudo'));
-  ['.chip-title-birria','.flyer-title-birria']
-    .forEach(s => document.querySelectorAll(s).forEach(el => el.textContent = p?.birria?.title  || 'Birria de Res'));
+    .forEach(s => document.querySelectorAll(s).forEach(el => el.textContent = p?.menudo?.title || 'Menudo Tradicional'));
   ['.chip-title-tacos','.flyer-title-tacos']
-    .forEach(s => document.querySelectorAll(s).forEach(el => el.textContent = p?.tacos?.title   || 'Tacos de Birria'));
+    .forEach(s => document.querySelectorAll(s).forEach(el => el.textContent = p?.tacos?.title   || 'Tacos de Barbacoa'));
   ['.chip-title-quesadillas','.flyer-title-quesadillas']
-    .forEach(s => document.querySelectorAll(s).forEach(el => el.textContent = p?.quesadillas?.title || 'Quesadillas'));
+    .forEach(s => document.querySelectorAll(s).forEach(el => el.textContent = p?.quesadillas?.title || 'Quesadilla Gigante de Barbacoa'));
 }
 
 function printTableCards() {

@@ -1,7 +1,8 @@
 'use strict';
 /**
  * APP.JS — Menú Digital (lado público) v2.2
- * 6 productos: menudo, birria, tacos, quesadillas, refresco, promos
+ * 3 productos activos: menudo, tacos de barbacoa, quesadillas de barbacoa
+ * (birria y refresco deshabilitados — enabled:false en data.js)
  * Auto-detecta abierto/cerrado según horario configurado en admin.
  */
 
@@ -9,6 +10,7 @@ const PRODUCT_KEYS_PUBLIC = ['menudo', 'birria', 'tacos', 'quesadillas', 'refres
 const STORAGE_KEY = 'menudo_store_config_v2';
 let storeData = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA));
 let statusTimer = null;
+
 
 // ── Migración de datos ───────────────────────────────────────
 function migrateData(data) {

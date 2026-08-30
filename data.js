@@ -1,12 +1,12 @@
 /**
  * DATA.JS — Datos por defecto del Menú Digital
- * Birriería & Antojitos — todos los campos editables desde el Admin.
+ * Barbacoa & Antojitos — todos los campos editables desde el Admin.
  */
 const DEFAULT_STORE_DATA = {
 
   business: {
-    name:            'Birriería & Antojitos',
-    slogan:          'La birria más rica, recién hecha y bien calientita 🔥',
+    name:            'Barbacoa & Antojitos',
+    slogan:          'La barbacoa más rica, recién hecha y bien calientita 🔥',
     currencySymbol:  '$'
   },
 
@@ -33,32 +33,32 @@ const DEFAULT_STORE_DATA = {
     },
 
     birria: {
-      enabled:   true,
+      enabled:   false,   // deshabilitado — menú cambió a barbacoa
       emoji:     '🥩',
       title:     'Birria de Res',
-      description: 'Birria de res hecha en casa, cocida a fuego lento con especias y chiles tradicionales. Incluye consomé, cebolla y cilantro.',
+      description: 'Birria de res hecha en casa, cocida a fuego lento con especias y chiles tradicionales.',
       price:     120,
       priceNote: '',
-      badge:     '🍵 Incluye consomé',
-      image:     'https://images.unsplash.com/photo-1625937286074-9ca519d5d9df?auto=format&fit=crop&w=900&q=80'
+      badge:     '',
+      image:     ''
     },
 
     tacos: {
       enabled:   true,
       emoji:     '🌮',
-      title:     'Tacos de Birria',
-      description: 'Tacos en tortilla de maíz rellenos de birria jugosa, bañados en consomé con queso Oaxaca derretido, cebolla y cilantro.',
+      title:     'Tacos de Barbacoa',
+      description: 'Tacos en tortilla de maíz rellenos de barbacoa jugosa, acompañados de cebolla, cilantro y salsa verde. ¡Recién hechos!',
       price:     25,
       priceNote: 'por taco',
-      badge:     '🧀 Queso derretido + consomé',
+      badge:     '🤤 Recién hechos',
       image:     'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=900&q=80'
     },
 
     quesadillas: {
       enabled:   true,
       emoji:     '🧀',
-      title:     'Quesadilla Gigante de Birria',
-      description: 'Quesadilla casera gigante de tortilla de maíz, rellena de birria y queso Oaxaca derretido. Acompañada de consomé para dipear.',
+      title:     'Quesadilla Gigante de Barbacoa',
+      description: 'Quesadilla casera gigante de tortilla de maíz, rellena de barbacoa y queso Oaxaca derretido. ¡Grande y bien llena!',
       price:     80,
       priceNote: '',
       badge:     '🔥 Casera y gigante',
@@ -66,7 +66,7 @@ const DEFAULT_STORE_DATA = {
     },
 
     refresco: {
-      enabled:   true,
+      enabled:   false,   // deshabilitado temporalmente
       emoji:     '🥤',
       title:     'Refresco / Agua Fresca',
       description: 'Refrescos de lata y aguas frescas del día para acompañar tus alimentos.',
@@ -80,15 +80,7 @@ const DEFAULT_STORE_DATA = {
   // ── Promos / Paquetes del día ──────────────────────────────────
   // Cada promo tiene: id, title, description, price, enabled
   // Se crean y editan desde el Admin → pestaña Promos
-  promos: [
-    {
-      id:          'promo_default1',
-      title:       'Combo Birria para 2',
-      description: '2 porciones de birria de res, consomé grande, tortillas recién hechas, cebolla, cilantro y salsas.',
-      price:       220,
-      enabled:     true
-    }
-  ],
+  promos: [],
 
   // ── Historial de cortes de caja ───────────────────────────────
   caja: []
