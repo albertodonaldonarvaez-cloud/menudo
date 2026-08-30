@@ -1,8 +1,7 @@
 'use strict';
 /**
- * CAJA.JS — Terminal POS v2.2
- * Rediseñado: badge en botones, animación de total, IDs nuevos.
- * v2.2: botones de precio libre (Menudo Suelto, Barbacoa Suelta)
+ * CAJA.JS ÔÇö Terminal POS v2.1
+ * Redise├▒ado: badge en botones, animaci├│n de total, IDs nuevos.
  */
 
 const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco'];
@@ -12,7 +11,7 @@ let ticket        = [];       // [{ key, title, emoji, price, priceNote, qty }]
 let paymentMethod = 'efectivo';
 let mobileTab     = 'productos'; // 'productos' | 'ticket'
 
-// ── Tabs móvil ────────────────────────────────────────────────
+// ÔöÇÔöÇ Tabs m├│vil ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function switchMobileTab(tab) {
   mobileTab = tab;
   const left  = document.getElementById('posLeftPanel');
@@ -43,7 +42,7 @@ function updateMobileTabBadge() {
   badge.classList.toggle('show', total > 0);
 }
 
-// ── Config ────────────────────────────────────────────────────
+// ÔöÇÔöÇ Config ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 async function loadConfig() {
   try {
     const res = await fetch('/api/config', { cache: 'no-store' });
@@ -55,7 +54,7 @@ async function loadConfig() {
   return { products: DEFAULT_STORE_DATA.products, business: DEFAULT_STORE_DATA.business };
 }
 
-// ── Reloj ─────────────────────────────────────────────────────
+// ÔöÇÔöÇ Reloj ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function updateClock() {
   const el = document.getElementById('posClock');
   if (!el) return;
@@ -65,7 +64,7 @@ function updateClock() {
   });
 }
 
-// ── Renderizado de botones de producto ────────────────────────
+// ÔöÇÔöÇ Renderizado de botones de producto ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function renderProductButtons() {
   const grid = document.getElementById('posProductsGrid');
   if (!grid) return;
@@ -77,7 +76,7 @@ function renderProductButtons() {
     return `
       <button class="pos-btn" id="posbtn-${key}" onclick="addToTicket('${key}')">
         <div class="pos-btn-qty-badge" id="posbadge-${key}">0</div>
-        <div class="pos-btn-emoji">${p.emoji || '🍽️'}</div>
+        <div class="pos-btn-emoji">${p.emoji || '­ƒì¢´©Å'}</div>
         <div class="pos-btn-name">${p.title}</div>
         <div class="pos-btn-price">$${p.price}</div>
         ${p.priceNote ? `<div class="pos-btn-note">${p.priceNote}</div>` : ''}
@@ -85,32 +84,26 @@ function renderProductButtons() {
     `;
   }).join('');
 
-  // Botones de precio libre (Menudo Suelto + Barbacoa Suelta)
+  // Bot├│n especial: Menudo Suelto (precio libre)
   const libreBtns = `
-    <button class="pos-btn pos-btn-libre" onclick="openPriceModal('menudo')">
-      <div class="pos-btn-qty-badge" id="posbadge-libre-menudo">0</div>
-      <div class="pos-btn-emoji">🍲</div>
+    <button class="pos-btn pos-btn-libre" onclick="openPriceModal()">
+      <div class="pos-btn-qty-badge" id="posbadge-libre">0</div>
+      <div class="pos-btn-emoji">­ƒì▓</div>
       <div class="pos-btn-name">Menudo Suelto</div>
-      <div class="pos-btn-price">Precio libre ✏️</div>
-    </button>
-    <button class="pos-btn pos-btn-libre pos-btn-libre-barb" onclick="openPriceModal('barbacoa')">
-      <div class="pos-btn-qty-badge" id="posbadge-libre-barbacoa">0</div>
-      <div class="pos-btn-emoji">🥩</div>
-      <div class="pos-btn-name">Barbacoa Suelta</div>
-      <div class="pos-btn-price">Precio libre ✏️</div>
+      <div class="pos-btn-price">Precio libre Ô£Å´©Å</div>
     </button>
   `;
 
-  // Botones de promos dinámicas
+  // Botones de promos din├ímicas
   const activePromos = (storeConfig.promos || DEFAULT_STORE_DATA.promos || []).filter(p => p.enabled);
   const promoBtns = activePromos.length ? `
     <div class="pos-promos-divider" style="grid-column:1/-1;">
-      <i class="fa-solid fa-tags"></i> Promos del Día
+      <i class="fa-solid fa-tags"></i> Promos del D├¡a
     </div>
     ${activePromos.map(p => `
       <button class="pos-btn pos-btn-promo" id="posbtn-${p.id}" onclick="addPromoToTicket('${p.id}')">
         <div class="pos-btn-qty-badge" id="posbadge-${p.id}">0</div>
-        <div class="pos-btn-emoji">🎉</div>
+        <div class="pos-btn-emoji">­ƒÄë</div>
         <div class="pos-btn-name">${p.title}</div>
         <div class="pos-btn-price">$${Number(p.price).toLocaleString('es-MX')}</div>
       </button>
@@ -120,30 +113,19 @@ function renderProductButtons() {
   grid.innerHTML = productBtns + libreBtns + promoBtns;
 }
 
-// ── Modal de precio libre ─────────────────────────────────────
-const LIBRE_CONFIG = {
-  menudo:   { prefix: 'menudo_libre',  title: 'Menudo Suelto',   emoji: '🍲', badgeId: 'posbadge-libre-menudo',   label: 'Menudo Suelto — ingresa el precio' },
-  barbacoa: { prefix: 'barb_libre',    title: 'Barbacoa Suelta', emoji: '🥩', badgeId: 'posbadge-libre-barbacoa', label: 'Barbacoa Suelta — ingresa el precio' }
-};
-let _currentLibreType = 'menudo';
-
-function openPriceModal(type) {
-  _currentLibreType = type || 'menudo';
-  const cfg   = LIBRE_CONFIG[_currentLibreType];
+// ÔöÇÔöÇ Modal de precio libre (Menudo Suelto) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+function openPriceModal() {
   const modal = document.getElementById('priceModal');
   const input = document.getElementById('priceModalInput');
   if (!modal || !input) return;
-  // Actualizar label y emoji del modal
-  const labelEl = document.getElementById('priceModalLabel');
-  const emojiEl = document.getElementById('priceModalEmoji');
-  if (labelEl) labelEl.textContent = cfg.label;
-  if (emojiEl) emojiEl.textContent = cfg.emoji;
   input.value = '';
   modal.classList.remove('hidden');
+  // peque├▒o delay para que el teclado abra bien en m├│vil
   setTimeout(() => input.focus(), 80);
 }
 
 function closePriceModal(e) {
+  // si hizo click en el overlay (fondo), cerrar
   if (e && e.target !== document.getElementById('priceModal')) return;
   document.getElementById('priceModal')?.classList.add('hidden');
 }
@@ -151,37 +133,53 @@ function closePriceModal(e) {
 function confirmPriceModal() {
   const input = document.getElementById('priceModalInput');
   const price = parseFloat(input?.value);
-  if (!price || price <= 0) { input?.focus(); input?.select(); return; }
+
+  if (!price || price <= 0) {
+    input?.focus();
+    input?.select();
+    return;
+  }
 
   document.getElementById('priceModal')?.classList.add('hidden');
 
-  const cfg = LIBRE_CONFIG[_currentLibreType];
+  // Agregar al ticket como ├¡tem independiente (permite m├║ltiples cantidades diferentes)
+  const key = `menudo_libre_${Date.now()}`;
   ticket.push({
-    key:       `${cfg.prefix}_${Date.now()}`,
-    title:     cfg.title,
-    emoji:     cfg.emoji,
+    key,
+    title:     'Menudo Suelto',
+    emoji:     '­ƒì▓',
     price,
     priceNote: '',
     qty:       1
   });
 
+  // Actualizar badge del bot├│n libre (suma todas las entradas libres)
   renderTicket();
-  if (window.innerWidth < 640) switchMobileTab('ticket');
+  updateLibreBadge();
+  flashLibreBtn();
+
+  // Si estamos en m├│vil y en la pesta├▒a de productos ÔåÆ cambiar a ticket
+  if (window.innerWidth < 640) {
+    switchMobileTab('ticket');
+  }
 }
 
 function updateLibreBadge() {
-  Object.values(LIBRE_CONFIG).forEach(cfg => {
-    const badge = document.getElementById(cfg.badgeId);
-    if (!badge) return;
-    const count = ticket
-      .filter(t => t.key.startsWith(cfg.prefix))
-      .reduce((s, t) => s + t.qty, 0);
-    badge.textContent = count;
-    badge.style.display = count > 0 ? 'flex' : 'none';
-  });
+  const badge = document.getElementById('posbadge-libre');
+  if (!badge) return;
+  const total = ticket.filter(t => t.key.startsWith('menudo_libre')).reduce((s, t) => s + t.qty, 0);
+  badge.textContent = total;
+  badge.style.display = total > 0 ? 'flex' : 'none';
 }
 
-// ── Ticket ────────────────────────────────────────────────────
+function flashLibreBtn() {
+  const btn = document.querySelector('.pos-btn-libre');
+  if (!btn) return;
+  btn.classList.add('flash');
+  setTimeout(() => btn.classList.remove('flash'), 300);
+}
+
+// ÔöÇÔöÇ Ticket ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function addToTicket(key) {
   const p = storeConfig.products?.[key] || DEFAULT_STORE_DATA.products[key];
   if (!p) return;
@@ -216,7 +214,7 @@ function addPromoToTicket(id) {
     ticket.push({
       key:      id,
       title:    p.title,
-      emoji:    '🎉',
+      emoji:    '­ƒÄë',
       price:    Number(p.price) || 0,
       priceNote: '',
       qty:      1
@@ -278,7 +276,7 @@ function renderTicket() {
     list.innerHTML = `
       <div class="ticket-empty">
         <i class="fa-regular fa-receipt"></i>
-        <span>Ticket vacío<br>Toca un producto</span>
+        <span>Ticket vac├¡o<br>Toca un producto</span>
       </div>
     `;
   } else {
@@ -290,7 +288,7 @@ function renderTicket() {
           <div class="ticket-row-unit">$${item.price}${item.priceNote ? ' '+item.priceNote : ''} c/u</div>
         </div>
         <div class="ticket-row-ctrl">
-          <button class="qty-btn minus" onclick="changeQty('${item.key}', -1)" title="Quitar uno">−</button>
+          <button class="qty-btn minus" onclick="changeQty('${item.key}', -1)" title="Quitar uno">ÔêÆ</button>
           <span class="ticket-qty">${item.qty}</span>
           <button class="qty-btn" onclick="changeQty('${item.key}', 1)" title="Agregar uno">+</button>
           <span class="ticket-sub">$${(item.price * item.qty).toLocaleString('es-MX')}</span>
@@ -299,7 +297,7 @@ function renderTicket() {
     `).join('');
   }
 
-  // Total con animación
+  // Total con animaci├│n
   if (totalEl) {
     totalEl.textContent = `$${total.toLocaleString('es-MX')}`;
     totalEl.classList.remove('pop');
@@ -307,7 +305,7 @@ function renderTicket() {
     totalEl.classList.add('pop');
   }
 
-  // Botón cobrar
+  // Bot├│n cobrar
   if (cobrarBtn) cobrarBtn.disabled = ticket.length === 0;
   if (cobrarLbl) cobrarLbl.textContent = ticket.length
     ? `Cobrar $${total.toLocaleString('es-MX')}`
@@ -318,14 +316,14 @@ function renderTicket() {
   updateLibreBadge();
 }
 
-// ── Pago ──────────────────────────────────────────────────────
+// ÔöÇÔöÇ Pago ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function selectPayment(method, btn) {
   paymentMethod = method;
   document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
 }
 
-// ── Completar venta ───────────────────────────────────────────
+// ÔöÇÔöÇ Completar venta ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 async function completeSale() {
   if (ticket.length === 0) return;
   const now   = new Date();
@@ -357,7 +355,7 @@ async function completeSale() {
   }).catch(e => console.warn('Tx sync error:', e));
 
   // Mostrar modal
-  const methodIcons = { efectivo: '💵 Efectivo', tarjeta: '💳 Tarjeta', transferencia: '📱 Transferencia' };
+  const methodIcons = { efectivo: '­ƒÆÁ Efectivo', tarjeta: '­ƒÆ│ Tarjeta', transferencia: '­ƒô▒ Transferencia' };
   const amountEl = document.getElementById('modalAmount');
   const methodEl = document.getElementById('modalMethod');
   if (amountEl) amountEl.textContent = `$${total.toLocaleString('es-MX')}`;
@@ -373,7 +371,7 @@ function closeModal() {
   clearTicket();
 }
 
-// ── Init ──────────────────────────────────────────────────────
+// ÔöÇÔöÇ Init ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 document.addEventListener('DOMContentLoaded', async () => {
   storeConfig = await loadConfig();
 

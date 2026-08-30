@@ -732,12 +732,12 @@
     </div>
   </div>
 
-  <!-- Modal de precio libre (Menudo Suelto) -->
+  <!-- Modal de precio libre (Menudo Suelto / Barbacoa Suelta) -->
   <div class="modal-overlay hidden" id="priceModal" onclick="closePriceModal(event)">
     <div class="modal-box price-modal-box">
       <p class="price-modal-label">
-        <span class="price-modal-emoji">🍲</span>
-        Menudo Suelto — ingresa el precio
+        <span class="price-modal-emoji" id="priceModalEmoji">🍲</span>
+        <span id="priceModalLabel">Menudo Suelto — ingresa el precio</span>
       </p>
       <div class="price-modal-input-wrap">
         <span class="price-modal-currency">$</span>
@@ -862,6 +862,12 @@
     .pos-btn-libre .pos-btn-emoji { opacity: 0.85; }
     .pos-btn-libre .pos-btn-name  { color: var(--primary); }
     .pos-btn-libre .pos-btn-price { color: var(--muted); font-size: 0.65rem; font-weight: 600; }
+
+    /* Barbacoa Suelta: borde dorado cálido para diferenciar */
+    .pos-btn-libre-barb {
+      border-color: #D97706 !important;
+    }
+    .pos-btn-libre-barb .pos-btn-name { color: #D97706; }
   </style>
 
   <script src="data.js?v=20260830"></script>
