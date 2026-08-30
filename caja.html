@@ -719,7 +719,7 @@
     </div>
   </div>
 
-  <!-- Modal de confirmación -->
+  <!-- Modal de confirmación de venta -->
   <div class="modal-overlay hidden" id="posModal">
     <div class="modal-box">
       <div class="modal-check">✅</div>
@@ -732,7 +732,139 @@
     </div>
   </div>
 
-  <script src="data.js?v=20260829"></script>
-  <script src="caja.js?v=20260829"></script>
+  <!-- Modal de precio libre (Menudo Suelto) -->
+  <div class="modal-overlay hidden" id="priceModal" onclick="closePriceModal(event)">
+    <div class="modal-box price-modal-box">
+      <p class="price-modal-label">
+        <span class="price-modal-emoji">🍲</span>
+        Menudo Suelto — ingresa el precio
+      </p>
+      <div class="price-modal-input-wrap">
+        <span class="price-modal-currency">$</span>
+        <input
+          type="number"
+          id="priceModalInput"
+          class="price-modal-input"
+          inputmode="decimal"
+          min="1"
+          step="1"
+          placeholder="0"
+          onkeydown="if(event.key==='Enter') confirmPriceModal()"
+        >
+      </div>
+      <div class="price-modal-btns">
+        <button class="price-modal-cancel" onclick="closePriceModal()">Cancelar</button>
+        <button class="price-modal-confirm" onclick="confirmPriceModal()">
+          <i class="fa-solid fa-plus"></i> Agregar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* ── Modal de precio libre ─────────────────────────── */
+    .price-modal-box {
+      padding: 24px 20px 20px;
+      max-width: 300px;
+      text-align: center;
+    }
+
+    .price-modal-label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .price-modal-emoji { font-size: 1.5rem; }
+
+    .price-modal-input-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: var(--bg);
+      border: 2px solid var(--primary);
+      border-radius: 14px;
+      padding: 8px 16px;
+      margin-bottom: 16px;
+    }
+
+    .price-modal-currency {
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: var(--primary);
+    }
+
+    .price-modal-input {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--primary);
+      background: transparent;
+      border: none;
+      outline: none;
+      width: 110px;
+      text-align: left;
+      -moz-appearance: textfield;
+    }
+    .price-modal-input::-webkit-outer-spin-button,
+    .price-modal-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    .price-modal-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .price-modal-cancel {
+      flex: 1;
+      padding: 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg);
+      color: var(--muted);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .price-modal-cancel:hover { border-color: var(--muted); }
+
+    .price-modal-confirm {
+      flex: 2;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #C84B31, #E06043);
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: opacity 0.15s;
+    }
+    .price-modal-confirm:hover { opacity: 0.9; }
+
+    /* Botón Menudo Suelto — borde punteado para indicar precio libre */
+    .pos-btn-libre {
+      border-style: dashed !important;
+      border-color: var(--primary) !important;
+    }
+    .pos-btn-libre .pos-btn-emoji { opacity: 0.85; }
+    .pos-btn-libre .pos-btn-name  { color: var(--primary); }
+    .pos-btn-libre .pos-btn-price { color: var(--muted); font-size: 0.65rem; font-weight: 600; }
+  </style>
+
+  <script src="data.js?v=20260830"></script>
+  <script src="caja.js?v=20260830"></script>
 </body>
 </html>

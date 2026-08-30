@@ -84,6 +84,16 @@ function renderProductButtons() {
     `;
   }).join('');
 
+  // Botón especial: Menudo Suelto (precio libre)
+  const libreBtns = `
+    <button class="pos-btn pos-btn-libre" onclick="openPriceModal()">
+      <div class="pos-btn-qty-badge" id="posbadge-libre">0</div>
+      <div class="pos-btn-emoji">🍲</div>
+      <div class="pos-btn-name">Menudo Suelto</div>
+      <div class="pos-btn-price">Precio libre ✏️</div>
+    </button>
+  `;
+
   // Botones de promos dinámicas
   const activePromos = (storeConfig.promos || DEFAULT_STORE_DATA.promos || []).filter(p => p.enabled);
   const promoBtns = activePromos.length ? `
@@ -100,7 +110,73 @@ function renderProductButtons() {
     `).join('')}
   ` : '';
 
-  grid.innerHTML = productBtns + promoBtns;
+  grid.innerHTML = productBtns + libreBtns + promoBtns;
+}
+
+// ── Modal de precio libre (Menudo Suelto) ─────────────────────
+function openPriceModal() {
+  const modal = document.getElementById('priceModal');
+  const input = document.getElementById('priceModalInput');
+  if (!modal || !input) return;
+  input.value = '';
+  modal.classList.remove('hidden');
+  // pequeño delay para que el teclado abra bien en móvil
+  setTimeout(() => input.focus(), 80);
+}
+
+function closePriceModal(e) {
+  // si hizo click en el overlay (fondo), cerrar
+  if (e && e.target !== document.getElementById('priceModal')) return;
+  document.getElementById('priceModal')?.classList.add('hidden');
+}
+
+function confirmPriceModal() {
+  const input = document.getElementById('priceModalInput');
+  const price = parseFloat(input?.value);
+
+  if (!price || price <= 0) {
+    input?.focus();
+    input?.select();
+    return;
+  }
+
+  document.getElementById('priceModal')?.classList.add('hidden');
+
+  // Agregar al ticket como ítem independiente (permite múltiples cantidades diferentes)
+  const key = `menudo_libre_${Date.now()}`;
+  ticket.push({
+    key,
+    title:     'Menudo Suelto',
+    emoji:     '🍲',
+    price,
+    priceNote: '',
+    qty:       1
+  });
+
+  // Actualizar badge del botón libre (suma todas las entradas libres)
+  renderTicket();
+  updateLibreBadge();
+  flashLibreBtn();
+
+  // Si estamos en móvil y en la pestaña de productos → cambiar a ticket
+  if (window.innerWidth < 640) {
+    switchMobileTab('ticket');
+  }
+}
+
+function updateLibreBadge() {
+  const badge = document.getElementById('posbadge-libre');
+  if (!badge) return;
+  const total = ticket.filter(t => t.key.startsWith('menudo_libre')).reduce((s, t) => s + t.qty, 0);
+  badge.textContent = total;
+  badge.style.display = total > 0 ? 'flex' : 'none';
+}
+
+function flashLibreBtn() {
+  const btn = document.querySelector('.pos-btn-libre');
+  if (!btn) return;
+  btn.classList.add('flash');
+  setTimeout(() => btn.classList.remove('flash'), 300);
 }
 
 // ── Ticket ────────────────────────────────────────────────────
@@ -237,6 +313,7 @@ function renderTicket() {
 
   updateBadges();
   updateMobileTabBadge();
+  updateLibreBadge();
 }
 
 // ── Pago ──────────────────────────────────────────────────────
