@@ -2878,11 +2878,21 @@ button, .btn-primary, .btn-back-menu,
 
 .menu-section .section-title {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 14px;
   padding-bottom: 8px;
   border-bottom: 2px solid var(--color-border);
+  text-align: center;
+}
+
+.menu-section .section-title .title-left {
+  flex: 1;
+  text-align: center;
+}
+
+.menu-section .section-title .title-left h2 {
+  justify-content: center;
 }
 
 /* Site footer clásico */
