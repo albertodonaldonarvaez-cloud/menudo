@@ -74,6 +74,28 @@ const DEFAULT_STORE_DATA = {
       priceNote: '',
       badge:     '🧊 Bien frío',
       image:     'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=900&q=80'
+    },
+
+    cafe: {
+      enabled:   true,
+      emoji:     '☕',
+      title:     'Café de Olla',
+      description: 'Café de olla recién preparado, con canela y piloncillo. Bien calientito para acompañar tu desayuno.',
+      price:     20,
+      priceNote: 'la taza',
+      badge:     '🌿 Con canela y piloncillo',
+      image:     'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=900&q=80'
+    },
+
+    pan: {
+      enabled:   true,
+      emoji:     '🍞',
+      title:     'Pan de Dulce',
+      description: 'Piezas de pan de dulce casero, perfecto para acompañar el café de olla.',
+      price:     10,
+      priceNote: 'la pieza',
+      badge:     '🏠 Casero',
+      image:     'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=900&q=80'
     }
   },
 

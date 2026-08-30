@@ -5,7 +5,7 @@
  * v2.2: botones de precio libre (Menudo Suelto, Barbacoa Suelta)
  */
 
-const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco'];
+const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco', 'cafe', 'pan'];
 
 let storeConfig   = {};
 let ticket        = [];       // [{ key, title, emoji, price, priceNote, qty }]
