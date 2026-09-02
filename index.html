@@ -6,6 +6,10 @@
   <title id="pageTitle">Menú Digital</title>
   <meta name="description" content="Menú digital para consultar en mesa nuestros platillos de birria, menudo, refrescos y promos.">
   <meta name="theme-color" content="#C84B31">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Menú Digital">
+  <link rel="manifest" href="/manifest.json">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -164,7 +168,12 @@
     </div>
   </footer>
 
-  <script src="data.js?v=20260829b"></script>
-  <script src="app.js?v=20260829b"></script>
+  <script src="data.js?v=20260902"></script>
+  <script src="app.js?v=20260902"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(e => console.warn('SW:', e));
+    }
+  </script>
 </body>
 </html>

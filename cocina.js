@@ -33,6 +33,10 @@ function renderCard(order) {
   const late   = isLate(order.timestamp);
   const ago    = timeAgo(order.timestamp);
 
+  const isLlevar  = order.orderType === 'llevar';
+  const typeLabel = isLlevar ? '🛍️ Para Llevar' : '🍽️ Aquí';
+  const typeCls   = isLlevar ? 'order-type-llevar' : 'order-type-aqui';
+
   const payIcons = { efectivo: '💵', tarjeta: '💳', transferencia: '📱' };
   const payLabel = order.paymentMethod
     ? `${payIcons[order.paymentMethod] || ''} ${order.paymentMethod}`
@@ -55,7 +59,7 @@ function renderCard(order) {
   } else if (status === 'en_prep') {
     actionBtns = `
       <button class="order-btn btn-print"  onclick="printOrder('${order.id}')" title="Imprimir ticket"><i class="fa-solid fa-print"></i></button>
-      <button class="order-btn btn-back"   onclick="setStatus('${order.id}','pendiente')" title="Regresar a pendiente"><i class="fa-solid fa-rotate-left"></i></button>
+      <button class="order-btn btn-back"   onclick="setStatus('${order.id}','pendiente')" title="Regresar"><i class="fa-solid fa-rotate-left"></i></button>
       <button class="order-btn btn-done"   onclick="setStatus('${order.id}','listo')"><i class="fa-solid fa-check"></i> Listo</button>
     `;
   } else {
@@ -65,14 +69,15 @@ function renderCard(order) {
   }
 
   return `
-    <div class="order-card" id="card-${order.id}">
+    <div class="order-card${isLlevar ? ' card-llevar' : ''}" id="card-${order.id}">
       <div class="order-card-header">
         <span class="order-num">#${order.num || '–'}</span>
         <span class="order-time${late ? ' late' : ''}">${ago}</span>
       </div>
+      <div class="order-type-tag ${typeCls}">${typeLabel}</div>
       <div class="order-client"><i class="fa-solid fa-user"></i> ${escHtml(order.clientName || 'Cliente')}</div>
       <ul class="order-items">${itemsHtml}</ul>
-      ${order.total ? `<div class="order-total">Total: $${Number(order.total).toLocaleString('es-MX')}</div>` : ''}
+      ${order.total ? `<div class="order-total">$${Number(order.total).toLocaleString('es-MX')}</div>` : ''}
       ${payLabel ? `<div class="order-payment">${payLabel}</div>` : ''}
       <div class="order-actions">${actionBtns}</div>
     </div>

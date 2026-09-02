@@ -1,38 +1,45 @@
 'use strict';
 /**
- * CAJA.JS — Terminal POS v2.2
- * Rediseñado: badge en botones, animación de total, IDs nuevos.
- * v2.2: botones de precio libre (Menudo Suelto, Barbacoa Suelta)
+ * CAJA.JS — Terminal POS v2.4
+ * Flujo: Enviar a Cocina → queda en "Por Cobrar" → se cobra después.
+ * Soporta múltiples órdenes simultáneas y tipo Aquí/Para Llevar.
  */
 
 const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco', 'cafe', 'pan'];
 
-let storeConfig   = {};
-let ticket        = [];       // [{ key, title, emoji, price, priceNote, qty }]
-let paymentMethod = 'efectivo';
-let mobileTab     = 'productos'; // 'productos' | 'ticket'
+let storeConfig       = {};
+let ticket            = [];         // [{ key, title, emoji, price, priceNote, qty }]
+let orderType         = 'aqui';     // 'aqui' | 'llevar'
+let mobileTab         = 'productos';// 'productos' | 'ticket' | 'cobrar'
+let pendingOrders     = [];         // órdenes pendientes de cobro
+let selectedPendingId = null;       // orden seleccionada en "Por Cobrar"
+let pendingPayMethod  = 'efectivo'; // método de pago en "Por Cobrar"
+let pendingPollTimer  = null;
 
-// ── Tabs móvil ────────────────────────────────────────────────
+// ── Tabs móvil (3 tabs) ───────────────────────────────────────
 function switchMobileTab(tab) {
   mobileTab = tab;
   const left  = document.getElementById('posLeftPanel');
   const right = document.getElementById('posRightPanel');
   const tProd = document.getElementById('mtabProductos');
   const tTick = document.getElementById('mtabTicket');
+  const tCobr = document.getElementById('mtabCobrar');
 
   if (!left || !right) return;
 
-  if (tab === 'productos') {
-    left.classList.remove('mobile-hidden');
-    right.classList.add('mobile-hidden');
-    tProd?.classList.add('active');
-    tTick?.classList.remove('active');
-  } else {
-    left.classList.add('mobile-hidden');
-    right.classList.remove('mobile-hidden');
-    tTick?.classList.add('active');
-    tProd?.classList.remove('active');
-  }
+  left.classList.toggle('mobile-hidden', tab !== 'productos');
+  right.classList.toggle('mobile-hidden', tab === 'productos');
+
+  // Mostrar sección correcta en el panel derecho
+  const newOrderSection  = document.getElementById('newOrderSection');
+  const porCobrarSection = document.getElementById('porCobrarSection');
+
+  if (newOrderSection)  newOrderSection.classList.toggle('mobile-hidden-section',  tab === 'cobrar');
+  if (porCobrarSection) porCobrarSection.classList.toggle('mobile-hidden-section', tab !== 'cobrar');
+
+  tProd?.classList.toggle('active', tab === 'productos');
+  tTick?.classList.toggle('active', tab === 'ticket');
+  tCobr?.classList.toggle('active', tab === 'cobrar');
 }
 
 function updateMobileTabBadge() {
@@ -41,6 +48,14 @@ function updateMobileTabBadge() {
   const total = ticket.reduce((s, t) => s + t.qty, 0);
   badge.textContent = total;
   badge.classList.toggle('show', total > 0);
+}
+
+function updateCobrarBadge() {
+  const tabBadge = document.getElementById('mtabCobrarBadge');
+  const secCount = document.getElementById('porCobrarCount');
+  const n = pendingOrders.length;
+  if (tabBadge) { tabBadge.textContent = n; tabBadge.classList.toggle('show', n > 0); }
+  if (secCount) { secCount.textContent = n; secCount.classList.toggle('show', n > 0); }
 }
 
 // ── Config ────────────────────────────────────────────────────
@@ -59,10 +74,14 @@ async function loadConfig() {
 function updateClock() {
   const el = document.getElementById('posClock');
   if (!el) return;
-  const now = new Date();
-  el.textContent = now.toLocaleTimeString('es-MX', {
-    hour: '2-digit', minute: '2-digit', hour12: true
-  });
+  el.textContent = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+
+// ── Tipo de orden ─────────────────────────────────────────────
+function setOrderType(type) {
+  orderType = type;
+  document.getElementById('btnTypeAqui')?.classList.toggle('active', type === 'aqui');
+  document.getElementById('btnTypeLlevar')?.classList.toggle('active', type === 'llevar');
 }
 
 // ── Renderizado de botones de producto ────────────────────────
@@ -70,22 +89,19 @@ function renderProductButtons() {
   const grid = document.getElementById('posProductsGrid');
   if (!grid) return;
 
-  // Botones de productos fijos
   const productBtns = PRODUCT_KEYS.map(key => {
     const p = storeConfig.products?.[key] || DEFAULT_STORE_DATA.products[key];
-    if (!p?.enabled) return '';
+    if (!p || p.enabled === false) return '';
     return `
       <button class="pos-btn" id="posbtn-${key}" onclick="addToTicket('${key}')">
         <div class="pos-btn-qty-badge" id="posbadge-${key}">0</div>
         <div class="pos-btn-emoji">${p.emoji || '🍽️'}</div>
         <div class="pos-btn-name">${p.title}</div>
-        <div class="pos-btn-price">$${p.price}</div>
+        <div class="pos-btn-price">$${Number(p.price).toLocaleString('es-MX')}</div>
         ${p.priceNote ? `<div class="pos-btn-note">${p.priceNote}</div>` : ''}
-      </button>
-    `;
+      </button>`;
   }).join('');
 
-  // Productos extra dinámicos (creados desde Admin)
   const extraProds = (storeConfig.extraProducts || DEFAULT_STORE_DATA.extraProducts || []).filter(ep => ep.enabled);
   const extraBtns = extraProds.map(ep => `
     <button class="pos-btn" id="posbtn-${ep.id}" onclick="addExtraToTicket('${ep.id}')">
@@ -94,39 +110,32 @@ function renderProductButtons() {
       <div class="pos-btn-name">${ep.title}</div>
       <div class="pos-btn-price">$${Number(ep.price).toLocaleString('es-MX')}</div>
       ${ep.priceNote ? `<div class="pos-btn-note">${ep.priceNote}</div>` : ''}
-    </button>
-  `).join('');
+    </button>`).join('');
 
-  // Botones de precio libre (Menudo Suelto + Barbacoa Suelta)
   const libreBtns = `
     <button class="pos-btn pos-btn-libre" onclick="openPriceModal('menudo')">
-      <div class="pos-btn-qty-badge" id="posbadge-libre-menudo">0</div>
+      <div class="pos-btn-qty-badge pos-btn-qty-libre" id="badgeLibreMenudo">0</div>
       <div class="pos-btn-emoji">🍲</div>
       <div class="pos-btn-name">Menudo Suelto</div>
-      <div class="pos-btn-price">Precio libre ✏️</div>
+      <div class="pos-btn-price pos-libre-label">Precio libre</div>
     </button>
-    <button class="pos-btn pos-btn-libre pos-btn-libre-barb" onclick="openPriceModal('barbacoa')">
-      <div class="pos-btn-qty-badge" id="posbadge-libre-barbacoa">0</div>
+    <button class="pos-btn pos-btn-libre-barb" onclick="openPriceModal('barbacoa')">
+      <div class="pos-btn-qty-badge pos-btn-qty-libre" id="badgeLibreBarb">0</div>
       <div class="pos-btn-emoji">🥩</div>
       <div class="pos-btn-name">Barbacoa Suelta</div>
-      <div class="pos-btn-price">Precio libre ✏️</div>
-    </button>
-  `;
+      <div class="pos-btn-price pos-libre-label">Precio libre</div>
+    </button>`;
 
-  // Botones de promos dinámicas
   const activePromos = (storeConfig.promos || DEFAULT_STORE_DATA.promos || []).filter(p => p.enabled);
   const promoBtns = activePromos.length ? `
-    <div class="pos-promos-divider" style="grid-column:1/-1;">
-      <i class="fa-solid fa-tags"></i> Promos del Día
-    </div>
+    <div class="pos-promo-divider"><span>🎉 Promos</span></div>
     ${activePromos.map(p => `
       <button class="pos-btn pos-btn-promo" id="posbtn-${p.id}" onclick="addPromoToTicket('${p.id}')">
         <div class="pos-btn-qty-badge" id="posbadge-${p.id}">0</div>
         <div class="pos-btn-emoji">🎉</div>
         <div class="pos-btn-name">${p.title}</div>
         <div class="pos-btn-price">$${Number(p.price).toLocaleString('es-MX')}</div>
-      </button>
-    `).join('')}
+      </button>`).join('')}
   ` : '';
 
   grid.innerHTML = productBtns + extraBtns + libreBtns + promoBtns;
@@ -134,62 +143,55 @@ function renderProductButtons() {
 
 // ── Modal de precio libre ─────────────────────────────────────
 const LIBRE_CONFIG = {
-  menudo:   { prefix: 'menudo_libre',  title: 'Menudo Suelto',   emoji: '🍲', badgeId: 'posbadge-libre-menudo',   label: 'Menudo Suelto — ingresa el precio' },
-  barbacoa: { prefix: 'barb_libre',    title: 'Barbacoa Suelta', emoji: '🥩', badgeId: 'posbadge-libre-barbacoa', label: 'Barbacoa Suelta — ingresa el precio' }
+  menudo:   { prefix: 'menudo_libre', title: 'Menudo Suelto',   emoji: '🍲', badgeId: 'badgeLibreMenudo', label: 'kg / porción' },
+  barbacoa: { prefix: 'barb_libre',   title: 'Barbacoa Suelta', emoji: '🥩', badgeId: 'badgeLibreBarb',   label: 'kg / porción' }
 };
 let _currentLibreType = 'menudo';
 
 function openPriceModal(type) {
-  _currentLibreType = type || 'menudo';
-  const cfg   = LIBRE_CONFIG[_currentLibreType];
+  _currentLibreType = type;
+  const cfg   = LIBRE_CONFIG[type];
   const modal = document.getElementById('priceModal');
   const input = document.getElementById('priceModalInput');
-  if (!modal || !input) return;
-  // Actualizar label y emoji del modal
-  const labelEl = document.getElementById('priceModalLabel');
-  const emojiEl = document.getElementById('priceModalEmoji');
-  if (labelEl) labelEl.textContent = cfg.label;
-  if (emojiEl) emojiEl.textContent = cfg.emoji;
-  input.value = '';
+  if (!modal || !cfg) return;
+  document.getElementById('priceModalLabel').textContent = cfg.label;
+  document.getElementById('priceModalEmoji').textContent = cfg.emoji;
+  if (input) { input.value = ''; }
   modal.classList.remove('hidden');
-  setTimeout(() => input.focus(), 80);
+  setTimeout(() => input?.focus(), 100);
 }
 
 function closePriceModal(e) {
-  if (e && e.target !== document.getElementById('priceModal')) return;
-  document.getElementById('priceModal')?.classList.add('hidden');
+  if (!e || e.target === document.getElementById('priceModal')) {
+    document.getElementById('priceModal')?.classList.add('hidden');
+  }
 }
 
 function confirmPriceModal() {
   const input = document.getElementById('priceModalInput');
   const price = parseFloat(input?.value);
-  if (!price || price <= 0) { input?.focus(); input?.select(); return; }
-
-  document.getElementById('priceModal')?.classList.add('hidden');
-
+  if (!price || price <= 0) { input?.focus(); return; }
   const cfg = LIBRE_CONFIG[_currentLibreType];
   ticket.push({
-    key:       `${cfg.prefix}_${Date.now()}`,
+    key:       cfg.prefix + '_' + Date.now(),
     title:     cfg.title,
     emoji:     cfg.emoji,
     price,
     priceNote: '',
     qty:       1
   });
-
+  document.getElementById('priceModal')?.classList.add('hidden');
   renderTicket();
-  if (window.innerWidth < 640) switchMobileTab('ticket');
+  if (mobileTab === 'productos') switchMobileTab('ticket');
 }
 
 function updateLibreBadge() {
   Object.values(LIBRE_CONFIG).forEach(cfg => {
     const badge = document.getElementById(cfg.badgeId);
     if (!badge) return;
-    const count = ticket
-      .filter(t => t.key.startsWith(cfg.prefix))
-      .reduce((s, t) => s + t.qty, 0);
+    const count = ticket.filter(t => t.key.startsWith(cfg.prefix)).length;
     badge.textContent = count;
-    badge.style.display = count > 0 ? 'flex' : 'none';
+    badge.classList.toggle('show', count > 0);
   });
 }
 
@@ -197,67 +199,29 @@ function updateLibreBadge() {
 function addToTicket(key) {
   const p = storeConfig.products?.[key] || DEFAULT_STORE_DATA.products[key];
   if (!p) return;
-
   const existing = ticket.find(t => t.key === key);
-  if (existing) {
-    existing.qty++;
-  } else {
-    ticket.push({
-      key,
-      title:     p.title,
-      emoji:     p.emoji || '',
-      price:     Number(p.price) || 0,
-      priceNote: p.priceNote || '',
-      qty:       1
-    });
-  }
-
+  if (existing) { existing.qty++; }
+  else { ticket.push({ key, title: p.title, emoji: p.emoji || '', price: Number(p.price) || 0, priceNote: p.priceNote || '', qty: 1 }); }
   renderTicket();
   flashBtn(key);
 }
 
 function addPromoToTicket(id) {
-  const promos = storeConfig.promos || DEFAULT_STORE_DATA.promos || [];
-  const p = promos.find(pr => pr.id === id);
+  const p = (storeConfig.promos || []).find(pr => pr.id === id);
   if (!p) return;
-
   const existing = ticket.find(t => t.key === id);
-  if (existing) {
-    existing.qty++;
-  } else {
-    ticket.push({
-      key:      id,
-      title:    p.title,
-      emoji:    '🎉',
-      price:    Number(p.price) || 0,
-      priceNote: '',
-      qty:      1
-    });
-  }
-
+  if (existing) { existing.qty++; }
+  else { ticket.push({ key: id, title: p.title, emoji: '🎉', price: Number(p.price) || 0, priceNote: '', qty: 1 }); }
   renderTicket();
   flashBtn(id);
 }
 
 function addExtraToTicket(id) {
-  const extras = storeConfig.extraProducts || DEFAULT_STORE_DATA.extraProducts || [];
-  const ep = extras.find(e => e.id === id);
+  const ep = (storeConfig.extraProducts || []).find(e => e.id === id);
   if (!ep) return;
-
   const existing = ticket.find(t => t.key === id);
-  if (existing) {
-    existing.qty++;
-  } else {
-    ticket.push({
-      key:      id,
-      title:    ep.title,
-      emoji:    ep.emoji || '🍽️',
-      price:    Number(ep.price) || 0,
-      priceNote: ep.priceNote || '',
-      qty:      1
-    });
-  }
-
+  if (existing) { existing.qty++; }
+  else { ticket.push({ key: id, title: ep.title, emoji: ep.emoji || '🍽️', price: Number(ep.price) || 0, priceNote: ep.priceNote || '', qty: 1 }); }
   renderTicket();
   flashBtn(id);
 }
@@ -265,8 +229,8 @@ function addExtraToTicket(id) {
 function changeQty(key, delta) {
   const item = ticket.find(t => t.key === key);
   if (!item) return;
-  item.qty = Math.max(0, item.qty + delta);
-  if (item.qty === 0) ticket = ticket.filter(t => t.key !== key);
+  item.qty += delta;
+  if (item.qty <= 0) ticket = ticket.filter(t => t.key !== key);
   renderTicket();
 }
 
@@ -283,7 +247,7 @@ function flashBtn(key) {
   const btn = document.getElementById(`posbtn-${key}`);
   if (!btn) return;
   btn.classList.add('flash');
-  setTimeout(() => btn.classList.remove('flash'), 160);
+  setTimeout(() => btn.classList.remove('flash'), 300);
 }
 
 function updateBadges() {
@@ -291,194 +255,277 @@ function updateBadges() {
     const badge = document.getElementById(`posbadge-${key}`);
     if (!badge) return;
     const item = ticket.find(t => t.key === key);
-    if (item && item.qty > 0) {
-      badge.textContent = item.qty;
-      badge.classList.add('show');
-    } else {
-      badge.classList.remove('show');
-    }
+    const count = item ? item.qty : 0;
+    badge.textContent = count;
+    badge.classList.toggle('show', count > 0);
   });
 }
 
 function renderTicket() {
-  const list      = document.getElementById('ticketList');
-  const totalEl   = document.getElementById('ticketTotal');
-  const cobrarBtn = document.getElementById('cobrarBtn');
-  const cobrarLbl = document.getElementById('cobrarLabel');
-  if (!list) return;
+  const list    = document.getElementById('ticketList');
+  const totalEl = document.getElementById('ticketTotal');
+  const sendBtn = document.getElementById('enviarCocinaBtn');
+  const total   = getTotal();
 
-  const total = getTotal();
-
-  if (ticket.length === 0) {
-    list.innerHTML = `
-      <div class="ticket-empty">
-        <i class="fa-regular fa-receipt"></i>
-        <span>Ticket vacío<br>Toca un producto</span>
-      </div>
-    `;
-  } else {
-    list.innerHTML = ticket.map(item => `
-      <div class="ticket-row">
-        <div class="ticket-row-emoji">${item.emoji}</div>
-        <div class="ticket-row-info">
-          <div class="ticket-row-name">${item.title}</div>
-          <div class="ticket-row-unit">$${item.price}${item.priceNote ? ' '+item.priceNote : ''} c/u</div>
-        </div>
-        <div class="ticket-row-ctrl">
-          <button class="qty-btn minus" onclick="changeQty('${item.key}', -1)" title="Quitar uno">−</button>
-          <span class="ticket-qty">${item.qty}</span>
-          <button class="qty-btn" onclick="changeQty('${item.key}', 1)" title="Agregar uno">+</button>
-          <span class="ticket-sub">$${(item.price * item.qty).toLocaleString('es-MX')}</span>
-        </div>
-      </div>
-    `).join('');
+  if (list) {
+    if (ticket.length === 0) {
+      list.innerHTML = `<div class="ticket-empty"><i class="fa-regular fa-receipt"></i><span>Ticket vacío<br>Toca un producto</span></div>`;
+    } else {
+      list.innerHTML = ticket.map(t => `
+        <div class="ticket-row">
+          <span class="ticket-emoji">${t.emoji}</span>
+          <div class="ticket-info">
+            <span class="ticket-name">${t.title}</span>
+            ${t.priceNote ? `<span class="ticket-note">${t.priceNote}</span>` : ''}
+          </div>
+          <div class="ticket-qty-ctrl">
+            <button onclick="changeQty('${t.key}',-1)">−</button>
+            <span>${t.qty}</span>
+            <button onclick="changeQty('${t.key}',1)">+</button>
+          </div>
+          <span class="ticket-sub">$${(t.price * t.qty).toLocaleString('es-MX')}</span>
+        </div>`).join('');
+    }
   }
 
-  // Total con animación
   if (totalEl) {
     totalEl.textContent = `$${total.toLocaleString('es-MX')}`;
-    totalEl.classList.remove('pop');
-    void totalEl.offsetWidth; // reflow
-    totalEl.classList.add('pop');
+    if (ticket.length > 0) {
+      totalEl.classList.add('pop');
+      setTimeout(() => totalEl.classList.remove('pop'), 300);
+    }
   }
 
-  // Botón cobrar y botón cocina
-  if (cobrarBtn) cobrarBtn.disabled = ticket.length === 0;
-  const cocinaBtnOnly = document.getElementById('cocinaBtnOnly');
-  if (cocinaBtnOnly) cocinaBtnOnly.disabled = ticket.length === 0;
-  if (cobrarLbl) cobrarLbl.textContent = ticket.length
-    ? `Cobrar $${total.toLocaleString('es-MX')}`
-    : 'Cobrar $0';
+  if (sendBtn) sendBtn.disabled = ticket.length === 0;
 
   updateBadges();
   updateMobileTabBadge();
   updateLibreBadge();
 }
 
-// ── Pago ──────────────────────────────────────────────────────
-function selectPayment(method, btn) {
-  paymentMethod = method;
-  document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-}
-
-// ── Helpers de UI ─────────────────────────────────────────────
+// ── Nombre del cliente ────────────────────────────────────────
 function getClientName() {
   return (document.getElementById('clientNameInput')?.value || '').trim();
 }
 
-// ── Cocina ────────────────────────────────────────────────────
-async function sendToKitchen(options = {}) {
-  const { paymentMethod: pm = null, registerSale = false } = options;
-  const items = ticket.map(t => ({
-    key:      t.key,
-    title:    t.title,
-    emoji:    t.emoji,
-    qty:      t.qty,
-    price:    t.price,
-    subtotal: t.price * t.qty
-  }));
-
-  await fetch('/api/orders', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify({
-      clientName:    getClientName(),
-      items,
-      total:         getTotal(),
-      paymentMethod: pm
-    })
-  }).catch(e => console.warn('Order sync error:', e));
-}
-
-/** Enviar a cocina sin cobrar (botón "Solo Cocina") */
-async function sendToKitchenOnly() {
+// ── ACCIÓN PRINCIPAL: Enviar a Cocina ─────────────────────────
+async function sendToKitchenPrimary() {
   if (ticket.length === 0) return;
 
-  const btn = document.getElementById('cocinaBtnOnly');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Enviando...'; }
+  const name = getClientName();
+  if (!name) {
+    const input = document.getElementById('clientNameInput');
+    input?.focus();
+    input?.classList.add('shake');
+    setTimeout(() => input?.classList.remove('shake'), 500);
+    showPosToast('⚠️ Escribe el nombre del cliente');
+    return;
+  }
 
-  await sendToKitchen({ registerSale: false });
+  const btn = document.getElementById('enviarCocinaBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...'; }
 
-  // Feedback visual
-  if (btn) {
-    btn.innerHTML = '<i class="fa-solid fa-check"></i> Enviado a Cocina';
-    btn.style.background = '#16A34A';
-    setTimeout(() => {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-fire-burner"></i> <span>Solo Cocina</span>';
-      btn.style.background = '';
-    }, 2000);
+  try {
+    const items = ticket.map(t => ({
+      key:      t.key,
+      title:    t.title,
+      emoji:    t.emoji,
+      qty:      t.qty,
+      price:    t.price,
+      subtotal: t.price * t.qty
+    }));
+
+    const res = await fetch('/api/orders', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body:    JSON.stringify({ clientName: name, orderType, items, total: getTotal() })
+    });
+
+    if (res.status === 401) { window.location.href = '/login'; return; }
+
+    if (res.ok) {
+      const { order } = await res.json();
+      showPosToast(`✅ Orden #${order.num} de ${name} enviada a cocina`);
+      // Limpiar ticket y nombre
+      clearTicket();
+      document.getElementById('clientNameInput').value = '';
+      setOrderType('aqui'); // reset a "Aquí"
+      // Recargar pendientes y volver a productos en móvil
+      await loadPendingOrders();
+      if (window.innerWidth < 640) switchMobileTab('productos');
+    } else {
+      const err = await res.json().catch(() => ({}));
+      showPosToast(`❌ ${err.error || 'Error al enviar'}`);
+    }
+  } catch (e) {
+    showPosToast('❌ Sin conexión con el servidor');
+    console.warn(e);
+  } finally {
+    if (btn) {
+      btn.disabled = ticket.length === 0;
+      btn.innerHTML = '<i class="fa-solid fa-fire-burner"></i> Enviar a Cocina';
+    }
   }
 }
 
-// ── Completar venta ───────────────────────────────────────────
-async function completeSale() {
-  if (ticket.length === 0) return;
-  const now   = new Date();
-  const total = getTotal();
-
-  const tx = {
-    id:            'tx_' + Date.now(),
-    timestamp:     now.toISOString(),
-    date:          now.toISOString().slice(0, 10),
-    hour:          now.getHours(),
-    clientName:    getClientName() || null,
-    items:         ticket.map(t => ({
-      key:      t.key,
-      title:    t.title,
-      price:    t.price,
-      qty:      t.qty,
-      subtotal: t.price * t.qty
-    })),
-    total,
-    paymentMethod
-  };
-
-  // Enviar transacción al servidor
-  fetch('/api/transactions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify(tx)
-  }).then(r => {
-    if (r.status === 401) window.location.href = '/login';
-  }).catch(e => console.warn('Tx sync error:', e));
-
-  // Enviar a cocina (asíncrono, sin bloquear)
-  sendToKitchen({ paymentMethod, registerSale: true });
-
-  // Mostrar modal de confirmación
-  const methodIcons = { efectivo: '💵 Efectivo', tarjeta: '💳 Tarjeta', transferencia: '📱 Transferencia' };
-  const amountEl = document.getElementById('modalAmount');
-  const methodEl = document.getElementById('modalMethod');
-  if (amountEl) amountEl.textContent = `$${total.toLocaleString('es-MX')}`;
-  if (methodEl) methodEl.textContent = methodIcons[paymentMethod] || paymentMethod;
-
-  const modal = document.getElementById('posModal');
-  if (modal) modal.classList.remove('hidden');
+// ── Por Cobrar ────────────────────────────────────────────────
+async function loadPendingOrders() {
+  try {
+    const res = await fetch('/api/orders', { cache: 'no-store' });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    if (!res.ok) return;
+    const data = await res.json();
+    pendingOrders = data.pendingPayment || [];
+    updateCobrarBadge();
+    renderPendingOrders();
+  } catch (e) {
+    console.warn('Poll pending orders error:', e);
+  }
 }
 
-function closeModal() {
-  const modal = document.getElementById('posModal');
-  if (modal) modal.classList.add('hidden');
-  // Limpiar nombre del cliente
-  const nameInput = document.getElementById('clientNameInput');
-  if (nameInput) nameInput.value = '';
-  clearTicket();
+function renderPendingOrders() {
+  const list = document.getElementById('pendingOrdersList');
+  if (!list) return;
+
+  if (pendingOrders.length === 0) {
+    list.innerHTML = `<div class="pending-empty"><i class="fa-solid fa-check-circle"></i><span>No hay órdenes<br>pendientes de cobro</span></div>`;
+    document.getElementById('pendingPaySection')?.classList.add('hidden');
+    selectedPendingId = null;
+    return;
+  }
+
+  function timeAgo(iso) {
+    const m = Math.floor((Date.now() - new Date(iso)) / 60000);
+    return m < 1 ? 'ahora' : `${m} min`;
+  }
+
+  list.innerHTML = pendingOrders.map(o => {
+    const isSelected = o.id === selectedPendingId;
+    const typeLabel  = o.orderType === 'llevar' ? '🛍️ Para Llevar' : '🍽️ Aquí';
+    const itemsText  = (o.items || []).slice(0, 3).map(it => `${it.qty}x ${it.title}`).join(' · ');
+    return `
+      <div class="pending-card${isSelected ? ' selected' : ''}" onclick="selectPendingOrder('${o.id}')">
+        <div class="pending-card-top">
+          <span class="pending-type ${o.orderType === 'llevar' ? 'llevar' : 'aqui'}">${typeLabel}</span>
+          <span class="pending-time">${timeAgo(o.timestamp)}</span>
+        </div>
+        <div class="pending-name"><i class="fa-solid fa-user"></i> ${o.clientName || 'Cliente'}</div>
+        <div class="pending-items">${itemsText}${(o.items||[]).length > 3 ? ' ...' : ''}</div>
+        <div class="pending-total">$${Number(o.total).toLocaleString('es-MX')}</div>
+      </div>`;
+  }).join('');
+
+  // Mostrar sección de pago si hay una orden seleccionada
+  const paySection = document.getElementById('pendingPaySection');
+  const selOrder   = pendingOrders.find(o => o.id === selectedPendingId);
+
+  if (!selOrder) {
+    paySection?.classList.add('hidden');
+    return;
+  }
+
+  paySection?.classList.remove('hidden');
+  const nameEl  = document.getElementById('payOrderName');
+  const totalEl = document.getElementById('payOrderTotal');
+  if (nameEl)  nameEl.textContent  = selOrder.clientName || 'Cliente';
+  if (totalEl) totalEl.textContent = `$${Number(selOrder.total).toLocaleString('es-MX')}`;
+
+  // Actualizar botones de método de pago
+  ['efectivo','tarjeta','transferencia'].forEach(m => {
+    document.getElementById(`pendPay${m.charAt(0).toUpperCase()+m.slice(1)}`)
+      ?.classList.toggle('active', m === pendingPayMethod);
+  });
+}
+
+function selectPendingOrder(id) {
+  selectedPendingId = (selectedPendingId === id) ? null : id; // toggle
+  pendingPayMethod  = 'efectivo';
+  renderPendingOrders();
+}
+
+function selectPendingPayment(method, btn) {
+  pendingPayMethod = method;
+  document.querySelectorAll('.pending-pay-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function collectPayment() {
+  if (!selectedPendingId) return;
+  const order = pendingOrders.find(o => o.id === selectedPendingId);
+  if (!order) return;
+
+  const cobrarBtn = document.getElementById('cobrarPendienteBtn');
+  if (cobrarBtn) { cobrarBtn.disabled = true; cobrarBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cobrando...'; }
+
+  try {
+    const res = await fetch(`/api/orders/${selectedPendingId}/pay`, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body:    JSON.stringify({ paymentMethod: pendingPayMethod })
+    });
+
+    if (res.status === 401) { window.location.href = '/login'; return; }
+
+    if (res.ok) {
+      showPosToast(`✅ Cobrado: ${order.clientName} — $${Number(order.total).toLocaleString('es-MX')}`);
+      selectedPendingId = null;
+      pendingPayMethod  = 'efectivo';
+      await loadPendingOrders();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      showPosToast(`❌ ${err.error || 'Error al cobrar'}`);
+    }
+  } catch (e) {
+    showPosToast('❌ Sin conexión');
+    console.warn(e);
+  } finally {
+    if (cobrarBtn) {
+      cobrarBtn.disabled = false;
+      cobrarBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> <span id="cobrarPendienteLabel">Cobrar</span>';
+    }
+  }
+}
+
+// ── Toast del POS ─────────────────────────────────────────────
+function showPosToast(msg) {
+  let el = document.getElementById('posToast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'posToast';
+    el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1F2937;color:#fff;padding:10px 20px;border-radius:12px;font-family:Outfit,sans-serif;font-size:0.9rem;font-weight:600;z-index:9999;transition:opacity 0.3s;pointer-events:none;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => { el.style.opacity = '0'; }, 2500);
 }
 
 // ── Init ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   storeConfig = await loadConfig();
 
-  // Nombre del negocio
   const nameEl = document.getElementById('posBusinessName');
-  if (nameEl && storeConfig.business?.name) {
-    nameEl.textContent = storeConfig.business.name;
-  }
+  if (nameEl && storeConfig.business?.name) nameEl.textContent = storeConfig.business.name;
 
-  renderProductButtons();
-  renderTicket();
   updateClock();
   setInterval(updateClock, 30_000);
+
+  setOrderType('aqui');
+  renderProductButtons();
+  renderTicket();
+
+  // Carga inicial de órdenes pendientes + polling cada 12s
+  await loadPendingOrders();
+  pendingPollTimer = setInterval(loadPendingOrders, 12_000);
+
+  // Refresca al volver a enfocar la pestaña
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') loadPendingOrders();
+  });
+
+  // Registrar Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(e => console.warn('SW:', e));
+  }
 });

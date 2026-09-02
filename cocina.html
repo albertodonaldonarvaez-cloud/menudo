@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#C84B31">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Cocina">
+  <link rel="manifest" href="/manifest.json">
   <title>🍳 Cocina</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -63,6 +68,12 @@
     .btn-prep{background:var(--blue);color:#fff}
     .btn-done{background:var(--green);color:#fff}
     .btn-back{background:#F3F4F6;color:var(--muted);border:1.5px solid var(--border);flex:0 0 auto;padding:7px 10px}
+
+    /* Tipo de orden */
+    .order-type-tag{font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:8px;margin-bottom:4px;display:inline-block}
+    .order-type-aqui{background:#EEF2FF;color:#3730A3}
+    .order-type-llevar{background:#FFFBEB;color:#92400E}
+    .card-llevar{border-left:3px solid var(--amber) !important}
 
     /* Print */
     #printArea{display:none}

@@ -369,19 +369,22 @@ app.get('/cocina.js', requireAnyAuth, (req, res) => {
 
 /**
  * GET /api/orders
- * Retorna órdenes activas (pendiente + en_prep) y las listas del día de hoy.
+ * Retorna: active (cocina), doneToday, pendingPayment (por cobrar en caja).
  */
 app.get('/api/orders', requireAnyAuth, (req, res) => {
   try {
     const all = readJSON(ORDERS_FILE) || [];
     const today = new Date().toISOString().slice(0, 10);
-    // Activas + listas de hoy (no más de 50 listas para no saturar)
     const active = all.filter(o => o.status !== 'listo' && o.status !== 'archivado');
     const doneToday = all
       .filter(o => (o.status === 'listo' || o.status === 'archivado') && o.date === today)
       .slice(-30);
+    // Órdenes de hoy sin cobrar (para la tab "Por Cobrar" del POS)
+    const pendingPayment = all
+      .filter(o => o.paymentStatus === 'pendiente' && o.date === today)
+      .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
     res.set('Cache-Control', 'no-store');
-    res.json({ active, doneToday });
+    res.json({ active, doneToday, pendingPayment });
   } catch (e) {
     res.status(500).json({ error: 'No se pudo leer órdenes' });
   }
@@ -390,17 +393,16 @@ app.get('/api/orders', requireAnyAuth, (req, res) => {
 /**
  * POST /api/orders
  * Crea una orden nueva desde el POS.
- * Body: { clientName, items, total, paymentMethod }
+ * Body: { clientName, orderType, items, total }
  */
 app.post('/api/orders', requireAnyAuth, (req, res) => {
   try {
-    const { clientName, items, total, paymentMethod } = req.body;
+    const { clientName, orderType, items, total } = req.body;
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'La orden debe tener al menos un ítem' });
     }
     const all = readJSON(ORDERS_FILE) || [];
 
-    // Número consecutivo del día
     const today = new Date().toISOString().slice(0, 10);
     const todayOrders = all.filter(o => o.date === today);
     const num = todayOrders.length + 1;
@@ -409,18 +411,20 @@ app.post('/api/orders', requireAnyAuth, (req, res) => {
       id:            'ord_' + Date.now(),
       num,
       clientName:    (clientName || '').trim() || `Cliente #${num}`,
+      orderType:     orderType === 'llevar' ? 'llevar' : 'aqui',
       timestamp:     new Date().toISOString(),
       date:          today,
       status:        'pendiente',
+      paymentStatus: 'pendiente',   // se marca 'cobrado' con PATCH /pay
       items,
       total:         Number(total) || 0,
-      paymentMethod: paymentMethod || null,
+      paymentMethod: null,
       createdBy:     req.session.user || 'caja'
     };
 
     all.push(order);
     writeJSON(ORDERS_FILE, all);
-    console.log(`[${new Date().toISOString()}] Orden ${order.id} | ${order.clientName} | $${order.total}`);
+    console.log(`[${new Date().toISOString()}] Orden #${num} ${order.id} | ${order.clientName} | ${order.orderType} | $${order.total}`);
     res.json({ ok: true, order });
   } catch (e) {
     console.error('Error orden:', e);
@@ -470,14 +474,77 @@ app.delete('/api/orders/clear-done', requireAdmin, (req, res) => {
   }
 });
 
+/**
+ * PATCH /api/orders/:id/pay
+ * Cobra una orden pendiente: guarda método de pago y registra transacción.
+ * Body: { paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia' }
+ */
+app.patch('/api/orders/:id/pay', requireAnyAuth, (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paymentMethod } = req.body;
+    if (!['efectivo', 'tarjeta', 'transferencia'].includes(paymentMethod)) {
+      return res.status(400).json({ error: 'Método de pago inválido' });
+    }
+
+    const all = readJSON(ORDERS_FILE) || [];
+    const idx = all.findIndex(o => o.id === id);
+    if (idx < 0) return res.status(404).json({ error: 'Orden no encontrada' });
+
+    const order = all[idx];
+    if (order.paymentStatus === 'cobrado') {
+      return res.status(409).json({ error: 'Esta orden ya fue cobrada' });
+    }
+
+    const now = new Date().toISOString();
+    order.paymentStatus = 'cobrado';
+    order.paymentMethod  = paymentMethod;
+    order.paidAt         = now;
+
+    writeJSON(ORDERS_FILE, all);
+
+    // Registrar en transactions.json
+    const tx = {
+      id:            'tx_' + Date.now(),
+      timestamp:     now,
+      date:          order.date,
+      hour:          new Date().getHours(),
+      clientName:    order.clientName || null,
+      orderType:     order.orderType || null,
+      orderId:       order.id,
+      items:         (order.items || []).map(it => ({
+        key:      it.key,
+        title:    it.title,
+        price:    it.price,
+        qty:      it.qty,
+        subtotal: it.subtotal || (it.price * it.qty)
+      })),
+      total:         order.total,
+      paymentMethod
+    };
+
+    const txAll = readJSON(TRANSACTIONS_FILE) || [];
+    txAll.push(tx);
+    writeJSON(TRANSACTIONS_FILE, txAll);
+
+    console.log(`[${now}] Cobrado: ${order.id} | ${order.clientName} | $${order.total} | ${paymentMethod} | ${req.session.user}`);
+    res.json({ ok: true, transaction: tx });
+  } catch (e) {
+    console.error('Error al cobrar:', e);
+    res.status(500).json({ error: 'No se pudo procesar el cobro' });
+  }
+});
+
 // ── Health check ──────────────────────────────────────────────
-app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '2.3' }));
+app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '2.4' }));
 
 // ── Archivos públicos del menú ────────────────────────────────
-['index.html', 'app.js', 'data.js', 'styles.css'].forEach(file => {
+['index.html', 'app.js', 'data.js', 'styles.css', 'manifest.json', 'sw.js', 'icon.svg'].forEach(file => {
   app.get(`/${file}`, (req, res) => {
     if (file.endsWith('.html')) noCache(res);
-    sendFile(res, file, !file.endsWith('.html'));
+    // service worker y manifest sin caché agresiva
+    if (file === 'sw.js' || file === 'manifest.json') noCache(res);
+    sendFile(res, file, !file.endsWith('.html') && file !== 'sw.js' && file !== 'manifest.json');
   });
 });
 

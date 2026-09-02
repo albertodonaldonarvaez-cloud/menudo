@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Caja POS">
+  <meta name="theme-color" content="#C84B31">
+  <link rel="manifest" href="/manifest.json">
   <title>Caja — POS</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,682 +15,338 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <style>
-    /* ══════════════════════════════════════════════════
-       POS — ESTILOS PROPIOS (independientes del menú)
-       ══════════════════════════════════════════════════ */
-    *, *::before, *::after {
-      box-sizing: border-box; margin: 0; padding: 0;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+    :root{
+      --bg:#F5F6FA;--bg2:#FFFFFF;--bg3:#F0F0F3;--border:#E2E4EC;
+      --text:#1F2937;--muted:#6B7280;--primary:#C84B31;
+      --green:#16A34A;--red:#DC2626;--amber:#D97706;--blue:#2563EB;
     }
 
-    :root {
-      --bg:      #F5F6FA;
-      --bg2:     #FFFFFF;
-      --bg3:     #F0F0F3;
-      --border:  #E2E4EC;
-      --text:    #1F2937;
-      --muted:   #6B7280;
-      --primary: #C84B31;   /* terracota del menú */
-      --green:   #16A34A;
-      --red:     #DC2626;
-      --amber:   #D97706;
+    html,body{
+      font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);
+      height:100%;height:100dvh;overflow:hidden;display:flex;flex-direction:column;
+    }
+    body>*{flex-shrink:0}
+
+    /* ── Header ─────────────────────────────── */
+    .pos-bar{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 12px;height:48px;background:#1E2022;flex-shrink:0;
+    }
+    .pos-bar-left{display:flex;align-items:center;gap:8px}
+    .pos-logo{font-size:1.2rem}
+    .pos-biz-name{font-size:0.9rem;font-weight:800;color:#fff}
+    .pos-bar-right{display:flex;align-items:center;gap:8px}
+    .pos-clock{font-size:0.8rem;color:#9CA3AF;font-weight:600;min-width:52px;text-align:right}
+    .pos-bar-action{
+      display:flex;align-items:center;gap:4px;color:#9CA3AF;text-decoration:none;
+      font-size:0.75rem;font-weight:700;padding:4px 8px;border-radius:8px;
+      background:rgba(255,255,255,0.07);transition:background 0.15s;
+    }
+    .pos-bar-action:hover{background:rgba(255,255,255,0.14)}
+    .pos-logout-text{font-size:0.72rem}
+
+    /* ── Mobile tabs (3 tabs) ───────────────── */
+    .pos-mobile-tabs{
+      display:none;
+      background:#1E2022;
+      border-top:1px solid #374151;
+      flex-shrink:0;
+    }
+    @media(max-width:639px){
+      .pos-mobile-tabs{display:flex}
+    }
+    .pos-mtab{
+      flex:1;padding:8px 4px;background:none;border:none;color:#9CA3AF;
+      font-family:'Outfit',sans-serif;font-size:0.72rem;font-weight:700;
+      cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;
+      position:relative;text-transform:uppercase;letter-spacing:0.5px;
+    }
+    .pos-mtab i{font-size:1rem}
+    .pos-mtab.active{color:#fff}
+    .pos-mtab-badge{
+      display:none;position:absolute;top:2px;right:calc(50% - 18px);
+      background:var(--primary);color:#fff;font-size:0.6rem;font-weight:900;
+      border-radius:10px;min-width:16px;height:16px;line-height:16px;
+      text-align:center;padding:0 3px;
+    }
+    .pos-mtab-badge.cobrar-badge{background:var(--green)}
+    .pos-mtab-badge.show{display:block}
+
+    /* ── Layout principal ───────────────────── */
+    .pos-root{
+      flex:1 1 0;min-height:0;display:flex;overflow:hidden;
     }
 
-    html, body {
-      font-family: 'Outfit', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      height: 100%;
-      height: 100dvh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
+    /* ── Panel izquierdo — Productos ────────── */
+    .pos-left{
+      width:60%;min-width:0;height:100%;
+      display:flex;flex-direction:column;overflow:hidden;
+      border-right:1.5px solid var(--border);
+    }
+    .pos-products-grid{
+      flex:1 1 0;min-height:0;overflow-y:auto;
+      padding:10px;
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+      gap:8px;
+      align-content:start;
     }
 
-    /* La tab bar y el root son hijos directos de body */
-    body > * { flex-shrink: 0; }
-    /* El pos-root sí puede crecer */
-    .pos-root { flex: 1 1 0; min-height: 0; }
-
-    /* ── HEADER ─────────────────────────────────────── */
-    .pos-bar {
-      height: 54px;
-      background: var(--bg2);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      position: sticky; top: 0; z-index: 10;
-      flex-shrink: 0;
+    /* ── Botones de producto ─────────────────── */
+    .pos-btn{
+      position:relative;background:var(--bg2);border:1.5px solid var(--border);
+      border-radius:14px;padding:12px 8px;cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;gap:4px;
+      font-family:'Outfit',sans-serif;color:var(--text);
+      transition:transform 0.1s,box-shadow 0.1s;
+      min-height:90px;
     }
-
-    .pos-bar-left {
-      display: flex; align-items: center; gap: 10px;
+    .pos-btn:active{transform:scale(0.95)}
+    .pos-btn.flash{background:#FEF3C7;border-color:var(--amber)}
+    .pos-btn-qty-badge{
+      display:none;position:absolute;top:-5px;right:-5px;
+      background:var(--primary);color:#fff;font-size:0.62rem;font-weight:900;
+      border-radius:10px;min-width:18px;height:18px;line-height:18px;text-align:center;padding:0 3px;
     }
+    .pos-btn-qty-badge.show{display:block}
+    .pos-btn-qty-libre{background:var(--amber)}
+    .pos-btn-emoji{font-size:1.6rem;line-height:1}
+    .pos-btn-name{font-size:0.72rem;font-weight:700;text-align:center;line-height:1.2}
+    .pos-btn-price{font-size:0.8rem;font-weight:800;color:var(--primary)}
+    .pos-btn-note{font-size:0.6rem;color:var(--muted);text-align:center}
+    .pos-libre-label{color:var(--amber)}
 
-    .pos-logo {
-      width: 34px; height: 34px;
-      background: var(--primary);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem;
+    /* Botones libres */
+    .pos-btn-libre{border:2px dashed var(--primary);background:#FFF5F3}
+    .pos-btn-libre-barb{border:2px dashed var(--amber);background:#FFFBEB}
+
+    /* Promos */
+    .pos-promo-divider{
+      grid-column:1/-1;display:flex;align-items:center;gap:8px;
+      font-size:0.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;
+      letter-spacing:0.8px;padding:4px 0;
     }
+    .pos-promo-divider::before,.pos-promo-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+    .pos-btn-promo{border-color:#E9D5FF;background:#FDFAFF}
+    .pos-btn-promo .pos-btn-price{color:#7C3AED}
 
-    .pos-biz-name {
-      font-size: 0.95rem; font-weight: 700;
-      color: var(--text);
-      max-width: 160px;
-      overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
-    }
-
-    .pos-bar-right {
-      display: flex; align-items: center; gap: 12px;
-    }
-
-    .pos-clock {
-      font-size: 1rem; font-weight: 700;
-      color: var(--primary); letter-spacing: 1px;
-      font-variant-numeric: tabular-nums;
+    /* ── Panel derecho ───────────────────────── */
+    .pos-right{
+      flex:1 1 0;min-width:0;height:100%;
+      display:flex;flex-direction:column;overflow:hidden;
+      background:var(--bg);
     }
 
-    .pos-bar-action {
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      padding: 7px 12px;
-      border-radius: 8px;
-      font-size: 0.8rem; font-weight: 600;
-      text-decoration: none;
-      display: inline-flex; align-items: center; gap: 6px;
-      cursor: pointer;
-      transition: color 0.2s, border-color 0.2s;
-    }
-    .pos-bar-action:hover { color: var(--text); border-color: var(--muted); }
-
-    /* ── LAYOUT ─────────────────────────────────────── */
-    .pos-root {
-      display: flex;
-      height: calc(100vh - 54px);
-      overflow: hidden;
+    /* Sección nueva orden */
+    .new-order-section{
+      flex:1 1 0;min-height:0;display:flex;flex-direction:column;overflow:hidden;
     }
 
-    /* ── PANEL IZQUIERDO: Productos ─────────────────── */
-    .pos-left {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 12px;
-      gap: 10px;
-      overflow-y: auto;
-      background: var(--bg);
+    /* Nombre + tipo en la parte superior */
+    .order-meta-bar{
+      flex-shrink:0;padding:8px 10px 6px;background:var(--bg2);
+      border-bottom:1.5px solid var(--border);
+      display:flex;flex-direction:column;gap:6px;
     }
+    .client-name-label{
+      font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;
+      color:var(--muted);display:flex;align-items:center;gap:5px;
+    }
+    .client-name-label .req{color:var(--primary);font-size:0.7rem}
+    .client-name-input{
+      width:100%;padding:9px 11px;border:2px solid var(--border);border-radius:10px;
+      font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:700;
+      color:var(--text);background:#fff;outline:none;transition:border-color 0.15s;
+    }
+    .client-name-input:focus{border-color:var(--primary)}
+    .client-name-input.shake{animation:shake 0.4s}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 
-    .pos-section-label {
-      font-size: 0.7rem; font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--muted);
-      padding: 0 4px;
+    /* Toggle Aquí / Para Llevar */
+    .order-type-toggle{display:flex;gap:6px}
+    .order-type-btn{
+      flex:1;padding:7px;border:2px solid var(--border);border-radius:10px;
+      background:#fff;font-family:'Outfit',sans-serif;font-size:0.78rem;font-weight:700;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;
+      color:var(--muted);transition:all 0.15s;
     }
+    .order-type-btn.active{border-color:var(--primary);background:#FFF5F3;color:var(--primary)}
+    .order-type-btn.llevar.active{border-color:var(--amber);background:#FFFBEB;color:var(--amber)}
 
-    .pos-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
+    /* Ticket list */
+    .ticket-list{flex:1 1 0;min-height:0;overflow-y:auto;padding:8px}
+    .ticket-empty{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      height:100%;gap:8px;color:var(--muted);font-size:0.85rem;text-align:center;opacity:0.6;
     }
+    .ticket-empty i{font-size:2rem}
+    .ticket-row{
+      display:flex;align-items:center;gap:8px;
+      padding:7px 8px;background:var(--bg2);border-radius:10px;
+      margin-bottom:5px;border:1px solid var(--border);
+    }
+    .ticket-emoji{font-size:1.1rem;flex-shrink:0}
+    .ticket-info{flex:1;min-width:0}
+    .ticket-name{font-size:0.82rem;font-weight:700;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ticket-note{font-size:0.65rem;color:var(--muted)}
+    .ticket-qty-ctrl{display:flex;align-items:center;gap:4px;flex-shrink:0}
+    .ticket-qty-ctrl button{
+      width:22px;height:22px;border:1.5px solid var(--border);border-radius:6px;
+      background:var(--bg3);cursor:pointer;font-size:0.85rem;font-weight:700;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .ticket-qty-ctrl span{font-size:0.82rem;font-weight:700;min-width:16px;text-align:center}
+    .ticket-sub{font-size:0.82rem;font-weight:800;color:var(--primary);flex-shrink:0}
 
-    .pos-btn {
-      background: var(--bg2);
-      border: 1.5px solid var(--border);
-      border-radius: 14px;
-      padding: 16px 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      transition: transform 0.12s, background 0.12s, border-color 0.12s, box-shadow 0.12s;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-      min-height: 110px;
-      user-select: none;
+    /* Total */
+    .ticket-total-bar{
+      flex-shrink:0;padding:8px 12px;
+      display:flex;align-items:center;justify-content:space-between;
+      background:var(--bg2);border-top:2px solid var(--border);
     }
+    .ticket-total-label{font-size:0.8rem;font-weight:700;color:var(--muted)}
+    .ticket-total-amount{font-size:1.3rem;font-weight:900;color:var(--text)}
+    .ticket-total-amount.pop{animation:pop 0.25s}
+    @keyframes pop{0%{transform:scale(1.18)}100%{transform:scale(1)}}
 
-    .pos-btn::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at center, rgba(249,115,22,0.15) 0%, transparent 70%);
-      opacity: 0;
-      transition: opacity 0.15s;
+    /* Botón Enviar a Cocina */
+    .enviar-wrap{flex-shrink:0;padding:8px 10px 10px}
+    .enviar-btn{
+      width:100%;padding:15px;border:none;border-radius:14px;
+      background:linear-gradient(135deg,#16A34A,#15803D);
+      color:#fff;font-family:'Outfit',sans-serif;font-size:1rem;font-weight:800;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+      transition:all 0.2s;box-shadow:0 4px 20px rgba(22,163,74,0.28);
     }
+    .enviar-btn:hover:not(:disabled){opacity:0.92}
+    .enviar-btn:active:not(:disabled){transform:scale(0.97)}
+    .enviar-btn:disabled{background:#E5E7EB;color:#9CA3AF;cursor:not-allowed;box-shadow:none}
 
-    .pos-btn:active, .pos-btn.flash {
-      transform: scale(0.95);
-      background: var(--bg3);
-      border-color: var(--primary);
-      box-shadow: 0 0 0 2px rgba(249,115,22,0.3);
+    /* ── Sección "Por Cobrar" ────────────────── */
+    .por-cobrar-section{
+      flex-shrink:0;max-height:45%;min-height:0;
+      display:flex;flex-direction:column;overflow:hidden;
+      border-top:2px solid var(--border);background:var(--bg2);
     }
-    .pos-btn:active::before, .pos-btn.flash::before { opacity: 1; }
+    .por-cobrar-header{
+      flex-shrink:0;padding:8px 12px 6px;
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .por-cobrar-title{
+      font-size:0.72rem;font-weight:800;text-transform:uppercase;
+      letter-spacing:0.8px;color:var(--muted);display:flex;align-items:center;gap:6px;
+    }
+    .por-cobrar-count{
+      background:var(--green);color:#fff;font-size:0.62rem;font-weight:900;
+      border-radius:10px;min-width:18px;height:18px;line-height:18px;
+      text-align:center;padding:0 4px;display:none;
+    }
+    .por-cobrar-count.show{display:block}
 
-    .pos-btn-emoji  { font-size: 2.2rem; line-height: 1; }
-    .pos-btn-name   { font-size: 0.82rem; font-weight: 700; color: var(--text); line-height: 1.3; }
-    .pos-btn-price  { font-size: 1.05rem; font-weight: 900; color: var(--primary); }
-    .pos-btn-note   { font-size: 0.65rem; color: var(--muted); font-weight: 500; }
+    /* Lista de órdenes pendientes */
+    .pending-orders-list{
+      flex:1 1 0;min-height:0;overflow-y:auto;
+      padding:0 8px 6px;display:flex;flex-direction:column;gap:5px;
+    }
+    .pending-empty{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:20px 8px;gap:6px;color:var(--muted);font-size:0.78rem;text-align:center;opacity:0.6;
+    }
+    .pending-empty i{font-size:1.5rem}
+    .pending-card{
+      border:2px solid var(--border);border-radius:10px;padding:8px 10px;
+      cursor:pointer;background:var(--bg);transition:border-color 0.15s;
+    }
+    .pending-card.selected{border-color:var(--green);background:#F0FDF4}
+    .pending-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+    .pending-type{font-size:0.68rem;font-weight:800;padding:2px 7px;border-radius:8px}
+    .pending-type.aqui{background:#EEF2FF;color:#3730A3}
+    .pending-type.llevar{background:#FFFBEB;color:#92400E}
+    .pending-time{font-size:0.62rem;color:var(--muted)}
+    .pending-name{font-size:0.88rem;font-weight:800;display:flex;align-items:center;gap:5px;margin-bottom:2px}
+    .pending-items{font-size:0.68rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pending-total{font-size:0.85rem;font-weight:800;color:var(--primary);text-align:right;margin-top:2px}
 
-    /* Badge de cantidad sobre el botón */
-    .pos-btn-qty-badge {
-      position: absolute;
-      top: 8px; right: 8px;
-      background: var(--primary);
-      color: #fff;
-      font-size: 0.7rem; font-weight: 800;
-      width: 22px; height: 22px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      display: none;
+    /* Sección de pago para pendiente seleccionado */
+    .pending-pay-section{
+      flex-shrink:0;padding:8px 10px 10px;
+      border-top:1.5px solid var(--border);background:#F0FDF4;
     }
-    .pos-btn-qty-badge.show { display: flex; }
+    .pending-pay-section.hidden{display:none}
+    .pending-pay-who{font-size:0.75rem;font-weight:700;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:5px}
+    .pending-pay-who strong{color:var(--text)}
+    .pending-pay-btns{display:flex;gap:5px;margin-bottom:6px}
+    .pending-pay-btn{
+      flex:1;padding:8px 4px;border:2px solid var(--border);border-radius:9px;
+      background:#fff;font-family:'Outfit',sans-serif;font-size:0.72rem;font-weight:700;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;
+      color:var(--text);transition:all 0.15s;
+    }
+    .pending-pay-btn.active{border-color:var(--green);background:rgba(22,163,74,0.08);color:var(--green)}
+    .cobrar-pendiente-btn{
+      width:100%;padding:13px;border:none;border-radius:12px;
+      background:linear-gradient(135deg,#16A34A,#15803D);color:#fff;
+      font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:800;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
+      box-shadow:0 3px 12px rgba(22,163,74,0.3);
+    }
+    .cobrar-pendiente-btn:disabled{background:#E5E7EB;color:#9CA3AF;box-shadow:none}
 
-    /* ── PANEL DERECHO: Ticket ──────────────────────── */
-    .pos-right {
-      width: 320px;
-      min-width: 290px;
-      background: var(--bg2);
-      border-left: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      box-shadow: -4px 0 16px rgba(0,0,0,0.06);
-    }
-
-    /* Cabecera del ticket */
-    .ticket-head {
-      padding: 12px 16px 10px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .ticket-head-title {
-      font-size: 0.82rem; font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      display: flex; align-items: center; gap: 6px;
-    }
-
-    .ticket-clear {
-      background: none;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 0.72rem;
-      font-weight: 600;
-      font-family: 'Outfit', sans-serif;
-      padding: 4px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: color 0.2s, border-color 0.2s;
-    }
-    .ticket-clear:hover { color: var(--red); border-color: var(--red); }
-
-    /* Lista de items */
-    .ticket-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px;
-    }
-
-    .ticket-empty {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      color: var(--border);
-      font-size: 0.88rem;
-      text-align: center;
-      padding: 24px;
-    }
-
-    .ticket-empty i { font-size: 2.5rem; opacity: 0.4; }
-
-    .ticket-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 8px;
-      border-radius: 10px;
-      border-bottom: 1px solid rgba(51,65,85,0.5);
-      transition: background 0.1s;
-    }
-    .ticket-row:hover { background: var(--bg3); }
-
-    .ticket-row-emoji { font-size: 1.6rem; flex-shrink: 0; }
-
-    .ticket-row-info { flex: 1; min-width: 0; }
-    .ticket-row-name { font-size: 0.82rem; font-weight: 700; color: var(--text); }
-    .ticket-row-unit { font-size: 0.68rem; color: var(--muted); }
-
-    .ticket-row-ctrl {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      flex-shrink: 0;
-    }
-
-    .qty-btn {
-      width: 28px; height: 28px;
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      color: var(--text);
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.1s, border-color 0.1s;
-      font-family: 'Outfit', sans-serif;
-    }
-    .qty-btn:hover { background: var(--primary); border-color: var(--primary); }
-    .qty-btn.minus:hover { background: var(--red); border-color: var(--red); }
-
-    .ticket-qty { 
-      font-size: 0.9rem; font-weight: 800; 
-      color: var(--text); min-width: 20px; text-align: center;
-    }
-    .ticket-sub {
-      font-size: 0.88rem; font-weight: 800;
-      color: var(--primary);
-      min-width: 52px; text-align: right;
-    }
-
-    /* Línea separadora con texto */
-    .ticket-separator {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 6px 8px 2px;
-      color: var(--border);
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .ticket-separator::before,
-    .ticket-separator::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    /* Total del ticket */
-    .ticket-total {
-      padding: 12px 16px;
-      border-top: 2px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .ticket-total-label {
-      font-size: 0.75rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 1px; color: var(--muted);
-    }
-    .ticket-total-amount {
-      font-size: 1.8rem; font-weight: 900;
-      color: var(--primary);
-      font-variant-numeric: tabular-nums;
-      transition: transform 0.15s;
-    }
-    .ticket-total-amount.pop {
-      animation: amountPop 0.25s ease;
-    }
-    @keyframes amountPop {
-      0%   { transform: scale(1); }
-      50%  { transform: scale(1.12); }
-      100% { transform: scale(1); }
-    }
-
-    /* Método de pago */
-    .payment-section {
-      padding: 10px 10px 6px;
-      background: var(--bg);
-      border-top: 1px solid var(--border);
-    }
-    .payment-label {
-      font-size: 0.65rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 1px;
-      color: var(--muted); margin-bottom: 6px;
-    }
-    .payment-btns {
-      display: flex; gap: 6px;
-    }
-    .pay-btn {
-      flex: 1;
-      background: var(--bg2);
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      padding: 8px 4px;
-      color: var(--muted);
-      font-family: 'Outfit', sans-serif;
-      font-size: 0.72rem; font-weight: 700;
-      cursor: pointer;
-      display: flex; flex-direction: column; align-items: center; gap: 3px;
-      transition: all 0.15s;
-      min-height: 52px;
-    }
-    .pay-btn i { font-size: 1.1rem; }
-    .pay-btn.active {
-      background: rgba(22,163,74,0.1);
-      border-color: var(--green);
-      color: var(--green);
-    }
-    .pay-btn:not(.active):hover { border-color: var(--muted); color: var(--text); }
-
-    /* Campo nombre del cliente */
-    .client-name-wrap {
-      padding: 6px 10px 4px;
-      flex-shrink: 0;
-    }
-    .client-name-label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.62rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-    .client-name-input {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: var(--text);
-      background: var(--bg2);
-      box-sizing: border-box;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .client-name-input:focus { border-color: var(--primary); }
-
-    /* Botón cobrar + botón solo cocina */
-    .cobrar-wrap {
-      padding: 6px 10px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
-    .cobrar-btn {
-      width: 100%;
-      padding: 16px;
-      border: none;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #16A34A, #15803D);
-      color: #fff;
-      font-family: 'Outfit', sans-serif;
-      font-size: 1.05rem; font-weight: 800;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      transition: all 0.2s;
-      box-shadow: 0 4px 20px rgba(22,163,74,0.25);
-      position: relative;
-      overflow: hidden;
-    }
-    .cobrar-btn::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: rgba(255,255,255,0);
-      transition: background 0.1s;
-    }
-    .cobrar-btn:hover:not(:disabled)::after { background: rgba(255,255,255,0.08); }
-    .cobrar-btn:active:not(:disabled) { transform: scale(0.98); }
-    .cobrar-btn:disabled {
-      background: #E5E7EB;
-      color: #9CA3AF;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    /* Botón "Solo Cocina" */
-    .cocina-btn {
-      width: 100%;
-      padding: 11px;
-      border: none;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #D97706, #B45309);
-      color: #fff;
-      font-family: 'Outfit', sans-serif;
-      font-size: 0.88rem; font-weight: 700;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 7px;
-      transition: all 0.2s;
-      box-shadow: 0 3px 12px rgba(217,119,6,0.3);
-    }
-    .cocina-btn:hover:not(:disabled) { opacity: 0.9; }
-    .cocina-btn:disabled {
-      background: #E5E7EB;
-      color: #9CA3AF;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    /* ── MODAL CONFIRMACIÓN ─────────────────────────── */
-    .modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(6px);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 100;
-      opacity: 1;
-      transition: opacity 0.2s;
-    }
-    .modal-overlay.hidden { display: none; }
-
-    .modal-box {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 32px 28px 28px;
-      text-align: center;
-      max-width: 340px;
-      width: 92%;
-      box-shadow: 0 24px 60px rgba(0,0,0,0.6);
-      animation: slideUp 0.25s ease;
-    }
-    @keyframes slideUp {
-      from { transform: translateY(20px); opacity: 0; }
-      to   { transform: translateY(0); opacity: 1; }
-    }
-
-    .modal-check {
-      width: 72px; height: 72px;
-      background: rgba(34,197,94,0.15);
-      border: 2px solid var(--green);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 16px;
-      font-size: 2rem;
-    }
-
-    .modal-title  { font-size: 1.3rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
-    .modal-amount { font-size: 2.4rem; font-weight: 900; color: var(--green); margin: 8px 0 4px; }
-    .modal-method { font-size: 0.88rem; color: var(--muted); margin-bottom: 20px; }
-
-    .modal-new-btn {
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 12px;
-      background: var(--primary);
-      color: #fff;
-      font-family: 'Outfit', sans-serif;
-      font-size: 1rem; font-weight: 800;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      transition: all 0.15s;
-    }
-    .modal-new-btn:hover { background: #EA6C0C; }
-
-    /* ── BARRA DE TABS MÓVIL (solo <640px) ─────────────── */
-    .pos-mobile-tabs {
-      display: none;
-    }
-
-    @media (max-width: 639px) {
-
-      /* ─── Tab bar sticky ─── */
-      .pos-mobile-tabs {
-        display: flex;
-        background: var(--bg2);
-        border-bottom: 2px solid var(--border);
-        flex-shrink: 0;
+    /* ── Mobile overrides ────────────────────── */
+    @media(max-width:639px){
+      .pos-left{width:100%!important;border-right:none!important}
+      .pos-right{
+        width:100%!important;min-width:unset!important;
+        height:100%;display:flex;flex-direction:column;overflow:hidden;
       }
-
-      .pos-mtab {
-        flex: 1;
-        padding: 11px 8px;
-        border: none;
-        background: transparent;
-        font-family: 'Outfit', sans-serif;
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: var(--muted);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 7px;
-        border-bottom: 3px solid transparent;
-        transition: color 0.15s, border-color 0.15s;
+      .mobile-hidden{display:none!important}
+      .mobile-hidden-section{display:none!important}
+      /* En móvil la sección por cobrar ocupa todo el panel derecho */
+      .por-cobrar-section{
+        border-top:none;max-height:unset;flex:1 1 0;
       }
-
-      .pos-mtab.active {
-        color: var(--primary);
-        border-bottom-color: var(--primary);
-      }
-
-      .pos-mtab-badge {
-        background: var(--primary);
-        color: #fff;
-        font-size: 0.68rem;
-        font-weight: 800;
-        min-width: 20px;
-        height: 20px;
-        border-radius: 10px;
-        padding: 0 5px;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        line-height: 1;
-      }
-      .pos-mtab-badge.show { display: flex; }
-
-      /* ─── Root: ocupa el espacio restante tras header + tabs ─── */
-      .pos-root {
-        flex-direction: column;
-        flex: 1 1 0;   /* hereda del body flex column */
-        min-height: 0;
-        overflow: hidden;
-        height: auto;  /* body flex lo controla */
-      }
-
-      /* ─── Ambos paneles llenan el contenedor ─── */
-      .pos-left, .pos-right {
-        width: 100%;
-        height: 100%;
-        min-height: 0;
-        flex: 1 1 0;
-      }
-
-      /* ─── Panel de productos: scroll interno ─── */
-      .pos-left {
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        padding: 10px;
-        border-right: none;
-      }
-
-      /* ─── Panel del ticket: columna con fondo fijo abajo ─── */
-      .pos-right {
-        width: 100% !important;
-        min-width: unset !important;
-        border-left: none !important;
-        border-top: none !important;
-        box-shadow: none !important;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;  /* MUY importante: evita que el panel crezca */
-      }
-
-      /* ─── La lista de items: la única parte que hace scroll ─── */
-      .ticket-list {
-        flex: 1 1 0;          /* crece hasta el espacio disponible */
-        min-height: 0;        /* permite que flex shrink funcione  */
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        max-height: none !important;
-      }
-
-      /* ─── Sección de pago: NO hace scroll, siempre visible ─── */
-      .ticket-total,
-      .payment-section,
-      .cobrar-wrap {
-        flex-shrink: 0;       /* nunca se comprime */
-      }
-
-      /* ─── Tamaños touch-friendly en móvil ─── */
-      .pos-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-      .pos-btn  { padding: 12px 8px; min-height: 90px; }
-      .pos-btn-emoji { font-size: 1.7rem; }
-
-      /* Botones de cantidad más grandes */
-      .qty-btn  { width: 36px; height: 36px; font-size: 1.1rem; }
-
-      /* Total más compacto */
-      .ticket-total { padding: 8px 14px; }
-      .ticket-total-amount { font-size: 1.5rem; }
-
-      /* Métodos de pago: botones más altos para dedo */
-      .pay-btn { min-height: 56px; font-size: 0.78rem; }
-
-      /* Cobrar: grande y fácil de tocar */
-      .cobrar-btn { padding: 18px; font-size: 1.05rem; border-radius: 12px; }
-      .cobrar-wrap { padding: 8px 10px 12px; }
-
-      /* Ocultar panel inactivo */
-      .pos-left.mobile-hidden,
-      .pos-right.mobile-hidden { display: none !important; }
-
-    } /* fin @media 639px */
-
-    /* ── TABLET 640–900px: layout dos columnas ──── */
-    @media (min-width: 640px) and (max-width: 899px) {
-      .pos-grid  { grid-template-columns: repeat(2, 1fr); }
-      .pos-right { width: 290px; }
+      .new-order-section{flex:1 1 0}
+    }
+    @media(min-width:640px){
+      /* En desktop, por cobrar siempre visible */
+      .por-cobrar-section{display:flex!important}
     }
 
-    @media (min-width: 900px) {
-      .pos-grid  { grid-template-columns: repeat(2, 1fr); }
-      .pos-right { width: 340px; }
+    /* ── Modal precio libre ──────────────────── */
+    .modal-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);
+      display:flex;align-items:center;justify-content:center;z-index:100;
+    }
+    .modal-overlay.hidden{display:none}
+    .modal-box{
+      background:var(--bg2);border-radius:18px;padding:24px;
+      width:min(340px,90vw);box-shadow:0 20px 60px rgba(0,0,0,0.25);
+      display:flex;flex-direction:column;align-items:center;gap:12px;
+    }
+    .price-modal-emoji{font-size:2.5rem}
+    .price-modal-title{font-size:1.1rem;font-weight:800}
+    .price-modal-input{
+      width:100%;padding:12px;border:2px solid var(--border);border-radius:12px;
+      font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:800;
+      text-align:center;outline:none;
+    }
+    .price-modal-input:focus{border-color:var(--primary)}
+    .price-modal-actions{display:flex;gap:8px;width:100%}
+    .price-modal-cancel{
+      flex:1;padding:12px;border:2px solid var(--border);border-radius:12px;
+      background:var(--bg3);font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;
+    }
+    .price-modal-confirm{
+      flex:2;padding:12px;border:none;border-radius:12px;
+      background:linear-gradient(135deg,var(--primary),#A83D27);
+      color:#fff;font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:800;cursor:pointer;
     }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
+  <!-- ── Header ──────────────────────────────────────────────── -->
   <header class="pos-bar">
     <div class="pos-bar-left">
       <div class="pos-logo">🔥</div>
@@ -695,7 +354,7 @@
     </div>
     <div class="pos-bar-right">
       <span class="pos-clock" id="posClock">--:--</span>
-      <a href="/cocina" class="pos-bar-action" title="Ir a Cocina" style="color:#D97706;">
+      <a href="/cocina" class="pos-bar-action" style="color:#D97706;">
         <i class="fa-solid fa-fire-burner"></i>
         <span class="pos-logout-text">Cocina</span>
       </a>
@@ -706,255 +365,149 @@
     </div>
   </header>
 
-  <!-- Barra de tabs (solo visible en móvil <640px) -->
+  <!-- ── Layout principal ─────────────────────────────────────── -->
+  <div class="pos-root">
+
+    <!-- Panel izquierdo: productos -->
+    <div class="pos-left" id="posLeftPanel">
+      <div class="pos-products-grid" id="posProductsGrid">
+        <!-- renderizado por caja.js -->
+      </div>
+    </div>
+
+    <!-- Panel derecho: nueva orden + por cobrar -->
+    <div class="pos-right" id="posRightPanel">
+
+      <!-- ── Sección: Nueva Orden ── -->
+      <div class="new-order-section" id="newOrderSection">
+
+        <!-- Nombre + tipo -->
+        <div class="order-meta-bar">
+          <div class="client-name-label">
+            <i class="fa-solid fa-user"></i> Nombre del cliente <span class="req">*</span>
+          </div>
+          <input type="text" id="clientNameInput" class="client-name-input"
+            placeholder="Juan, Mesa 3, Para llevar..." autocomplete="off" maxlength="40">
+
+          <div class="order-type-toggle">
+            <button id="btnTypeAqui" class="order-type-btn active" onclick="setOrderType('aqui')">
+              <i class="fa-solid fa-utensils"></i> Aquí
+            </button>
+            <button id="btnTypeLlevar" class="order-type-btn llevar" onclick="setOrderType('llevar')">
+              <i class="fa-solid fa-bag-shopping"></i> Para Llevar
+            </button>
+          </div>
+        </div>
+
+        <!-- Ticket -->
+        <div class="ticket-list" id="ticketList">
+          <div class="ticket-empty">
+            <i class="fa-regular fa-receipt"></i>
+            <span>Ticket vacío<br>Toca un producto</span>
+          </div>
+        </div>
+
+        <!-- Total -->
+        <div class="ticket-total-bar">
+          <span class="ticket-total-label">Total</span>
+          <span class="ticket-total-amount" id="ticketTotal">$0</span>
+        </div>
+
+        <!-- Botón Enviar a Cocina -->
+        <div class="enviar-wrap">
+          <button class="enviar-btn" id="enviarCocinaBtn" onclick="sendToKitchenPrimary()" disabled>
+            <i class="fa-solid fa-fire-burner"></i>
+            Enviar a Cocina
+          </button>
+        </div>
+
+      </div><!-- /new-order-section -->
+
+      <!-- ── Sección: Por Cobrar ── -->
+      <div class="por-cobrar-section" id="porCobrarSection">
+
+        <div class="por-cobrar-header">
+          <span class="por-cobrar-title">
+            <i class="fa-solid fa-coins"></i>
+            Por Cobrar
+            <span class="por-cobrar-count" id="porCobrarCount">0</span>
+          </span>
+        </div>
+
+        <!-- Lista de órdenes pendientes -->
+        <div class="pending-orders-list" id="pendingOrdersList">
+          <div class="pending-empty">
+            <i class="fa-solid fa-check-circle"></i>
+            <span>Sin órdenes pendientes</span>
+          </div>
+        </div>
+
+        <!-- Panel de cobro al seleccionar una orden -->
+        <div class="pending-pay-section hidden" id="pendingPaySection">
+          <div class="pending-pay-who">
+            Cobrar a: <strong id="payOrderName">—</strong>
+            &nbsp;·&nbsp; <span id="payOrderTotal" style="color:var(--primary);font-weight:800">$0</span>
+          </div>
+          <div class="pending-pay-btns">
+            <button id="pendPayEfectivo" class="pending-pay-btn active"
+              onclick="selectPendingPayment('efectivo',this)">
+              <i class="fa-solid fa-money-bills"></i> Efectivo
+            </button>
+            <button id="pendPayTarjeta" class="pending-pay-btn"
+              onclick="selectPendingPayment('tarjeta',this)">
+              <i class="fa-solid fa-credit-card"></i> Tarjeta
+            </button>
+            <button id="pendPayTransferencia" class="pending-pay-btn"
+              onclick="selectPendingPayment('transferencia',this)">
+              <i class="fa-solid fa-mobile-screen-button"></i> Transfer
+            </button>
+          </div>
+          <button class="cobrar-pendiente-btn" id="cobrarPendienteBtn" onclick="collectPayment()">
+            <i class="fa-solid fa-circle-check"></i>
+            <span id="cobrarPendienteLabel">Cobrar</span>
+          </button>
+        </div>
+
+      </div><!-- /por-cobrar-section -->
+
+    </div><!-- /pos-right -->
+
+  </div><!-- /pos-root -->
+
+  <!-- ── Tab bar móvil (3 tabs) ──────────────────────────────── -->
   <div class="pos-mobile-tabs" id="posMobileTabs">
     <button class="pos-mtab active" id="mtabProductos" onclick="switchMobileTab('productos')">
-      <i class="fa-solid fa-bowl-food"></i>
-      Productos
+      <i class="fa-solid fa-grid-2"></i>
+      <span>Productos</span>
     </button>
     <button class="pos-mtab" id="mtabTicket" onclick="switchMobileTab('ticket')">
       <i class="fa-solid fa-receipt"></i>
-      Ticket
+      <span>Orden</span>
       <span class="pos-mtab-badge" id="mtabBadge">0</span>
+    </button>
+    <button class="pos-mtab" id="mtabCobrar" onclick="switchMobileTab('cobrar')">
+      <i class="fa-solid fa-coins"></i>
+      <span>Cobrar</span>
+      <span class="pos-mtab-badge cobrar-badge" id="mtabCobrarBadge">0</span>
     </button>
   </div>
 
-  <!-- Layout principal -->
-  <div class="pos-root">
-
-    <!-- PANEL: Productos -->
-    <div class="pos-left" id="posLeftPanel">
-      <p class="pos-section-label">Toca para agregar al ticket</p>
-      <div class="pos-grid" id="posProductsGrid">
-        <!-- Renderizado por caja.js -->
-      </div>
-    </div>
-
-    <!-- PANEL: Ticket -->
-    <div class="pos-right" id="posRightPanel">
-
-      <div class="ticket-head">
-        <span class="ticket-head-title">
-          <i class="fa-solid fa-receipt"></i> Ticket actual
-        </span>
-        <button class="ticket-clear" onclick="clearTicket()">
-          <i class="fa-solid fa-xmark"></i> Vaciar
-        </button>
-      </div>
-
-      <div class="ticket-list" id="ticketList">
-        <div class="ticket-empty">
-          <i class="fa-regular fa-receipt"></i>
-          <span>Ticket vacío<br>Toca un producto</span>
-        </div>
-      </div>
-
-      <div class="ticket-total">
-        <span class="ticket-total-label">Total</span>
-        <span class="ticket-total-amount" id="ticketTotal">$0</span>
-      </div>
-
-      <!-- Método de pago -->
-      <div class="payment-section">
-        <p class="payment-label">Forma de pago</p>
-        <div class="payment-btns">
-          <button class="pay-btn active" id="payEfectivo" onclick="selectPayment('efectivo', this)">
-            <i class="fa-solid fa-money-bills"></i>
-            Efectivo
-          </button>
-          <button class="pay-btn" id="payTarjeta" onclick="selectPayment('tarjeta', this)">
-            <i class="fa-solid fa-credit-card"></i>
-            Tarjeta
-          </button>
-          <button class="pay-btn" id="payTransfer" onclick="selectPayment('transferencia', this)">
-            <i class="fa-solid fa-mobile-screen-button"></i>
-            Transfer
-          </button>
-        </div>
-      </div>
-
-      <!-- Campo de nombre del cliente -->
-      <div class="client-name-wrap" id="clientNameWrap">
-        <label class="client-name-label" for="clientNameInput">
-          <i class="fa-solid fa-user"></i> Nombre del cliente (opcional)
-        </label>
-        <input
-          type="text"
-          id="clientNameInput"
-          class="client-name-input"
-          placeholder="Ej: Juan, Mesa 3, Para llevar..."
-          autocomplete="off"
-          maxlength="40"
-        >
-      </div>
-
-      <!-- Cobrar + Enviar a Cocina -->
-      <div class="cobrar-wrap">
-        <button class="cobrar-btn" id="cobrarBtn" onclick="completeSale()" disabled>
-          <i class="fa-solid fa-circle-check"></i>
-          <span id="cobrarLabel">Cobrar $0</span>
-        </button>
-        <button class="cocina-btn" id="cocinaBtnOnly" onclick="sendToKitchenOnly()" disabled title="Enviar a cocina sin cobrar todavía">
-          <i class="fa-solid fa-fire-burner"></i>
-          <span>Solo Cocina</span>
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Modal de confirmación de venta -->
-  <div class="modal-overlay hidden" id="posModal">
-    <div class="modal-box">
-      <div class="modal-check">✅</div>
-      <h2 class="modal-title">¡Venta registrada!</h2>
-      <div class="modal-amount" id="modalAmount">$0</div>
-      <p class="modal-method" id="modalMethod">💵 Efectivo</p>
-      <button class="modal-new-btn" onclick="closeModal()">
-        <i class="fa-solid fa-plus"></i> Siguiente cliente
-      </button>
-    </div>
-  </div>
-
-  <!-- Modal de precio libre (Menudo Suelto / Barbacoa Suelta) -->
+  <!-- ── Modal precio libre ───────────────────────────────────── -->
   <div class="modal-overlay hidden" id="priceModal" onclick="closePriceModal(event)">
-    <div class="modal-box price-modal-box">
-      <p class="price-modal-label">
-        <span class="price-modal-emoji" id="priceModalEmoji">🍲</span>
-        <span id="priceModalLabel">Menudo Suelto — ingresa el precio</span>
-      </p>
-      <div class="price-modal-input-wrap">
-        <span class="price-modal-currency">$</span>
-        <input
-          type="number"
-          id="priceModalInput"
-          class="price-modal-input"
-          inputmode="decimal"
-          min="1"
-          step="1"
-          placeholder="0"
-          onkeydown="if(event.key==='Enter') confirmPriceModal()"
-        >
-      </div>
-      <div class="price-modal-btns">
-        <button class="price-modal-cancel" onclick="closePriceModal()">Cancelar</button>
-        <button class="price-modal-confirm" onclick="confirmPriceModal()">
-          <i class="fa-solid fa-plus"></i> Agregar
-        </button>
+    <div class="modal-box">
+      <div class="price-modal-emoji" id="priceModalEmoji">🍲</div>
+      <div class="price-modal-title" id="priceModalLabel">Precio libre</div>
+      <input type="number" id="priceModalInput" class="price-modal-input"
+        placeholder="$ precio" min="1" step="0.5"
+        onkeydown="if(event.key==='Enter')confirmPriceModal()">
+      <div class="price-modal-actions">
+        <button class="price-modal-cancel" onclick="closePriceModal({target:document.getElementById('priceModal')})">Cancelar</button>
+        <button class="price-modal-confirm" onclick="confirmPriceModal()">Agregar al ticket</button>
       </div>
     </div>
   </div>
 
-  <style>
-    /* ── Modal de precio libre ─────────────────────────── */
-    .price-modal-box {
-      padding: 24px 20px 20px;
-      max-width: 300px;
-      text-align: center;
-    }
-
-    .price-modal-label {
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .price-modal-emoji { font-size: 1.5rem; }
-
-    .price-modal-input-wrap {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      background: var(--bg);
-      border: 2px solid var(--primary);
-      border-radius: 14px;
-      padding: 8px 16px;
-      margin-bottom: 16px;
-    }
-
-    .price-modal-currency {
-      font-size: 1.6rem;
-      font-weight: 900;
-      color: var(--primary);
-    }
-
-    .price-modal-input {
-      font-family: 'Outfit', sans-serif;
-      font-size: 2rem;
-      font-weight: 900;
-      color: var(--primary);
-      background: transparent;
-      border: none;
-      outline: none;
-      width: 110px;
-      text-align: left;
-      -moz-appearance: textfield;
-    }
-    .price-modal-input::-webkit-outer-spin-button,
-    .price-modal-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
-    .price-modal-btns {
-      display: flex;
-      gap: 10px;
-    }
-
-    .price-modal-cancel {
-      flex: 1;
-      padding: 12px;
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      background: var(--bg);
-      color: var(--muted);
-      font-family: 'Outfit', sans-serif;
-      font-size: 0.9rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: border-color 0.15s;
-    }
-    .price-modal-cancel:hover { border-color: var(--muted); }
-
-    .price-modal-confirm {
-      flex: 2;
-      padding: 12px;
-      border: none;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #C84B31, #E06043);
-      color: #fff;
-      font-family: 'Outfit', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 800;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: opacity 0.15s;
-    }
-    .price-modal-confirm:hover { opacity: 0.9; }
-
-    /* Botón Menudo Suelto — borde punteado para indicar precio libre */
-    .pos-btn-libre {
-      border-style: dashed !important;
-      border-color: var(--primary) !important;
-    }
-    .pos-btn-libre .pos-btn-emoji { opacity: 0.85; }
-    .pos-btn-libre .pos-btn-name  { color: var(--primary); }
-    .pos-btn-libre .pos-btn-price { color: var(--muted); font-size: 0.65rem; font-weight: 600; }
-
-    /* Barbacoa Suelta: borde dorado cálido para diferenciar */
-    .pos-btn-libre-barb {
-      border-color: #D97706 !important;
-    }
-    .pos-btn-libre-barb .pos-btn-name { color: #D97706; }
-  </style>
-
-  <script src="data.js?v=20260830"></script>
-  <script src="caja.js?v=20260830"></script>
+  <script src="data.js?v=20260902"></script>
+  <script src="caja.js?v=20260902"></script>
 </body>
 </html>

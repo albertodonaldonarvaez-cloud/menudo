@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fondo -->
+  <rect width="512" height="512" rx="96" fill="#C84B31"/>
+  <!-- Cuenco -->
+  <ellipse cx="256" cy="310" rx="140" ry="36" fill="#FFE5B4"/>
+  <path d="M116 310 Q116 420 256 420 Q396 420 396 310 Z" fill="#FFE5B4"/>
+  <!-- Vapor 1 -->
+  <path d="M200 270 Q195 240 205 215 Q215 190 210 165" stroke="white" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <!-- Vapor 2 -->
+  <path d="M256 260 Q251 230 261 205 Q271 180 266 155" stroke="white" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <!-- Vapor 3 -->
+  <path d="M312 270 Q307 240 317 215 Q327 190 322 165" stroke="white" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <!-- Texto POS -->
+  <text x="256" y="390" font-family="Arial Black,sans-serif" font-size="72" font-weight="900" text-anchor="middle" fill="#C84B31">POS</text>
+</svg>
