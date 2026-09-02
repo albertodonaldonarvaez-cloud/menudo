@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🍳 Cocina</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#F0F2F5;--bg2:#FFFFFF;--border:#E2E4EC;--text:#1F2937;
+      --muted:#6B7280;--primary:#C84B31;--green:#16A34A;
+      --amber:#D97706;--blue:#2563EB;--red:#DC2626;
+      --shadow:0 2px 12px rgba(0,0,0,0.08);
+    }
+    body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+
+    /* Header */
+    .cocina-header{background:#1E2022;color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .cocina-brand{font-size:1.1rem;font-weight:800;display:flex;align-items:center;gap:8px}
+    .cocina-meta{display:flex;align-items:center;gap:12px;font-size:0.82rem;color:#9CA3AF}
+    .cocina-clock{font-size:1rem;font-weight:700;color:#fff}
+    .cocina-refresh-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+    .btn-exit{background:#374151;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-family:'Outfit',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+
+    /* Tablero */
+    .cocina-board{flex:1 1 0;min-height:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:10px;overflow:hidden}
+    .board-col{background:var(--bg2);border-radius:14px;border:1.5px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+    .col-header{padding:10px 14px;font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .col-header .col-count{font-size:0.72rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(0,0,0,0.06)}
+    #colPendiente .col-header{background:#FEF3C7;color:#92400E;border-bottom:2px solid #FDE68A}
+    #colEnPrep .col-header{background:#DBEAFE;color:#1E3A8A;border-bottom:2px solid #BFDBFE}
+    #colListos .col-header{background:#D1FAE5;color:#065F46;border-bottom:2px solid #A7F3D0}
+    .col-body{flex:1 1 0;min-height:0;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:8px}
+    .col-empty{text-align:center;color:var(--muted);font-size:0.8rem;padding:24px 8px;opacity:0.6}
+
+    /* Tarjeta */
+    .order-card{background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;transition:box-shadow 0.2s}
+    .order-card:hover{box-shadow:var(--shadow)}
+    .order-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+    .order-num{font-size:0.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px}
+    .order-time{font-size:0.65rem;color:var(--muted)}
+    .order-time.late{color:var(--red);font-weight:700}
+    .order-client{font-size:1rem;font-weight:800;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:5px}
+    .order-items{list-style:none;margin-bottom:6px}
+    .order-items li{font-size:0.82rem;display:flex;align-items:center;padding:3px 0;border-bottom:1px solid var(--border);gap:8px}
+    .order-items li:last-child{border-bottom:none}
+    .order-item-qty{background:var(--text);color:#fff;font-size:0.7rem;font-weight:800;border-radius:6px;padding:1px 6px;flex-shrink:0}
+    .order-item-name{flex:1}
+    .order-total{font-size:0.75rem;font-weight:700;color:var(--muted);text-align:right;margin-bottom:7px}
+    .order-payment{font-size:0.68rem;color:var(--muted);text-align:right;margin-bottom:7px}
+
+    /* Acciones */
+    .order-actions{display:flex;gap:5px}
+    .order-btn{flex:1;padding:7px 4px;border:none;border-radius:9px;font-family:'Outfit',sans-serif;font-size:0.72rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:opacity 0.15s,transform 0.1s}
+    .order-btn:hover{opacity:0.85}
+    .order-btn:active{transform:scale(0.96)}
+    .btn-print{background:#F3F4F6;color:var(--text);border:1.5px solid var(--border);flex:0 0 auto;padding:7px 10px}
+    .btn-prep{background:var(--blue);color:#fff}
+    .btn-done{background:var(--green);color:#fff}
+    .btn-back{background:#F3F4F6;color:var(--muted);border:1.5px solid var(--border);flex:0 0 auto;padding:7px 10px}
+
+    /* Print */
+    #printArea{display:none}
+    @media print{
+      body>*:not(#printArea){display:none!important}
+      #printArea{display:block!important;width:80mm;font-family:'Courier New',monospace;font-size:10pt;color:#000;padding:4mm}
+      .print-header{text-align:center;margin-bottom:8pt}
+      .print-business{font-size:13pt;font-weight:bold}
+      .print-client{font-size:15pt;font-weight:bold;border:2px solid #000;padding:4pt;margin:6pt 0;text-align:center}
+      .print-divider{border-top:1px dashed #000;margin:4pt 0}
+      .print-row{display:flex;justify-content:space-between;font-size:10pt;margin:2pt 0}
+      .print-qty{font-weight:bold;min-width:20pt}
+      .print-total{text-align:right;font-size:12pt;font-weight:bold;margin-top:6pt}
+      .print-footer{text-align:center;font-size:8pt;margin-top:8pt}
+    }
+
+    @media(max-width:700px){
+      .cocina-board{grid-template-columns:1fr;overflow-y:auto}
+      .board-col{min-height:200px;overflow:visible}
+      .col-body{overflow:visible}
+    }
+  </style>
+</head>
+<body>
+
+  <header class="cocina-header">
+    <div class="cocina-brand">
+      <i class="fa-solid fa-fire-burner"></i>
+      <span id="cocinaBusName">Cocina</span>
+    </div>
+    <div class="cocina-meta">
+      <span class="cocina-refresh-dot" title="Auto-refrescando cada 8s"></span>
+      <span id="cocinaClock" class="cocina-clock">--:--</span>
+      <a href="/caja" class="btn-exit"><i class="fa-solid fa-cash-register"></i> Caja</a>
+      <a href="/admin.html" class="btn-exit"><i class="fa-solid fa-gear"></i></a>
+      <a href="/logout" class="btn-exit"><i class="fa-solid fa-right-from-bracket"></i></a>
+    </div>
+  </header>
+
+  <div class="cocina-board">
+    <div class="board-col" id="colPendiente">
+      <div class="col-header">
+        <span>🟡 Pendiente</span>
+        <span class="col-count" id="cntPendiente">0</span>
+      </div>
+      <div class="col-body" id="listPendiente">
+        <div class="col-empty">Sin órdenes pendientes</div>
+      </div>
+    </div>
+
+    <div class="board-col" id="colEnPrep">
+      <div class="col-header">
+        <span>🔵 En Preparación</span>
+        <span class="col-count" id="cntEnPrep">0</span>
+      </div>
+      <div class="col-body" id="listEnPrep">
+        <div class="col-empty">Nada en preparación</div>
+      </div>
+    </div>
+
+    <div class="board-col" id="colListos">
+      <div class="col-header">
+        <span>✅ Listos Hoy</span>
+        <span class="col-count" id="cntListos">0</span>
+      </div>
+      <div class="col-body" id="listListos">
+        <div class="col-empty">Nada listo aún</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="printArea"></div>
+
+  <script src="data.js?v=20260901"></script>
+  <script src="cocina.js?v=20260901"></script>
+</body>
+</html>

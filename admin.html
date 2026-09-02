@@ -21,6 +21,9 @@
       <span>Panel de Control</span>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
+      <a href="/cocina" class="btn-back-menu" style="background:#D97706;">
+        <i class="fa-solid fa-fire-burner"></i> Cocina
+      </a>
       <a href="/" class="btn-back-menu">
         <i class="fa-solid fa-eye"></i> Ver Menú
       </a>
@@ -90,6 +93,39 @@
           </button>
         </div>
       </form>
+
+      <!-- ── Productos Extra (dinámicos) ── -->
+      <div class="admin-panel-card" style="margin-top:24px;">
+        <div class="card-header-styled">
+          <h3><i class="fa-solid fa-plus-circle"></i> Productos Extra</h3>
+          <p>Agrega productos adicionales al menú sin tocar código. Aparecen en el menú público y en el POS.</p>
+        </div>
+
+        <!-- Lista actual -->
+        <div id="extraProductsList" style="margin-bottom:16px;"></div>
+
+        <!-- Formulario para agregar -->
+        <div class="promo-add-form" style="gap:10px;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <input type="text" id="extraEmoji" class="form-input"
+              placeholder="🍽️ Emoji" maxlength="4"
+              style="width:70px;flex-shrink:0;font-size:1.2rem;text-align:center;">
+            <input type="text" id="extraTitle" class="form-input"
+              placeholder="Nombre del producto *" style="flex:1;min-width:150px;">
+            <input type="number" id="extraPrice" class="form-input"
+              placeholder="Precio *" min="0" step="0.5" style="width:100px;flex-shrink:0;">
+            <input type="text" id="extraPriceNote" class="form-input"
+              placeholder="Nota precio (ej: la pieza)" style="width:140px;flex-shrink:0;">
+          </div>
+          <input type="text" id="extraDesc" class="form-input"
+            placeholder="Descripción (opcional)">
+          <div style="text-align:right;">
+            <button type="button" class="btn-primary" onclick="addExtraProduct()">
+              <i class="fa-solid fa-plus"></i> Agregar Producto
+            </button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- ════════════════════════════════════════════════════════ -->

@@ -18,6 +18,7 @@ const ROOT = __dirname;
 const CONFIG_FILE       = '/data/store_config.json';
 const TRANSACTIONS_FILE = '/data/transactions.json';
 const USERS_FILE        = '/data/users.json';
+const ORDERS_FILE       = '/data/orders.json';
 
 // ── Variables de entorno ─────────────────────────────────────
 const ADMIN_USER     = process.env.ADMIN_USER     || 'admin';
@@ -263,7 +264,7 @@ app.delete('/api/users/:username', requireAdmin, (req, res) => {
 });
 
 // ── API — Imágenes ────────────────────────────────────────────
-const VALID_IMG_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco'];
+const VALID_IMG_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco', 'cafe', 'pan'];
 
 app.post('/api/upload-image', requireAdmin, (req, res) => {
   try {
@@ -357,8 +358,120 @@ app.delete('/api/transactions/:id', requireAdmin, (req, res) => {
   }
 });
 
+// ── Módulo de Cocina ─────────────────────────────────────────
+app.get('/cocina',    requireAnyAuth, (req, res) => sendFile(res, 'cocina.html'));
+app.get('/cocina.js', requireAnyAuth, (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.sendFile(path.join(ROOT, 'cocina.js'));
+});
+
+// ── API — Órdenes de Cocina ───────────────────────────────────
+
+/**
+ * GET /api/orders
+ * Retorna órdenes activas (pendiente + en_prep) y las listas del día de hoy.
+ */
+app.get('/api/orders', requireAnyAuth, (req, res) => {
+  try {
+    const all = readJSON(ORDERS_FILE) || [];
+    const today = new Date().toISOString().slice(0, 10);
+    // Activas + listas de hoy (no más de 50 listas para no saturar)
+    const active = all.filter(o => o.status !== 'listo' && o.status !== 'archivado');
+    const doneToday = all
+      .filter(o => (o.status === 'listo' || o.status === 'archivado') && o.date === today)
+      .slice(-30);
+    res.set('Cache-Control', 'no-store');
+    res.json({ active, doneToday });
+  } catch (e) {
+    res.status(500).json({ error: 'No se pudo leer órdenes' });
+  }
+});
+
+/**
+ * POST /api/orders
+ * Crea una orden nueva desde el POS.
+ * Body: { clientName, items, total, paymentMethod }
+ */
+app.post('/api/orders', requireAnyAuth, (req, res) => {
+  try {
+    const { clientName, items, total, paymentMethod } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'La orden debe tener al menos un ítem' });
+    }
+    const all = readJSON(ORDERS_FILE) || [];
+
+    // Número consecutivo del día
+    const today = new Date().toISOString().slice(0, 10);
+    const todayOrders = all.filter(o => o.date === today);
+    const num = todayOrders.length + 1;
+
+    const order = {
+      id:            'ord_' + Date.now(),
+      num,
+      clientName:    (clientName || '').trim() || `Cliente #${num}`,
+      timestamp:     new Date().toISOString(),
+      date:          today,
+      status:        'pendiente',
+      items,
+      total:         Number(total) || 0,
+      paymentMethod: paymentMethod || null,
+      createdBy:     req.session.user || 'caja'
+    };
+
+    all.push(order);
+    writeJSON(ORDERS_FILE, all);
+    console.log(`[${new Date().toISOString()}] Orden ${order.id} | ${order.clientName} | $${order.total}`);
+    res.json({ ok: true, order });
+  } catch (e) {
+    console.error('Error orden:', e);
+    res.status(500).json({ error: 'No se pudo crear la orden' });
+  }
+});
+
+/**
+ * PATCH /api/orders/:id/status
+ * Cambia el estado de una orden.
+ * Body: { status: 'en_prep' | 'listo' | 'pendiente' }
+ */
+app.patch('/api/orders/:id/status', requireAnyAuth, (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const validStatuses = ['pendiente', 'en_prep', 'listo', 'archivado'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Estado inválido' });
+    }
+    const all = readJSON(ORDERS_FILE) || [];
+    const idx = all.findIndex(o => o.id === id);
+    if (idx < 0) return res.status(404).json({ error: 'Orden no encontrada' });
+
+    all[idx].status = status;
+    if (status === 'listo') all[idx].completedAt = new Date().toISOString();
+    writeJSON(ORDERS_FILE, all);
+    res.json({ ok: true, order: all[idx] });
+  } catch (e) {
+    res.status(500).json({ error: 'No se pudo actualizar la orden' });
+  }
+});
+
+/**
+ * DELETE /api/orders/clear-done
+ * Limpia órdenes archivadas de más de 3 días.
+ */
+app.delete('/api/orders/clear-done', requireAdmin, (req, res) => {
+  try {
+    const all = readJSON(ORDERS_FILE) || [];
+    const cutoff = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const kept = all.filter(o => !(o.status === 'archivado' && o.date < cutoff));
+    writeJSON(ORDERS_FILE, kept);
+    res.json({ ok: true, removed: all.length - kept.length });
+  } catch (e) {
+    res.status(500).json({ error: 'No se pudo limpiar' });
+  }
+});
+
 // ── Health check ──────────────────────────────────────────────
-app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '2.2' }));
+app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '2.3' }));
 
 // ── Archivos públicos del menú ────────────────────────────────
 ['index.html', 'app.js', 'data.js', 'styles.css'].forEach(file => {
@@ -377,11 +490,12 @@ app.use((req, res) => res.status(404).redirect('/'));
 app.listen(PORT, () => {
   const userCount = loadUsers().length;
   console.log('══════════════════════════════════════════');
-  console.log(`  🔥  Menú Digital v2.2 en :${PORT}`);
+  console.log(`  🔥  Menú Digital v2.3 en :${PORT}`);
   console.log(`  👤  Admin: ${ADMIN_USER}`);
   console.log(`  👥  Usuarios cajero en BD: ${userCount}`);
   console.log(`  📁  Config: ${CONFIG_FILE}`);
   console.log(`  🧾  Transacciones: ${TRANSACTIONS_FILE}`);
+  console.log(`  🍳  Órdenes cocina: ${ORDERS_FILE}`);
   console.log(`  🔑  Usuarios: ${USERS_FILE}`);
   console.log('══════════════════════════════════════════');
 });

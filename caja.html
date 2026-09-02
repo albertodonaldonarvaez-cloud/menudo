@@ -388,8 +388,46 @@
     }
     .pay-btn:not(.active):hover { border-color: var(--muted); color: var(--text); }
 
-    /* Botón cobrar */
-    .cobrar-wrap { padding: 10px; }
+    /* Campo nombre del cliente */
+    .client-name-wrap {
+      padding: 6px 10px 4px;
+      flex-shrink: 0;
+    }
+    .client-name-label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .client-name-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--bg2);
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .client-name-input:focus { border-color: var(--primary); }
+
+    /* Botón cobrar + botón solo cocina */
+    .cobrar-wrap {
+      padding: 6px 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
 
     .cobrar-btn {
       width: 100%;
@@ -417,6 +455,29 @@
     .cobrar-btn:hover:not(:disabled)::after { background: rgba(255,255,255,0.08); }
     .cobrar-btn:active:not(:disabled) { transform: scale(0.98); }
     .cobrar-btn:disabled {
+      background: #E5E7EB;
+      color: #9CA3AF;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* Botón "Solo Cocina" */
+    .cocina-btn {
+      width: 100%;
+      padding: 11px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #D97706, #B45309);
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.88rem; font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      transition: all 0.2s;
+      box-shadow: 0 3px 12px rgba(217,119,6,0.3);
+    }
+    .cocina-btn:hover:not(:disabled) { opacity: 0.9; }
+    .cocina-btn:disabled {
       background: #E5E7EB;
       color: #9CA3AF;
       cursor: not-allowed;
@@ -634,6 +695,10 @@
     </div>
     <div class="pos-bar-right">
       <span class="pos-clock" id="posClock">--:--</span>
+      <a href="/cocina" class="pos-bar-action" title="Ir a Cocina" style="color:#D97706;">
+        <i class="fa-solid fa-fire-burner"></i>
+        <span class="pos-logout-text">Cocina</span>
+      </a>
       <a href="/logout" class="pos-bar-action" title="Cerrar sesión">
         <i class="fa-solid fa-right-from-bracket"></i>
         <span class="pos-logout-text">Salir</span>
@@ -708,11 +773,30 @@
         </div>
       </div>
 
-      <!-- Cobrar -->
+      <!-- Campo de nombre del cliente -->
+      <div class="client-name-wrap" id="clientNameWrap">
+        <label class="client-name-label" for="clientNameInput">
+          <i class="fa-solid fa-user"></i> Nombre del cliente (opcional)
+        </label>
+        <input
+          type="text"
+          id="clientNameInput"
+          class="client-name-input"
+          placeholder="Ej: Juan, Mesa 3, Para llevar..."
+          autocomplete="off"
+          maxlength="40"
+        >
+      </div>
+
+      <!-- Cobrar + Enviar a Cocina -->
       <div class="cobrar-wrap">
         <button class="cobrar-btn" id="cobrarBtn" onclick="completeSale()" disabled>
           <i class="fa-solid fa-circle-check"></i>
           <span id="cobrarLabel">Cobrar $0</span>
+        </button>
+        <button class="cocina-btn" id="cocinaBtnOnly" onclick="sendToKitchenOnly()" disabled title="Enviar a cocina sin cobrar todavía">
+          <i class="fa-solid fa-fire-burner"></i>
+          <span>Solo Cocina</span>
         </button>
       </div>
 

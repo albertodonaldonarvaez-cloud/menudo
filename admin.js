@@ -477,7 +477,97 @@ function deletePromo(id) {
 }
 
 // ════════════════════════════════════════════════════════════════
-// TAB: ANALÍTICA DE VENTAS
+// TAB: PRODUCTOS EXTRA (dinámicos)
+// ════════════════════════════════════════════════════════════════
+function renderExtraProductsList() {
+  const container = document.getElementById('extraProductsList');
+  if (!container) return;
+  const extras = storeData.extraProducts || [];
+
+  if (extras.length === 0) {
+    container.innerHTML = '<p style="color:#9CA3AF;font-size:0.85rem;text-align:center;padding:16px">No hay productos extra. Agrega uno abajo ↓</p>';
+    return;
+  }
+
+  container.innerHTML = extras.map(ep => `
+    <div class="promo-row" id="extra-row-${ep.id}">
+      <span class="promo-row-emoji">${ep.emoji || '🍽️'}</span>
+      <div class="promo-row-info">
+        <strong>${ep.title}</strong>
+        <span>$${Number(ep.price).toLocaleString('es-MX')}${ep.priceNote ? ' ' + ep.priceNote : ''}</span>
+        ${ep.description ? `<em style="font-size:0.75rem;color:#6B7280">${ep.description}</em>` : ''}
+      </div>
+      <div class="promo-row-actions">
+        <label class="toggle-switch" title="${ep.enabled ? 'Desactivar' : 'Activar'}">
+          <input type="checkbox" ${ep.enabled ? 'checked' : ''} onchange="toggleExtraProduct('${ep.id}', this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+        <button class="btn-danger-sm" onclick="deleteExtraProduct('${ep.id}')">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addExtraProduct() {
+  const emojiEl = document.getElementById('extraEmoji');
+  const titleEl = document.getElementById('extraTitle');
+  const priceEl = document.getElementById('extraPrice');
+  const noteEl  = document.getElementById('extraPriceNote');
+  const descEl  = document.getElementById('extraDesc');
+
+  const emoji = emojiEl?.value.trim() || '🍽️';
+  const title = titleEl?.value.trim();
+  const price = parseFloat(priceEl?.value) || 0;
+  const note  = noteEl?.value.trim() || '';
+  const desc  = descEl?.value.trim() || '';
+
+  if (!title) { showToast('❌ Escribe el nombre del producto'); titleEl?.focus(); return; }
+  if (price <= 0) { showToast('❌ Agrega un precio mayor a $0'); priceEl?.focus(); return; }
+
+  if (!storeData.extraProducts) storeData.extraProducts = [];
+  storeData.extraProducts.push({
+    id:          'extra_' + Date.now(),
+    enabled:     true,
+    emoji,
+    title,
+    description: desc,
+    price,
+    priceNote:   note,
+    badge:       ''
+  });
+
+  saveStoreData();
+  renderExtraProductsList();
+  showToast(`✅ Producto "${title}" agregado`);
+
+  if (emojiEl) emojiEl.value = '';
+  if (titleEl) titleEl.value = '';
+  if (priceEl) priceEl.value = '';
+  if (noteEl)  noteEl.value  = '';
+  if (descEl)  descEl.value  = '';
+  titleEl?.focus();
+}
+
+function toggleExtraProduct(id, enabled) {
+  const ep = (storeData.extraProducts || []).find(e => e.id === id);
+  if (!ep) return;
+  ep.enabled = enabled;
+  saveStoreData();
+  showToast(enabled ? '✅ Producto activado' : 'Producto desactivado');
+}
+
+function deleteExtraProduct(id) {
+  const ep = (storeData.extraProducts || []).find(e => e.id === id);
+  if (!ep) return;
+  if (!confirm(`¿Eliminar el producto "${ep.title}"? Esta acción no se puede deshacer.`)) return;
+  storeData.extraProducts = storeData.extraProducts.filter(e => e.id !== id);
+  saveStoreData();
+  renderExtraProductsList();
+  showToast('Producto eliminado');
+}
+
 // ════════════════════════════════════════════════════════════════
 
 /** Carga transacciones del servidor y renderiza toda la analítica */
@@ -739,6 +829,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Promos
   renderPromosList();
+
+  // Productos extra dinámicos
+  renderExtraProductsList();
 
   // Usuarios
   loadUsersList();

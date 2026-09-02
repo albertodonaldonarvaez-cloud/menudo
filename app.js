@@ -148,6 +148,52 @@ function renderAllProducts() {
   PRODUCT_KEYS_PUBLIC.forEach(renderProductCard);
 }
 
+// ── Productos Extra (dinámicos) ───────────────────────────────
+function renderExtraProductsPublic() {
+  const extras = (storeData.extraProducts || []).filter(ep => ep.enabled);
+  // Agrega una sección al final del main para los extras activos
+  const existing = document.getElementById('section-extras');
+  if (!extras.length) {
+    if (existing) existing.style.display = 'none';
+    return;
+  }
+
+  let section = existing;
+  if (!section) {
+    section = document.createElement('section');
+    section.id = 'section-extras';
+    section.className = 'menu-section';
+    section.setAttribute('data-product', 'extras');
+    section.innerHTML = `
+      <div class="section-title">
+        <div class="title-left">
+          <h2><span class="section-emoji">🍽️</span> Más opciones</h2>
+          <p class="section-subtitle">Productos adicionales del día</p>
+        </div>
+      </div>
+      <div id="card-extras"></div>
+    `;
+    document.querySelector('main.main-content')?.appendChild(section);
+  }
+
+  section.style.display = '';
+  const container = document.getElementById('card-extras');
+  if (!container) return;
+
+  container.innerHTML = extras.map(ep => `
+    <article class="promo-pub-card">
+      <div class="promo-pub-icon">${ep.emoji || '🍽️'}</div>
+      <div class="promo-pub-body">
+        <div class="promo-pub-header">
+          <h3 class="promo-pub-title">${ep.title}</h3>
+          <span class="promo-pub-price">$${Number(ep.price).toLocaleString('es-MX')}${ep.priceNote ? ' <small>' + ep.priceNote + '</small>' : ''}</span>
+        </div>
+        ${ep.description ? `<p class="promo-pub-desc">${ep.description}</p>` : ''}
+      </div>
+    </article>
+  `).join('');
+}
+
 // ── Renderizado de Promos (array independiente) ──────────────
 function renderPromos() {
   const container = document.getElementById('card-promos');
@@ -224,6 +270,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateBusinessHeader();
   renderAllProducts();
   renderPromos();
+  renderExtraProductsPublic();
   updateStatusBadge();
   initCategoryNav();
 

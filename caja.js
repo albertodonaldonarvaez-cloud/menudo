@@ -85,6 +85,18 @@ function renderProductButtons() {
     `;
   }).join('');
 
+  // Productos extra dinámicos (creados desde Admin)
+  const extraProds = (storeConfig.extraProducts || DEFAULT_STORE_DATA.extraProducts || []).filter(ep => ep.enabled);
+  const extraBtns = extraProds.map(ep => `
+    <button class="pos-btn" id="posbtn-${ep.id}" onclick="addExtraToTicket('${ep.id}')">
+      <div class="pos-btn-qty-badge" id="posbadge-${ep.id}">0</div>
+      <div class="pos-btn-emoji">${ep.emoji || '🍽️'}</div>
+      <div class="pos-btn-name">${ep.title}</div>
+      <div class="pos-btn-price">$${Number(ep.price).toLocaleString('es-MX')}</div>
+      ${ep.priceNote ? `<div class="pos-btn-note">${ep.priceNote}</div>` : ''}
+    </button>
+  `).join('');
+
   // Botones de precio libre (Menudo Suelto + Barbacoa Suelta)
   const libreBtns = `
     <button class="pos-btn pos-btn-libre" onclick="openPriceModal('menudo')">
@@ -117,7 +129,7 @@ function renderProductButtons() {
     `).join('')}
   ` : '';
 
-  grid.innerHTML = productBtns + libreBtns + promoBtns;
+  grid.innerHTML = productBtns + extraBtns + libreBtns + promoBtns;
 }
 
 // ── Modal de precio libre ─────────────────────────────────────
@@ -227,6 +239,29 @@ function addPromoToTicket(id) {
   flashBtn(id);
 }
 
+function addExtraToTicket(id) {
+  const extras = storeConfig.extraProducts || DEFAULT_STORE_DATA.extraProducts || [];
+  const ep = extras.find(e => e.id === id);
+  if (!ep) return;
+
+  const existing = ticket.find(t => t.key === id);
+  if (existing) {
+    existing.qty++;
+  } else {
+    ticket.push({
+      key:      id,
+      title:    ep.title,
+      emoji:    ep.emoji || '🍽️',
+      price:    Number(ep.price) || 0,
+      priceNote: ep.priceNote || '',
+      qty:      1
+    });
+  }
+
+  renderTicket();
+  flashBtn(id);
+}
+
 function changeQty(key, delta) {
   const item = ticket.find(t => t.key === key);
   if (!item) return;
@@ -307,8 +342,10 @@ function renderTicket() {
     totalEl.classList.add('pop');
   }
 
-  // Botón cobrar
+  // Botón cobrar y botón cocina
   if (cobrarBtn) cobrarBtn.disabled = ticket.length === 0;
+  const cocinaBtnOnly = document.getElementById('cocinaBtnOnly');
+  if (cocinaBtnOnly) cocinaBtnOnly.disabled = ticket.length === 0;
   if (cobrarLbl) cobrarLbl.textContent = ticket.length
     ? `Cobrar $${total.toLocaleString('es-MX')}`
     : 'Cobrar $0';
@@ -325,6 +362,56 @@ function selectPayment(method, btn) {
   if (btn) btn.classList.add('active');
 }
 
+// ── Helpers de UI ─────────────────────────────────────────────
+function getClientName() {
+  return (document.getElementById('clientNameInput')?.value || '').trim();
+}
+
+// ── Cocina ────────────────────────────────────────────────────
+async function sendToKitchen(options = {}) {
+  const { paymentMethod: pm = null, registerSale = false } = options;
+  const items = ticket.map(t => ({
+    key:      t.key,
+    title:    t.title,
+    emoji:    t.emoji,
+    qty:      t.qty,
+    price:    t.price,
+    subtotal: t.price * t.qty
+  }));
+
+  await fetch('/api/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({
+      clientName:    getClientName(),
+      items,
+      total:         getTotal(),
+      paymentMethod: pm
+    })
+  }).catch(e => console.warn('Order sync error:', e));
+}
+
+/** Enviar a cocina sin cobrar (botón "Solo Cocina") */
+async function sendToKitchenOnly() {
+  if (ticket.length === 0) return;
+
+  const btn = document.getElementById('cocinaBtnOnly');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Enviando...'; }
+
+  await sendToKitchen({ registerSale: false });
+
+  // Feedback visual
+  if (btn) {
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Enviado a Cocina';
+    btn.style.background = '#16A34A';
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-fire-burner"></i> <span>Solo Cocina</span>';
+      btn.style.background = '';
+    }, 2000);
+  }
+}
+
 // ── Completar venta ───────────────────────────────────────────
 async function completeSale() {
   if (ticket.length === 0) return;
@@ -336,6 +423,7 @@ async function completeSale() {
     timestamp:     now.toISOString(),
     date:          now.toISOString().slice(0, 10),
     hour:          now.getHours(),
+    clientName:    getClientName() || null,
     items:         ticket.map(t => ({
       key:      t.key,
       title:    t.title,
@@ -347,7 +435,7 @@ async function completeSale() {
     paymentMethod
   };
 
-  // Enviar al servidor (sin bloquear la UI)
+  // Enviar transacción al servidor
   fetch('/api/transactions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -356,7 +444,10 @@ async function completeSale() {
     if (r.status === 401) window.location.href = '/login';
   }).catch(e => console.warn('Tx sync error:', e));
 
-  // Mostrar modal
+  // Enviar a cocina (asíncrono, sin bloquear)
+  sendToKitchen({ paymentMethod, registerSale: true });
+
+  // Mostrar modal de confirmación
   const methodIcons = { efectivo: '💵 Efectivo', tarjeta: '💳 Tarjeta', transferencia: '📱 Transferencia' };
   const amountEl = document.getElementById('modalAmount');
   const methodEl = document.getElementById('modalMethod');
@@ -370,6 +461,9 @@ async function completeSale() {
 function closeModal() {
   const modal = document.getElementById('posModal');
   if (modal) modal.classList.add('hidden');
+  // Limpiar nombre del cliente
+  const nameInput = document.getElementById('clientNameInput');
+  if (nameInput) nameInput.value = '';
   clearTicket();
 }
 

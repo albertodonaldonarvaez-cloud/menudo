@@ -104,6 +104,11 @@ const DEFAULT_STORE_DATA = {
   // Se crean y editan desde el Admin → pestaña Promos
   promos: [],
 
+  // ── Productos adicionales (dinámicos) ─────────────────────────
+  // Creados desde Admin → Productos → "+ Nuevo Producto"
+  // Cada uno tiene: id, enabled, emoji, title, description, price, priceNote, badge
+  extraProducts: [],
+
   // ── Historial de cortes de caja ───────────────────────────────
   caja: []
 };
