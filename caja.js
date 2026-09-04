@@ -90,15 +90,21 @@ function renderProductButtons() {
   if (!grid) return;
 
   const productBtns = PRODUCT_KEYS.map(key => {
-    const p = storeConfig.products?.[key] || DEFAULT_STORE_DATA.products[key];
+    const serverP  = storeConfig.products?.[key];
+    const defaultP = DEFAULT_STORE_DATA.products[key];
+    const p = serverP ? { ...defaultP, ...serverP } : defaultP;
     if (!p || p.enabled === false) return '';
+    const isKilo = defaultP?.calcMode === 'kilo';
     return `
-      <button class="pos-btn" id="posbtn-${key}" onclick="addToTicket('${key}')">
-        <div class="pos-btn-qty-badge" id="posbadge-${key}">0</div>
+      <button class="pos-btn${isKilo ? ' pos-btn-kilo' : ''}" id="posbtn-${key}" onclick="addToTicket('${key}')">
+        <div class="pos-btn-qty-badge${isKilo ? ' pos-btn-qty-libre' : ''}" id="posbadge-${key}">0</div>
         <div class="pos-btn-emoji">${p.emoji || '🍽️'}</div>
         <div class="pos-btn-name">${p.title}</div>
-        <div class="pos-btn-price">$${Number(p.price).toLocaleString('es-MX')}</div>
-        ${p.priceNote ? `<div class="pos-btn-note">${p.priceNote}</div>` : ''}
+        ${isKilo
+          ? `<div class="pos-btn-price pos-libre-label">🔢 $${Number(p.price).toLocaleString('es-MX')}/kg</div>`
+          : `<div class="pos-btn-price">$${Number(p.price).toLocaleString('es-MX')}</div>
+             ${p.priceNote ? `<div class="pos-btn-note">${p.priceNote}</div>` : ''}`
+        }
       </button>`;
   }).join('');
 
@@ -197,11 +203,15 @@ function updateLibreBadge() {
 
 // ── Ticket ────────────────────────────────────────────────────
 function addToTicket(key) {
-  const p = storeConfig.products?.[key] || DEFAULT_STORE_DATA.products[key];
+  const serverP  = storeConfig.products?.[key];
+  const defaultP = DEFAULT_STORE_DATA.products[key];
+  // Fusión: datos del servidor + propiedades de código (calcMode, etc.) del default
+  const p = serverP ? { ...defaultP, ...serverP } : defaultP;
   if (!p) return;
 
-  // Productos con calculadora especial
-  if (p.calcMode === 'kilo') {
+  // calcMode se lee siempre del DEFAULT (propiedad de código, no configurable por el admin)
+  const calcMode = defaultP?.calcMode;
+  if (calcMode === 'kilo') {
     openKiloModal(key);
     return;
   }
