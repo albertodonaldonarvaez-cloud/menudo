@@ -97,9 +97,9 @@ function initTabs() {
 // ════════════════════════════════════════════════════════════════
 const PRODUCT_NAMES = {
   menudo:      '🍲 Menudo Tradicional',
-  birria:      '🥩 Birria de Res',
-  tacos:       '🌮 Tacos de Birria',
-  quesadillas: '🧀 Quesadilla Gigante de Birria'
+  birria:      '🥩 Barbacoa × Kilo',
+  tacos:       '🌮 Tacos de Barbacoa',
+  quesadillas: '🧀 Quesadilla Gigante de Barbacoa'
 };
 
 function renderProductEditors() {
@@ -174,11 +174,13 @@ function toggleProductEnabled(key, enabled) {
 function saveProductosForm() {
   PRODUCT_KEYS.forEach(key => {
     const p = storeData.products[key];
+    if (!p) return;
     p.title       = document.getElementById(`pt-${key}`)?.value.trim() || p.title;
     p.price       = Number(document.getElementById(`pp-${key}`)?.value) || p.price;
     p.priceNote   = document.getElementById(`pn-${key}`)?.value.trim() || '';
     p.badge       = document.getElementById(`pb-${key}`)?.value.trim() || '';
     p.description = document.getElementById(`pd-${key}`)?.value.trim() || p.description;
+    // NOTA: p.image NO se toca aquí — se guarda directamente al subir la foto vía handleImageUpload
   });
   saveStoreData();
   showToast('✅ Productos guardados');
@@ -489,25 +491,74 @@ function renderExtraProductsList() {
     return;
   }
 
-  container.innerHTML = extras.map(ep => `
-    <div class="promo-row" id="extra-row-${ep.id}">
-      <span class="promo-row-emoji">${ep.emoji || '🍽️'}</span>
-      <div class="promo-row-info">
-        <strong>${ep.title}</strong>
-        <span>$${Number(ep.price).toLocaleString('es-MX')}${ep.priceNote ? ' ' + ep.priceNote : ''}</span>
-        ${ep.description ? `<em style="font-size:0.75rem;color:#6B7280">${ep.description}</em>` : ''}
-      </div>
-      <div class="promo-row-actions">
-        <label class="toggle-switch" title="${ep.enabled ? 'Desactivar' : 'Activar'}">
-          <input type="checkbox" ${ep.enabled ? 'checked' : ''} onchange="toggleExtraProduct('${ep.id}', this.checked)">
-          <span class="toggle-slider"></span>
-        </label>
-        <button class="btn-danger-sm" onclick="deleteExtraProduct('${ep.id}')">
-          <i class="fa-solid fa-trash"></i>
-        </button>
+  container.innerHTML = extras.map(ep => {
+    const imgSrc = ep.image || '';
+    return `
+    <div class="admin-panel-card" style="margin-bottom:14px;">
+      <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+        <!-- Foto -->
+        <div style="flex-shrink:0;">
+          ${imgSrc
+            ? `<img id="extprev-${ep.id}" src="${imgSrc}" alt="${ep.title}" style="width:72px;height:72px;border-radius:10px;object-fit:cover;border:2px solid #E2E4EC;"
+                onerror="this.style.display='none';document.getElementById('extprev-ph-${ep.id}').style.display='flex';">`
+            : ''}
+          <div id="extprev-ph-${ep.id}" style="display:${imgSrc ? 'none' : 'flex'};width:72px;height:72px;border-radius:10px;background:#F0F0F3;border:2px dashed #D1D5DB;align-items:center;justify-content:center;font-size:2rem;">${ep.emoji || '🍽️'}</div>
+        </div>
+        <!-- Info -->
+        <div style="flex:1;min-width:180px;">
+          <div style="font-weight:800;font-size:0.95rem;">${ep.emoji || ''} ${ep.title}</div>
+          <div style="font-size:0.8rem;color:#C84B31;font-weight:700;">$${Number(ep.price).toLocaleString('es-MX')}${ep.priceNote ? ' <span style="color:#6B7280;font-weight:400;">' + ep.priceNote + '</span>' : ''}</div>
+          ${ep.badge ? `<div style="font-size:0.72rem;color:#7C3AED;margin-top:2px;">${ep.badge}</div>` : ''}
+          ${ep.description ? `<div style="font-size:0.72rem;color:#6B7280;margin-top:2px;">${ep.description}</div>` : ''}
+        </div>
+        <!-- Controles -->
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+          <div style="display:flex;gap:6px;align-items:center;">
+            <label class="toggle-switch" title="${ep.enabled ? 'Desactivar' : 'Activar'}">
+              <input type="checkbox" ${ep.enabled ? 'checked' : ''} onchange="toggleExtraProduct('${ep.id}', this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+            <button class="btn-danger-sm" onclick="deleteExtraProduct('${ep.id}')">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+          <label class="btn-upload-file" style="font-size:0.72rem;padding:5px 10px;" title="Subir foto">
+            <i class="fa-solid fa-camera"></i> Foto
+            <input type="file" accept="image/*" onchange="handleExtraImageUpload(event,'${ep.id}')" style="display:none;">
+          </label>
+        </div>
       </div>
     </div>
-  `).join('');
+  `}).join('');
+}
+
+async function handleExtraImageUpload(event, id) {
+  const file = event.target.files[0];
+  if (!file) return;
+  showToast('⏳ Procesando imagen...');
+  try {
+    const compressed = await compressImage(file, 1200, 1200, 0.82);
+    const dataUrl    = await blobToDataUrl(compressed);
+    const res = await fetch('/api/upload-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ key: id, image: dataUrl })
+    });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    // Actualizar en storeData
+    const ep = (storeData.extraProducts || []).find(e => e.id === id);
+    if (ep) {
+      ep.image = data.url + '?t=' + Date.now();
+      saveStoreData();
+    }
+    renderExtraProductsList();
+    showToast('✅ Foto del producto actualizada');
+  } catch (e) {
+    console.error(e);
+    showToast('❌ Error al subir imagen. Intenta de nuevo.');
+  }
 }
 
 function addExtraProduct() {
@@ -646,38 +697,71 @@ function renderProductBreakdown(txs) {
   if (!el) return;
   if (!txs.length) { el.innerHTML = '<p style="color:#9CA3AF;text-align:center;padding:16px;">Sin datos.</p>'; return; }
 
-  const totals = {};
-  const qtys   = {};
+  // Mapa de clave → { label, emoji, total, qty }
+  const byKey = {};
+
+  // Etiquetas para claves conocidas
+  const KNOWN_LABELS = {
+    menudo:      { label: 'Menudo Tradicional',   emoji: '🍲' },
+    birria:      { label: 'Barbacoa × Kilo',       emoji: '🥩' },
+    tacos:       { label: 'Tacos de Barbacoa',     emoji: '🌮' },
+    quesadillas: { label: 'Quesadilla de Barbacoa',emoji: '🧀' },
+    refresco:    { label: 'Refresco',              emoji: '🥤' },
+    cafe:        { label: 'Café de Olla',          emoji: '☕' },
+    pan:         { label: 'Pan de Dulce',          emoji: '🥐' },
+  };
+
   txs.forEach(t => {
     (t.items || []).forEach(item => {
-      totals[item.key] = (totals[item.key] || 0) + (item.subtotal || 0);
-      qtys[item.key]   = (qtys[item.key]   || 0) + (item.qty     || 0);
+      const key = item.key || '';
+      // Normalizar clave para agrupación
+      let groupKey = key;
+      let label = item.title || key;
+      let emoji = item.emoji || '';
+
+      if (key.startsWith('menudo_libre')) {
+        groupKey = '__menudo_suelto';
+        label    = 'Menudo Suelto';
+        emoji    = '🍲';
+      } else if (key.startsWith('barb_libre') || key.startsWith('birria_kilo')) {
+        groupKey = '__barb_kilo';
+        label    = 'Barbacoa × Kilo';
+        emoji    = '🥩';
+      } else if (KNOWN_LABELS[key]) {
+        label = KNOWN_LABELS[key].label;
+        emoji = KNOWN_LABELS[key].emoji;
+      }
+      // extras y promos usan su propio key con el título del item
+
+      if (!byKey[groupKey]) byKey[groupKey] = { label, emoji, total: 0, qty: 0 };
+      byKey[groupKey].total += item.subtotal || (item.price * item.qty) || 0;
+      byKey[groupKey].qty   += item.qty || 0;
     });
   });
 
-  const grandTotal = Object.values(totals).reduce((s, v) => s + v, 0) || 1;
+  const entries = Object.values(byKey).filter(e => e.qty > 0);
+  if (!entries.length) { el.innerHTML = '<p style="color:#9CA3AF;text-align:center;padding:16px;">Sin datos de productos.</p>'; return; }
+
+  entries.sort((a, b) => b.total - a.total);
+  const grandTotal = entries.reduce((s, e) => s + e.total, 0) || 1;
   const sym = storeData.business?.currencySymbol || '$';
 
   el.innerHTML = `
     <div class="product-breakdown">
-      ${PRODUCT_KEYS.map(key => {
-        const p    = storeData.products?.[key];
-        const amt  = totals[key]  || 0;
-        const qty  = qtys[key]    || 0;
-        const pct  = Math.round((amt / grandTotal) * 100);
-        if (!qty) return '';
+      ${entries.map(e => {
+        const pct = Math.round((e.total / grandTotal) * 100);
         return `
           <div class="prod-breakdown-row">
             <div class="prod-breakdown-label">
-              <span>${p?.emoji || ''} ${p?.title || key}</span>
-              <span class="prod-breakdown-qty">${qty} uds.</span>
+              <span>${e.emoji} ${e.label}</span>
+              <span class="prod-breakdown-qty">${e.qty} uds.</span>
             </div>
             <div class="prod-breakdown-bar-wrap">
               <div class="prod-breakdown-bar" style="width:${pct}%"></div>
             </div>
             <div class="prod-breakdown-right">
               <span class="prod-breakdown-pct">${pct}%</span>
-              <span class="prod-breakdown-total">${sym}${amt.toLocaleString('es-MX')}</span>
+              <span class="prod-breakdown-total">${sym}${e.total.toLocaleString('es-MX')}</span>
             </div>
           </div>
         `;
@@ -864,11 +948,17 @@ function renderUsersList(users) {
   const container = document.getElementById('usersList');
   if (!container) return;
 
+  const ROLE_ICONS = {
+    cajero:  { icon: 'fa-cash-register', label: 'Cajero',  color: '#2563EB' },
+    mesero:  { icon: 'fa-utensils',      label: 'Mesero',  color: '#D97706' },
+    cocina:  { icon: 'fa-fire-burner',   label: 'Cocina',  color: '#C84B31' }
+  };
+
   if (!users.length) {
     container.innerHTML = `
       <div style="text-align:center;padding:32px;color:#9CA3AF;">
         <i class="fa-solid fa-user-slash" style="font-size:2rem;margin-bottom:8px;display:block;opacity:0.3;"></i>
-        Aún no hay usuarios de caja. Agrega uno arriba.
+        Aún no hay usuarios. Agrega uno arriba.
       </div>
     `;
     return;
@@ -878,17 +968,23 @@ function renderUsersList(users) {
     <div class="users-list-header">
       <span>Usuario</span>
       <span>Nombre</span>
+      <span>Rol</span>
       <span>Estado</span>
       <span>Creado</span>
       <span></span>
     </div>
-    ${users.map(u => `
+    ${users.map(u => {
+      const ri = ROLE_ICONS[u.role] || ROLE_ICONS.cajero;
+      return `
       <div class="user-row" id="userrow-${u.username}">
         <div class="user-row-username">
-          <i class="fa-solid fa-user-tie" style="color:#6B7280;"></i>
+          <i class="fa-solid ${ri.icon}" style="color:${ri.color};"></i>
           <strong>${u.username}</strong>
         </div>
         <div class="user-row-name">${u.name || '<span style="color:#9CA3AF;font-size:0.8rem;">Sin nombre</span>'}</div>
+        <div class="user-row-role">
+          <span style="background:${ri.color}18;color:${ri.color};font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:8px;">${ri.label}</span>
+        </div>
         <div class="user-row-status">
           <label class="switch-label" title="${u.active ? 'Activo' : 'Inactivo'}">
             <input type="checkbox" ${u.active ? 'checked' : ''}
@@ -907,7 +1003,7 @@ function renderUsersList(users) {
           </button>
         </div>
       </div>
-    `).join('')}
+    `}).join('')}
   `;
 }
 
@@ -915,10 +1011,12 @@ async function addUser() {
   const usernameEl = document.getElementById('newUsername');
   const nameEl     = document.getElementById('newUserName');
   const passwordEl = document.getElementById('newPassword');
+  const roleEl     = document.getElementById('newUserRole');
 
   const username = usernameEl?.value.trim();
   const name     = nameEl?.value.trim() || '';
   const password = passwordEl?.value;
+  const role     = roleEl?.value || 'cajero';
 
   if (!username) { showToast('❌ Escribe un nombre de usuario'); usernameEl?.focus(); return; }
   if (!password) { showToast('❌ Escribe una contraseña'); passwordEl?.focus(); return; }
@@ -927,15 +1025,16 @@ async function addUser() {
     const res = await fetch('/api/users', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ username, name, password })
+      body: JSON.stringify({ username, name, password, role })
     });
     const data = await res.json();
     if (!res.ok) { showToast(`❌ ${data.error}`); return; }
 
-    showToast(`✅ Usuario "${data.username}" creado`);
+    showToast(`✅ Usuario "${data.username}" creado (${data.role || role})`);
     if (usernameEl) usernameEl.value = '';
     if (nameEl)     nameEl.value     = '';
     if (passwordEl) passwordEl.value = '';
+    if (roleEl)     roleEl.value     = 'cajero';
     usernameEl?.focus();
     loadUsersList();
   } catch (e) {

@@ -507,6 +507,74 @@
     </div>
   </div>
 
+  <!-- ── Modal calculadora Barbacoa × Kilo ────────────────────── -->
+  <style>
+    .kilo-modal-box{max-width:360px;width:92vw;}
+    .kilo-product-name{font-size:1.05rem;font-weight:800;text-align:center;}
+    .kilo-price-ref{font-size:0.8rem;color:var(--muted);text-align:center;margin-top:2px;}
+    .kilo-mode-toggle{display:flex;gap:6px;width:100%;}
+    .kilo-mode-btn{
+      flex:1;padding:9px;border:2px solid var(--border);border-radius:10px;
+      background:#fff;font-family:'Outfit',sans-serif;font-size:0.8rem;font-weight:700;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;
+      color:var(--muted);transition:all 0.15s;
+    }
+    .kilo-mode-btn.active{border-color:var(--amber);background:#FFFBEB;color:var(--amber);}
+    .kilo-input-wrap{width:100%;position:relative;}
+    .kilo-input{
+      width:100%;padding:12px 44px 12px 12px;border:2px solid var(--border);border-radius:12px;
+      font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:800;
+      text-align:center;outline:none;
+    }
+    .kilo-input:focus{border-color:var(--amber);}
+    .kilo-input-unit{
+      position:absolute;right:12px;top:50%;transform:translateY(-50%);
+      font-size:0.85rem;font-weight:700;color:var(--muted);pointer-events:none;
+    }
+    .kilo-result{
+      font-size:1rem;font-weight:800;color:var(--green);text-align:center;
+      min-height:1.4em;
+    }
+  </style>
+
+  <div class="modal-overlay hidden" id="kiloModal" onclick="closeKiloModal(event)">
+    <div class="modal-box kilo-modal-box">
+      <div class="kilo-product-name" id="kiloProductName">🥩 Barbacoa × Kilo</div>
+      <div class="kilo-price-ref" id="kiloPricePerKg">$250 / kg</div>
+
+      <!-- Toggle kg / precio -->
+      <div class="kilo-mode-toggle">
+        <button id="kiloModeKg" class="kilo-mode-btn active" onclick="setKiloMode('kg')">
+          <i class="fa-solid fa-weight-hanging"></i> Ingresar kg
+        </button>
+        <button id="kiloModePrecio" class="kilo-mode-btn" onclick="setKiloMode('precio')">
+          <i class="fa-solid fa-dollar-sign"></i> Ingresar precio
+        </button>
+      </div>
+
+      <!-- Etiqueta dinámica -->
+      <div style="font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;width:100;" id="kiloInputLabel">Kilos a vender</div>
+
+      <!-- Input con unidad -->
+      <div class="kilo-input-wrap">
+        <input type="number" id="kiloInput" class="kilo-input"
+          placeholder="0" min="0" step="0.1"
+          oninput="updateKiloCalc()"
+          onkeydown="if(event.key==='Enter')confirmKiloModal()">
+        <span class="kilo-input-unit" id="kiloInputUnit">kg</span>
+      </div>
+
+      <!-- Resultado calculado -->
+      <div class="kilo-result" id="kiloResult"></div>
+
+      <!-- Acciones -->
+      <div class="price-modal-actions">
+        <button class="price-modal-cancel" onclick="closeKiloModal({target:document.getElementById('kiloModal')})">Cancelar</button>
+        <button class="price-modal-confirm" style="background:linear-gradient(135deg,var(--amber),#B45309);" onclick="confirmKiloModal()">Agregar al ticket</button>
+      </div>
+    </div>
+  </div>
+
   <script src="data.js?v=20260902"></script>
   <script src="caja.js?v=20260902"></script>
 </body>

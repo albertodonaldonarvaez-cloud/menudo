@@ -33,14 +33,15 @@ const DEFAULT_STORE_DATA = {
     },
 
     birria: {
-      enabled:   false,   // deshabilitado — menú cambió a barbacoa
+      enabled:   true,
       emoji:     '🥩',
-      title:     'Birria de Res',
-      description: 'Birria de res hecha en casa, cocida a fuego lento con especias y chiles tradicionales.',
-      price:     120,
-      priceNote: '',
-      badge:     '',
-      image:     ''
+      title:     'Barbacoa × Kilo',
+      description: 'Barbacoa estilo Hidalgo, vendida por kilo o fracción. Perfecta para llevar a casa o servir en grupo.',
+      price:     250,
+      priceNote: 'por kg',
+      badge:     '🏆 Especialidad de la casa',
+      calcMode:  'kilo',   // POS abre calculadora kg↔precio en lugar de agregar directo
+      image:     'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=900&q=80'
     },
 
     tacos: {

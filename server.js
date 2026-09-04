@@ -54,16 +54,16 @@ function saveUsers(users) {
  * Verifica credenciales. Retorna { role, username } o null.
  */
 function checkCredentials(user, password) {
-  // Admin siempre desde .env (no editable desde UI)
+  // Admin siempre desde .env
   if (user === ADMIN_USER && password === ADMIN_PASSWORD) {
     return { role: 'admin', username: user };
   }
-  // Usuarios cajero desde users.json
+  // Usuarios desde users.json (cajero / mesero / cocina)
   const users = loadUsers();
   const hashed = hashPassword(password);
   const found = users.find(u => u.username === user && u.passwordHash === hashed && u.active !== false);
   if (found) {
-    return { role: 'cajero', username: found.username };
+    return { role: found.role || 'cajero', username: found.username };
   }
   return null;
 }
@@ -92,6 +92,25 @@ function requireAnyAuth(req, res, next) {
   res.redirect('/login');
 }
 
+// requireCajaAccess: admin + cajero + mesero (NO cocina)
+function requireCajaAccess(req, res, next) {
+  if (!req.session?.authenticated) {
+    if (req.headers['accept']?.includes('application/json')) {
+      return res.status(401).json({ error: 'Sesión expirada.' });
+    }
+    return res.redirect('/login');
+  }
+  const role = req.session?.role;
+  if (role === 'cocina') {
+    // Usuario de cocina no tiene acceso al POS
+    if (req.headers['accept']?.includes('application/json')) {
+      return res.status(403).json({ error: 'Acceso no autorizado. Usa la pantalla de Cocina.' });
+    }
+    return res.redirect('/cocina');
+  }
+  next();
+}
+
 function requireAdmin(req, res, next) {
   if (req.session?.authenticated && req.session?.role === 'admin') return next();
   if (req.headers['accept']?.includes('application/json')) {
@@ -114,7 +133,10 @@ function sendFile(res, file, cache = false) {
 // ── Rutas de autenticación ───────────────────────────────────
 app.get('/login', (req, res) => {
   if (req.session?.authenticated) {
-    return res.redirect(req.session.role === 'cajero' ? '/caja' : '/admin.html');
+    const role = req.session.role;
+    if (role === 'admin') return res.redirect('/admin.html');
+    if (role === 'cocina') return res.redirect('/cocina');
+    return res.redirect('/caja');
   }
   noCache(res);
   res.sendFile(path.join(ROOT, 'login.html'));
@@ -127,7 +149,9 @@ app.post('/login', (req, res) => {
     req.session.authenticated = true;
     req.session.role = result.role;
     req.session.user = result.username;
-    return res.redirect(result.role === 'cajero' ? '/caja' : '/admin.html');
+    if (result.role === 'admin') return res.redirect('/admin.html');
+    if (result.role === 'cocina') return res.redirect('/cocina');
+    return res.redirect('/caja');
   }
   res.redirect('/login?error=1');
 });
@@ -144,9 +168,9 @@ app.get('/admin.js',   requireAdmin, (req, res) => {
   res.sendFile(path.join(ROOT, 'admin.js'));
 });
 
-// ── Caja POS (admin o cajero) ─────────────────────────────────
-app.get('/caja',    requireAnyAuth, (req, res) => sendFile(res, 'caja.html'));
-app.get('/caja.js', requireAnyAuth, (req, res) => {
+// ── Caja POS (admin + cajero + mesero, NO cocina) ─────────────
+app.get('/caja',    requireCajaAccess, (req, res) => sendFile(res, 'caja.html'));
+app.get('/caja.js', requireCajaAccess, (req, res) => {
   res.set('Cache-Control', 'no-store');
   res.sendFile(path.join(ROOT, 'caja.js'));
 });
@@ -160,16 +184,17 @@ app.get('/api/session', (req, res) => {
   });
 });
 
-// ── API — Usuarios cajero (solo admin) ───────────────────────
+// ── API — Usuarios (solo admin) ───────────────────────────────
 /**
  * GET /api/users
- * Lista de usuarios cajero (sin contraseñas).
+ * Lista de usuarios (sin contraseñas).
  */
 app.get('/api/users', requireAdmin, (req, res) => {
   const users = loadUsers().map(u => ({
-    username: u.username,
-    name:     u.name || '',
-    active:   u.active !== false,
+    username:  u.username,
+    name:      u.name || '',
+    role:      u.role || 'cajero',
+    active:    u.active !== false,
     createdAt: u.createdAt || ''
   }));
   res.json(users);
@@ -177,11 +202,11 @@ app.get('/api/users', requireAdmin, (req, res) => {
 
 /**
  * POST /api/users
- * Crea un nuevo usuario cajero.
- * Body: { username, password, name? }
+ * Crea un nuevo usuario.
+ * Body: { username, password, name?, role? }
  */
 app.post('/api/users', requireAdmin, (req, res) => {
-  const { username, password, name } = req.body;
+  const { username, password, name, role } = req.body;
 
   if (!username || !password) {
     return res.status(400).json({ error: 'Usuario y contraseña requeridos.' });
@@ -195,10 +220,12 @@ app.post('/api/users', requireAdmin, (req, res) => {
     return res.status(400).json({ error: 'La contraseña debe tener al menos 4 caracteres.' });
   }
 
-  // No puede usar el mismo username que el admin
   if (userClean === ADMIN_USER.toLowerCase()) {
     return res.status(400).json({ error: 'Ese nombre de usuario está reservado para el administrador.' });
   }
+
+  const validRoles = ['cajero', 'mesero', 'cocina'];
+  const userRole = validRoles.includes(role) ? role : 'cajero';
 
   const users = loadUsers();
   if (users.find(u => u.username === userClean)) {
@@ -209,7 +236,7 @@ app.post('/api/users', requireAdmin, (req, res) => {
     username:     userClean,
     name:         (name || '').trim(),
     passwordHash: hashPassword(password),
-    role:         'cajero',
+    role:         userRole,
     active:       true,
     createdAt:    new Date().toISOString().slice(0, 10)
   };
@@ -217,8 +244,8 @@ app.post('/api/users', requireAdmin, (req, res) => {
   users.push(newUser);
   saveUsers(users);
 
-  console.log(`[${new Date().toISOString()}] Usuario cajero creado: ${userClean} por ${req.session.user}`);
-  res.json({ ok: true, username: userClean });
+  console.log(`[${new Date().toISOString()}] Usuario [${userRole}] creado: ${userClean} por ${req.session.user}`);
+  res.json({ ok: true, username: userClean, role: userRole });
 });
 
 /**
@@ -266,10 +293,14 @@ app.delete('/api/users/:username', requireAdmin, (req, res) => {
 // ── API — Imágenes ────────────────────────────────────────────
 const VALID_IMG_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco', 'cafe', 'pan'];
 
+function isValidImgKey(key) {
+  return VALID_IMG_KEYS.includes(key) || /^extra_\d+$/.test(key);
+}
+
 app.post('/api/upload-image', requireAdmin, (req, res) => {
   try {
     const { key, image } = req.body;
-    if (!VALID_IMG_KEYS.includes(key) || !image) {
+    if (!isValidImgKey(key) || !image) {
       return res.status(400).json({ error: 'Clave o imagen inválida' });
     }
     const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
@@ -288,7 +319,7 @@ app.post('/api/upload-image', requireAdmin, (req, res) => {
 
 app.get('/images/:key', (req, res) => {
   const { key } = req.params;
-  if (!VALID_IMG_KEYS.includes(key)) return res.status(404).end();
+  if (!isValidImgKey(key)) return res.status(404).end();
   const imgPath = path.join('/data/images', `${key}.jpg`);
   if (!fs.existsSync(imgPath)) return res.status(404).end();
   res.set('Cache-Control', 'public, max-age=86400');

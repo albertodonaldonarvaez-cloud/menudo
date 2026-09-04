@@ -148,10 +148,9 @@ function renderAllProducts() {
   PRODUCT_KEYS_PUBLIC.forEach(renderProductCard);
 }
 
-// ── Productos Extra (dinámicos) ───────────────────────────────
+// ── Productos Extra (dinámicos) — misma apariencia que los fijos ─
 function renderExtraProductsPublic() {
   const extras = (storeData.extraProducts || []).filter(ep => ep.enabled);
-  // Agrega una sección al final del main para los extras activos
   const existing = document.getElementById('section-extras');
   if (!extras.length) {
     if (existing) existing.style.display = 'none';
@@ -180,18 +179,35 @@ function renderExtraProductsPublic() {
   const container = document.getElementById('card-extras');
   if (!container) return;
 
-  container.innerHTML = extras.map(ep => `
-    <article class="promo-pub-card">
-      <div class="promo-pub-icon">${ep.emoji || '🍽️'}</div>
-      <div class="promo-pub-body">
-        <div class="promo-pub-header">
-          <h3 class="promo-pub-title">${ep.title}</h3>
-          <span class="promo-pub-price">$${Number(ep.price).toLocaleString('es-MX')}${ep.priceNote ? ' <small>' + ep.priceNote + '</small>' : ''}</span>
+  // Cada extra product usa el mismo HTML que renderProductCard (product-card)
+  container.innerHTML = extras.map(ep => {
+    const imgSrc    = ep.image || '';
+    const priceHtml = fmt(ep.price, ep.priceNote);
+    const fallback  = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60'><rect width='100' height='60' fill='%23F0F0F3'/><text x='50' y='38' font-size='28' text-anchor='middle'>${encodeURIComponent(ep.emoji || '🍽️')}</text></svg>`;
+    return `
+      <article class="product-card">
+        <div class="product-card-img-wrap">
+          <img
+            class="product-card-img"
+            src="${imgSrc || fallback}"
+            alt="${ep.title}"
+            loading="lazy"
+            onerror="this.src='${fallback}'"
+          >
+          <div class="product-card-overlay"></div>
+          <div class="product-card-emoji">${ep.emoji || ''}</div>
         </div>
-        ${ep.description ? `<p class="promo-pub-desc">${ep.description}</p>` : ''}
-      </div>
-    </article>
-  `).join('');
+        <div class="product-card-body">
+          <div class="product-card-header">
+            <h2 class="product-card-title">${ep.title}</h2>
+            ${priceHtml ? `<div class="product-card-price">${priceHtml}</div>` : ''}
+          </div>
+          ${ep.badge ? `<span class="product-badge">${ep.badge}</span>` : ''}
+          <p class="product-card-desc">${ep.description || ''}</p>
+        </div>
+      </article>
+    `;
+  }).join('');
 }
 
 // ── Renderizado de Promos (array independiente) ──────────────

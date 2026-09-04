@@ -480,6 +480,14 @@
               <label><i class="fa-solid fa-id-card"></i> Nombre (opcional)</label>
               <input type="text" id="newUserName" class="form-input" placeholder="Juan López">
             </div>
+            <div class="field-item" style="flex:1; min-width:130px;">
+              <label><i class="fa-solid fa-shield-halved"></i> Rol</label>
+              <select id="newUserRole" class="form-input" style="cursor:pointer;">
+                <option value="cajero">🧾 Cajero — acceso POS + Cocina</option>
+                <option value="mesero">🍽️ Mesero — acceso POS + Cocina</option>
+                <option value="cocina">🔥 Cocina — solo pantalla Cocina</option>
+              </select>
+            </div>
             <div class="field-item" style="flex:1; min-width:140px;">
               <label><i class="fa-solid fa-lock"></i> Contraseña</label>
               <div class="pass-wrap">

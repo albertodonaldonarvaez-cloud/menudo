@@ -199,6 +199,13 @@ function updateLibreBadge() {
 function addToTicket(key) {
   const p = storeConfig.products?.[key] || DEFAULT_STORE_DATA.products[key];
   if (!p) return;
+
+  // Productos con calculadora especial
+  if (p.calcMode === 'kilo') {
+    openKiloModal(key);
+    return;
+  }
+
   const existing = ticket.find(t => t.key === key);
   if (existing) { existing.qty++; }
   else { ticket.push({ key, title: p.title, emoji: p.emoji || '', price: Number(p.price) || 0, priceNote: p.priceNote || '', qty: 1 }); }
@@ -499,6 +506,103 @@ function showPosToast(msg) {
   el.style.opacity = '1';
   clearTimeout(el._timer);
   el._timer = setTimeout(() => { el.style.opacity = '0'; }, 2500);
+}
+
+// ── Calculadora Barbacoa × Kilo ───────────────────────────────
+let _kiloProductKey  = 'birria';
+let _kiloMode        = 'kg';  // 'kg' | 'precio'
+
+function openKiloModal(key) {
+  _kiloProductKey = key;
+  _kiloMode       = 'kg';
+  const p         = storeConfig.products?.[key] || DEFAULT_STORE_DATA.products[key];
+  const modal     = document.getElementById('kiloModal');
+  if (!modal || !p) return;
+
+  document.getElementById('kiloProductName').textContent = `${p.emoji || '🥩'} ${p.title}`;
+  document.getElementById('kiloPricePerKg').textContent  = `$${Number(p.price).toLocaleString('es-MX')} / kg`;
+  document.getElementById('kiloInput').value = '';
+  document.getElementById('kiloResult').textContent = '';
+  document.getElementById('kiloModeKg').classList.add('active');
+  document.getElementById('kiloModePrecio').classList.remove('active');
+  document.getElementById('kiloInputLabel').textContent = 'Kilos a vender';
+  document.getElementById('kiloInputUnit').textContent  = 'kg';
+
+  modal.classList.remove('hidden');
+  setTimeout(() => document.getElementById('kiloInput')?.focus(), 100);
+}
+
+function closeKiloModal(e) {
+  if (!e || e.target === document.getElementById('kiloModal')) {
+    document.getElementById('kiloModal')?.classList.add('hidden');
+  }
+}
+
+function setKiloMode(mode) {
+  _kiloMode = mode;
+  const labelEl = document.getElementById('kiloInputLabel');
+  const unitEl  = document.getElementById('kiloInputUnit');
+  document.getElementById('kiloModeKg')?.classList.toggle('active',     mode === 'kg');
+  document.getElementById('kiloModePrecio')?.classList.toggle('active', mode === 'precio');
+  if (mode === 'kg') {
+    if (labelEl) labelEl.textContent = 'Kilos a vender';
+    if (unitEl)  unitEl.textContent  = 'kg';
+  } else {
+    if (labelEl) labelEl.textContent = 'Precio a cobrar ($)';
+    if (unitEl)  unitEl.textContent  = '$';
+  }
+  document.getElementById('kiloInput').value = '';
+  document.getElementById('kiloResult').textContent = '';
+}
+
+function updateKiloCalc() {
+  const p       = storeConfig.products?.[_kiloProductKey] || DEFAULT_STORE_DATA.products[_kiloProductKey];
+  const priceKg = Number(p?.price) || 250;
+  const val     = parseFloat(document.getElementById('kiloInput')?.value);
+  const resultEl = document.getElementById('kiloResult');
+  if (!resultEl) return;
+
+  if (!val || val <= 0) { resultEl.textContent = ''; return; }
+
+  if (_kiloMode === 'kg') {
+    const total = (val * priceKg);
+    resultEl.textContent = `→ Total: $${total % 1 === 0 ? total.toFixed(0) : total.toFixed(2)}`;
+  } else {
+    const grams = Math.round((val / priceKg) * 1000);
+    const kgDisplay = (val / priceKg).toFixed(3).replace(/\.?0+$/, '');
+    resultEl.textContent = `→ ${grams} gramos (${kgDisplay} kg)`;
+  }
+}
+
+function confirmKiloModal() {
+  const p       = storeConfig.products?.[_kiloProductKey] || DEFAULT_STORE_DATA.products[_kiloProductKey];
+  const priceKg = Number(p?.price) || 250;
+  const val     = parseFloat(document.getElementById('kiloInput')?.value);
+  if (!val || val <= 0) { document.getElementById('kiloInput')?.focus(); return; }
+
+  let finalPrice, label;
+  if (_kiloMode === 'kg') {
+    finalPrice = val * priceKg;
+    const kgStr = val % 1 === 0 ? val.toFixed(0) : val.toFixed(3).replace(/\.?0+$/, '');
+    label = `${p.title} (${kgStr} kg)`;
+  } else {
+    finalPrice = val;
+    const grams = Math.round((val / priceKg) * 1000);
+    label = `${p.title} (${grams} g)`;
+  }
+
+  ticket.push({
+    key:       _kiloProductKey + '_kilo_' + Date.now(),
+    title:     label,
+    emoji:     p.emoji || '🥩',
+    price:     parseFloat(finalPrice.toFixed(2)),
+    priceNote: '',
+    qty:       1
+  });
+
+  document.getElementById('kiloModal')?.classList.add('hidden');
+  renderTicket();
+  if (window.innerWidth < 640) switchMobileTab('ticket');
 }
 
 // ── Init ──────────────────────────────────────────────────────
