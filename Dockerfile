@@ -12,17 +12,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --omit=dev
 
-# Copiar el servidor y archivos estáticos
-COPY server.js     .
-COPY index.html    .
-COPY admin.html    .
-COPY caja.html     .
-COPY login.html    .
-COPY app.js        .
-COPY admin.js      .
-COPY caja.js       .
-COPY data.js       .
-COPY styles.css    .
+# Copiar el código fuente completo
+COPY . .
 
 # Directorio de datos persistentes (se monta como volumen)
 RUN mkdir -p /data
