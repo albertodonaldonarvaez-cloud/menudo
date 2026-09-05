@@ -5,7 +5,7 @@
  * Offline fallback para el POS.
  */
 
-const CACHE_NAME  = 'menudo-pos-v1';
+const CACHE_NAME  = 'menudo-pos-v5';
 const STATIC_URLS = [
   '/caja',
   '/caja.js',
