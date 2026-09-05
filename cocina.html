@@ -32,48 +32,61 @@
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
     .btn-exit{background:#374151;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-family:'Outfit',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
 
-    /* Tablero */
-    .cocina-board{flex:1 1 0;min-height:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:10px;overflow:hidden}
-    .board-col{background:var(--bg2);border-radius:14px;border:1.5px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-    .col-header{padding:10px 14px;font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-    .col-header .col-count{font-size:0.72rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(0,0,0,0.06)}
-    #colPendiente .col-header{background:#FEF3C7;color:#92400E;border-bottom:2px solid #FDE68A}
-    #colEnPrep .col-header{background:#DBEAFE;color:#1E3A8A;border-bottom:2px solid #BFDBFE}
-    #colListos .col-header{background:#D1FAE5;color:#065F46;border-bottom:2px solid #A7F3D0}
-    .col-body{flex:1 1 0;min-height:0;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:8px}
-    .col-empty{text-align:center;color:var(--muted);font-size:0.8rem;padding:24px 8px;opacity:0.6}
+    /* Cola de pedidos — una sola columna que ocupa todo */
+    .cocina-queue{flex:1 1 0;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:10px}
+    .queue-header{
+      display:flex;align-items:center;justify-content:space-between;
+      background:#FEF3C7;color:#92400E;border:1.5px solid #FDE68A;
+      border-radius:14px 14px 0 0;padding:10px 16px;
+      font-size:0.82rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;flex-shrink:0;
+    }
+    .queue-count{font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:20px;background:rgba(0,0,0,0.08)}
+    .queue-body{
+      flex:1 1 0;min-height:0;overflow-y:auto;
+      background:var(--bg2);border:1.5px solid #FDE68A;border-top:none;
+      border-radius:0 0 14px 14px;
+      padding:10px;display:flex;flex-direction:column;gap:10px;
+    }
+    .queue-empty{text-align:center;color:var(--muted);font-size:1rem;padding:48px 16px;opacity:0.6}
 
     /* Tarjeta */
-    .order-card{background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;transition:box-shadow 0.2s}
+    .order-card{
+      background:var(--bg);border:1.5px solid var(--border);border-radius:14px;
+      padding:12px 14px;transition:box-shadow 0.2s;
+    }
     .order-card:hover{box-shadow:var(--shadow)}
+    .card-llevar{border-left:4px solid var(--amber)!important}
+
     .order-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
     .order-num{font-size:0.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px}
     .order-time{font-size:0.65rem;color:var(--muted)}
     .order-time.late{color:var(--red);font-weight:700}
-    .order-client{font-size:1rem;font-weight:800;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:5px}
-    .order-items{list-style:none;margin-bottom:6px}
-    .order-items li{font-size:0.82rem;display:flex;align-items:center;padding:3px 0;border-bottom:1px solid var(--border);gap:8px}
-    .order-items li:last-child{border-bottom:none}
-    .order-item-qty{background:var(--text);color:#fff;font-size:0.7rem;font-weight:800;border-radius:6px;padding:1px 6px;flex-shrink:0}
-    .order-item-name{flex:1}
-    .order-total{font-size:0.75rem;font-weight:700;color:var(--muted);text-align:right;margin-bottom:7px}
-    .order-payment{font-size:0.68rem;color:var(--muted);text-align:right;margin-bottom:7px}
 
-    /* Acciones */
-    .order-actions{display:flex;gap:5px}
-    .order-btn{flex:1;padding:7px 4px;border:none;border-radius:9px;font-family:'Outfit',sans-serif;font-size:0.72rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:opacity 0.15s,transform 0.1s}
-    .order-btn:hover{opacity:0.85}
-    .order-btn:active{transform:scale(0.96)}
-    .btn-print{background:#F3F4F6;color:var(--text);border:1.5px solid var(--border);flex:0 0 auto;padding:7px 10px}
-    .btn-prep{background:var(--blue);color:#fff}
-    .btn-done{background:var(--green);color:#fff}
-    .btn-back{background:#F3F4F6;color:var(--muted);border:1.5px solid var(--border);flex:0 0 auto;padding:7px 10px}
-
-    /* Tipo de orden */
-    .order-type-tag{font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:8px;margin-bottom:4px;display:inline-block}
+    .order-type-tag{font-size:0.7rem;font-weight:800;padding:3px 10px;border-radius:8px;display:inline-block;margin-bottom:6px}
     .order-type-aqui{background:#EEF2FF;color:#3730A3}
     .order-type-llevar{background:#FFFBEB;color:#92400E}
-    .card-llevar{border-left:3px solid var(--amber) !important}
+
+    .order-client{font-size:1.15rem;font-weight:800;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+
+    .order-items{list-style:none;margin-bottom:8px}
+    .order-items li{font-size:0.88rem;display:flex;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);gap:8px}
+    .order-items li:last-child{border-bottom:none}
+    .order-item-qty{background:var(--text);color:#fff;font-size:0.72rem;font-weight:800;border-radius:6px;padding:1px 7px;flex-shrink:0}
+    .order-item-name{flex:1}
+
+    /* Acciones */
+    .order-actions{display:flex;gap:6px;margin-top:4px}
+    .order-btn{flex:1;padding:9px 6px;border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity 0.15s,transform 0.1s}
+    .order-btn:hover{opacity:0.85}
+    .order-btn:active{transform:scale(0.96)}
+    .btn-print{background:#F3F4F6;color:var(--text);border:1.5px solid var(--border);flex:0 0 auto;padding:9px 14px}
+    .btn-done{background:var(--green);color:#fff;font-size:0.9rem}
+
+    /* Responsive — en movil se ven como cards mas anchas */
+    @media(max-width:640px){
+      .cocina-queue{padding:8px}
+      .order-client{font-size:1.05rem}
+    }
 
     /* Print */
     #printArea{display:none}
@@ -89,12 +102,6 @@
       .print-total{text-align:right;font-size:12pt;font-weight:bold;margin-top:6pt}
       .print-footer{text-align:center;font-size:8pt;margin-top:8pt}
     }
-
-    @media(max-width:700px){
-      .cocina-board{grid-template-columns:1fr;overflow-y:auto}
-      .board-col{min-height:200px;overflow:visible}
-      .col-body{overflow:visible}
-    }
   </style>
 </head>
 <body>
@@ -107,47 +114,24 @@
     <div class="cocina-meta">
       <span class="cocina-refresh-dot" title="Auto-refrescando cada 8s"></span>
       <span id="cocinaClock" class="cocina-clock">--:--</span>
-      <a href="/caja" class="btn-exit"><i class="fa-solid fa-cash-register"></i> Caja</a>
-      <a href="/admin.html" class="btn-exit"><i class="fa-solid fa-gear"></i></a>
       <a href="/logout" class="btn-exit"><i class="fa-solid fa-right-from-bracket"></i></a>
     </div>
   </header>
 
-  <div class="cocina-board">
-    <div class="board-col" id="colPendiente">
-      <div class="col-header">
-        <span>🟡 Pendiente</span>
-        <span class="col-count" id="cntPendiente">0</span>
-      </div>
-      <div class="col-body" id="listPendiente">
-        <div class="col-empty">Sin órdenes pendientes</div>
-      </div>
+  <!-- Cola única de pedidos pendientes -->
+  <div class="cocina-queue">
+    <div class="queue-header">
+      <span>🟡 Cola de pedidos</span>
+      <span class="queue-count" id="queueCount">0</span>
     </div>
-
-    <div class="board-col" id="colEnPrep">
-      <div class="col-header">
-        <span>🔵 En Preparación</span>
-        <span class="col-count" id="cntEnPrep">0</span>
-      </div>
-      <div class="col-body" id="listEnPrep">
-        <div class="col-empty">Nada en preparación</div>
-      </div>
-    </div>
-
-    <div class="board-col" id="colListos">
-      <div class="col-header">
-        <span>✅ Listos Hoy</span>
-        <span class="col-count" id="cntListos">0</span>
-      </div>
-      <div class="col-body" id="listListos">
-        <div class="col-empty">Nada listo aún</div>
-      </div>
+    <div class="queue-body" id="queueBody">
+      <div class="queue-empty">Sin pedidos pendientes 🎉</div>
     </div>
   </div>
 
   <div id="printArea"></div>
 
-  <script src="data.js?v=20260901"></script>
-  <script src="cocina.js?v=20260901"></script>
+  <script src="data.js?v=20260904"></script>
+  <script src="cocina.js?v=20260904"></script>
 </body>
 </html>
