@@ -5,11 +5,8 @@
  * Offline fallback para el POS.
  */
 
-const CACHE_NAME  = 'menudo-pos-v5';
+const CACHE_NAME  = 'menudo-pos-v6';
 const STATIC_URLS = [
-  '/caja',
-  '/caja.js',
-  '/data.js',
   '/manifest.json',
   '/icon.svg',
   'https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap',
