@@ -424,7 +424,12 @@ function renderPendingOrders() {
       <div class="pending-card${isSelected ? ' selected' : ''}" onclick="selectPendingOrder('${o.id}')">
         <div class="pending-card-top">
           <span class="pending-type ${o.orderType === 'llevar' ? 'llevar' : 'aqui'}">${typeLabel}</span>
-          <span class="pending-time">${timeAgo(o.timestamp)}</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <button class="pending-edit-btn" onclick="event.stopPropagation();openEditModal('${o.id}')" title="Editar orden">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <span class="pending-time">${timeAgo(o.timestamp)}</span>
+          </div>
         </div>
         <div class="pending-name"><i class="fa-solid fa-user"></i> ${o.clientName || 'Cliente'}</div>
         <div class="pending-items">${itemsText}${(o.items||[]).length > 3 ? ' ...' : ''}</div>
@@ -503,7 +508,160 @@ async function collectPayment() {
   }
 }
 
-// ── Toast del POS ─────────────────────────────────────────────
+// ── Modal Editar Orden ─────────────────────────────────────────
+let editOrderId   = null;
+let editItems     = [];   // copia editable de los items
+
+function openEditModal(orderId) {
+  const order = pendingOrders.find(o => o.id === orderId);
+  if (!order) return;
+  editOrderId = orderId;
+  editItems   = order.items.map(it => ({ ...it })); // copia profunda
+  renderEditModal(order);
+  document.getElementById('editOrderModal')?.classList.remove('hidden');
+}
+
+function closeEditModal() {
+  document.getElementById('editOrderModal')?.classList.add('hidden');
+  editOrderId = null;
+  editItems   = [];
+}
+
+function renderEditModal(order) {
+  // Header
+  const clientEl = document.getElementById('editModalClient');
+  if (clientEl) clientEl.textContent = order.clientName || 'Cliente';
+
+  // Lista de items
+  renderEditItems();
+
+  // Grid de productos para agregar
+  renderEditAddGrid();
+}
+
+function renderEditItems() {
+  const list = document.getElementById('editItemsList');
+  if (!list) return;
+
+  if (editItems.length === 0) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;text-align:center;padding:12px;">Sin ítems — agrega productos abajo</div>';
+    updateEditTotal();
+    return;
+  }
+
+  list.innerHTML = editItems.map((it, idx) => `
+    <div class="edit-item-row">
+      <span style="font-size:1.2rem">${it.emoji || '🍽️'}</span>
+      <div style="flex:1;min-width:0">
+        <div class="edit-item-name">${it.title}</div>
+        ${it.priceNote ? `<div class="edit-item-note">${it.priceNote}</div>` : ''}
+      </div>
+      <span class="edit-item-price">$${(Number(it.price) * it.qty).toLocaleString('es-MX')}</span>
+      <div class="edit-qty-ctrl">
+        <button class="eq-del" onclick="changeEditQty(${idx},-1)" title="Quitar">
+          ${it.qty === 1 ? '<i class="fa-solid fa-trash" style="font-size:0.7rem"></i>' : '−'}
+        </button>
+        <span class="edit-qty-num">${it.qty}</span>
+        <button onclick="changeEditQty(${idx},1)">+</button>
+      </div>
+    </div>`).join('');
+
+  updateEditTotal();
+}
+
+function changeEditQty(idx, delta) {
+  if (editItems[idx].qty + delta <= 0) {
+    editItems.splice(idx, 1);
+  } else {
+    editItems[idx].qty += delta;
+  }
+  renderEditItems();
+}
+
+function renderEditAddGrid() {
+  const grid = document.getElementById('editAddGrid');
+  if (!grid) return;
+
+  const productBtns = PRODUCT_KEYS.map(key => {
+    const serverP  = storeConfig.products?.[key];
+    const defaultP = DEFAULT_STORE_DATA.products[key];
+    const p = serverP ? { ...defaultP, ...serverP } : defaultP;
+    if (!p || p.enabled === false) return '';
+    return `<button class="edit-add-btn" onclick="addProductToEdit('${key}')">
+      <span class="ea-emoji">${p.emoji || '🍽️'}</span>
+      <span class="ea-name">${p.title}</span>
+      <span class="ea-price">$${Number(p.price).toLocaleString('es-MX')}</span>
+    </button>`;
+  }).join('');
+
+  const extras = (storeConfig.extraProducts || DEFAULT_STORE_DATA.extraProducts || [])
+    .filter(ep => ep.enabled)
+    .map(ep => `<button class="edit-add-btn" onclick="addExtraToEdit('${ep.id}')">
+      <span class="ea-emoji">${ep.emoji || '🍽️'}</span>
+      <span class="ea-name">${ep.title}</span>
+      <span class="ea-price">$${Number(ep.price).toLocaleString('es-MX')}</span>
+    </button>`).join('');
+
+  grid.innerHTML = productBtns + extras;
+}
+
+function addProductToEdit(key) {
+  const serverP  = storeConfig.products?.[key];
+  const defaultP = DEFAULT_STORE_DATA.products[key];
+  const p = serverP ? { ...defaultP, ...serverP } : defaultP;
+  if (!p) return;
+  const existing = editItems.find(it => it.key === key);
+  if (existing) { existing.qty++; }
+  else { editItems.push({ key, title: p.title, emoji: p.emoji || '', price: Number(p.price) || 0, priceNote: p.priceNote || '', qty: 1 }); }
+  renderEditItems();
+}
+
+function addExtraToEdit(id) {
+  const ep = (storeConfig.extraProducts || []).find(e => e.id === id);
+  if (!ep) return;
+  const existing = editItems.find(it => it.key === id);
+  if (existing) { existing.qty++; }
+  else { editItems.push({ key: id, title: ep.title, emoji: ep.emoji || '', price: Number(ep.price) || 0, priceNote: ep.priceNote || '', qty: 1 }); }
+  renderEditItems();
+}
+
+function updateEditTotal() {
+  const total = editItems.reduce((s, it) => s + Number(it.price) * it.qty, 0);
+  const el    = document.getElementById('editTotalDisplay');
+  if (el) el.textContent = `$${total.toLocaleString('es-MX')}`;
+  const btn = document.getElementById('editSaveBtn');
+  if (btn) btn.disabled = editItems.length === 0;
+}
+
+async function saveEditedOrder() {
+  if (!editOrderId || editItems.length === 0) return;
+  const total  = editItems.reduce((s, it) => s + Number(it.price) * it.qty, 0);
+  const btn    = document.getElementById('editSaveBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...'; }
+
+  try {
+    const res = await fetch(`/api/orders/${editOrderId}/items`, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body:    JSON.stringify({ items: editItems, total })
+    });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    if (res.ok) {
+      showPosToast('✅ Orden actualizada');
+      closeEditModal();
+      await loadPendingOrders();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      showPosToast(`❌ ${err.error || 'Error al guardar'}`);
+    }
+  } catch (e) {
+    showPosToast('❌ Sin conexión');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar cambios'; }
+  }
+}
+
+
 function showPosToast(msg) {
   let el = document.getElementById('posToast');
   if (!el) {

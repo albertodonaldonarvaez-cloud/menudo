@@ -464,6 +464,34 @@ app.post('/api/orders', requireAnyAuth, (req, res) => {
 });
 
 /**
+ * PATCH /api/orders/:id/items
+ * Edita los ítems de una orden que aún no ha sido cobrada.
+ * Body: { items: [...], total: number }
+ */
+app.patch('/api/orders/:id/items', requireAnyAuth, (req, res) => {
+  try {
+    const { id } = req.params;
+    const { items, total } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'La orden debe tener al menos un ítem' });
+    }
+    const all = readJSON(ORDERS_FILE) || [];
+    const idx = all.findIndex(o => o.id === id);
+    if (idx < 0) return res.status(404).json({ error: 'Orden no encontrada' });
+    if (all[idx].paymentStatus === 'cobrado') {
+      return res.status(409).json({ error: 'No se puede editar una orden ya cobrada' });
+    }
+    all[idx].items = items;
+    all[idx].total = Number(total) || 0;
+    all[idx].editedAt = new Date().toISOString();
+    writeJSON(ORDERS_FILE, all);
+    res.json({ ok: true, order: all[idx] });
+  } catch (e) {
+    res.status(500).json({ error: 'No se pudo actualizar la orden' });
+  }
+});
+
+/**
  * PATCH /api/orders/:id/status
  * Cambia el estado de una orden.
  * Body: { status: 'en_prep' | 'listo' | 'pendiente' }
