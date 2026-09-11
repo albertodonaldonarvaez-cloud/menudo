@@ -425,6 +425,71 @@
       .pending-card{padding:15px 16px}
     }
 
+    /* ── Modal de Cobro ──────────────────────── */
+    .pay-modal-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
+      display:flex;align-items:center;justify-content:center;z-index:200;
+    }
+    .pay-modal-overlay.hidden{display:none}
+    .pay-modal-box{
+      background:#fff;border-radius:20px;width:min(400px,92vw);
+      box-shadow:0 20px 60px rgba(0,0,0,0.35);overflow:hidden;
+    }
+    .pay-modal-header{
+      background:var(--dark);color:#fff;padding:16px 20px;text-align:center;
+      font-weight:800;font-size:1.1rem;
+    }
+    .pay-modal-body{padding:16px 20px}
+    .pay-method-btns{display:flex;gap:8px;margin-bottom:16px}
+    .pay-method-btn{
+      flex:1;padding:14px 6px;border:2px solid var(--border);border-radius:12px;
+      background:#fff;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:700;
+      cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;
+      transition:all 0.15s;color:var(--text);
+    }
+    .pay-method-btn.active{border-color:var(--primary);background:var(--primary);color:#fff}
+    .pay-method-btn i{font-size:1.3rem}
+
+    .pay-cash-section{margin-top:12px}
+    .pay-cash-label{font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+    .pay-cash-input{
+      width:100%;padding:14px;border:2px solid var(--border);border-radius:12px;
+      font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:800;
+      text-align:center;color:var(--text);outline:none;
+    }
+    .pay-cash-input:focus{border-color:var(--primary)}
+    .pay-quick-bills{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+    .pay-quick-bill{
+      flex:1;min-width:60px;padding:10px 4px;border:1.5px solid var(--border);border-radius:10px;
+      background:#FEFCE8;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:700;
+      cursor:pointer;text-align:center;color:#92400E;transition:all 0.15s;
+    }
+    .pay-quick-bill:active{transform:scale(0.95);background:#FEF08A}
+    .pay-change-display{
+      margin-top:14px;padding:14px;border-radius:14px;text-align:center;
+      font-family:'Outfit',sans-serif;
+    }
+    .pay-change-display.positive{background:#DCFCE7;color:#166534}
+    .pay-change-display.negative{background:#FEE2E2;color:#991B1B}
+    .pay-change-display.zero{background:#F3F4F6;color:#6B7280}
+    .pay-change-label{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
+    .pay-change-amount{font-size:1.8rem;font-weight:900}
+
+    .pay-modal-footer{padding:12px 20px 20px;display:flex;flex-direction:column;gap:8px}
+    .pay-confirm-btn{
+      width:100%;padding:16px;border:none;border-radius:14px;
+      background:linear-gradient(135deg,#16A34A,#15803D);
+      color:#fff;font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:800;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+      transition:all 0.15s;box-shadow:0 4px 15px rgba(22,163,74,0.3);
+    }
+    .pay-confirm-btn:active{transform:scale(0.97)}
+    .pay-confirm-btn:disabled{background:#D1D5DB;color:#9CA3AF;cursor:not-allowed;box-shadow:none}
+    .pay-cancel-btn{
+      width:100%;padding:10px;border:none;border-radius:10px;
+      background:#F3F4F6;color:#6B7280;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:700;
+      cursor:pointer;
+    }
 
 
     /* ── Modal precio libre ──────────────────── */
@@ -715,7 +780,61 @@
     </div>
   </div>
 
-  <script src="data.js?v=20260910f"></script>
-  <script src="caja.js?v=20260910f"></script>
+  <!-- ── Modal de Cobro ──────────────────────── -->
+  <div class="pay-modal-overlay hidden" id="payModal" onclick="if(event.target===this)closePayModal()">
+    <div class="pay-modal-box">
+
+      <div class="pay-modal-header" id="payModalHeader">
+        💰 Cobrar — $0
+      </div>
+
+      <div class="pay-modal-body">
+        <!-- Método de pago -->
+        <div class="pay-method-btns">
+          <button class="pay-method-btn active" id="pmEfectivo" onclick="setPayMethod('efectivo')">
+            <i class="fa-solid fa-money-bills"></i> Efectivo
+          </button>
+          <button class="pay-method-btn" id="pmTarjeta" onclick="setPayMethod('tarjeta')">
+            <i class="fa-solid fa-credit-card"></i> Tarjeta
+          </button>
+          <button class="pay-method-btn" id="pmTransfer" onclick="setPayMethod('transferencia')">
+            <i class="fa-solid fa-mobile-screen-button"></i> Transfer
+          </button>
+        </div>
+
+        <!-- Sección efectivo -->
+        <div id="payCashSection">
+          <div class="pay-cash-label">💵 ¿Con cuánto paga el cliente?</div>
+          <input type="number" class="pay-cash-input" id="payCashInput"
+            placeholder="0" inputmode="decimal" oninput="calcChange()">
+
+          <div class="pay-quick-bills">
+            <button class="pay-quick-bill" onclick="setQuickBill(50)">$50</button>
+            <button class="pay-quick-bill" onclick="setQuickBill(100)">$100</button>
+            <button class="pay-quick-bill" onclick="setQuickBill(200)">$200</button>
+            <button class="pay-quick-bill" onclick="setQuickBill(500)">$500</button>
+            <button class="pay-quick-bill" onclick="setQuickBill(1000)">$1000</button>
+          </div>
+
+          <div class="pay-change-display zero" id="payChangeDisplay">
+            <div class="pay-change-label">Cambio</div>
+            <div class="pay-change-amount" id="payChangeAmount">$0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pay-modal-footer">
+        <button class="pay-confirm-btn" id="payConfirmBtn" onclick="confirmPay()">
+          <i class="fa-solid fa-circle-check"></i>
+          <span id="payConfirmLabel">Confirmar cobro</span>
+        </button>
+        <button class="pay-cancel-btn" onclick="closePayModal()">Cancelar</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="data.js?v=20260910g"></script>
+  <script src="caja.js?v=20260910g"></script>
 </body>
 </html>

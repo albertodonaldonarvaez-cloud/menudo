@@ -443,35 +443,119 @@ async function sendEditedToKitchen() {
   } catch (e) { showPosToast('❌ Sin conexión'); }
 }
 
-// ── Cobrar orden editada ──────────────────────────────────────
+// ── Cobrar orden editada → abre modal de pago ────────────────
 async function cobrarEditingOrder() {
   if (!editingOrderId || ticket.length === 0) return;
+
+  // Primero guardar cambios si los hay
+  const currentSnap = JSON.stringify(ticket.map(t => ({k:t.key,q:t.qty,p:t.price})));
+  if (currentSnap !== originalItemsSnapshot) {
+    const total = getTotal();
+    try {
+      await fetch(`/api/orders/${editingOrderId}/items`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          items: ticket.map(t => ({ key: t.key, title: t.title, emoji: t.emoji, qty: t.qty, price: t.price, subtotal: t.price * t.qty })),
+          total
+        })
+      });
+      originalItemsSnapshot = currentSnap;
+    } catch { /* continuar a cobrar */ }
+  }
+
+  // Abrir modal de cobro
+  openPayModal();
+}
+
+// ── Modal de Cobro ────────────────────────────────────────────
+let payModalMethod = 'efectivo';
+
+function openPayModal() {
+  const total = getTotal();
+  const order = pendingOrders.find(o => o.id === editingOrderId);
+  const name  = order?.clientName || getClientName() || 'Cliente';
+
+  // Header
+  document.getElementById('payModalHeader').textContent = `💰 Cobrar: ${name} — $${total.toLocaleString('es-MX')}`;
+
+  // Reset
+  payModalMethod = 'efectivo';
+  document.getElementById('pmEfectivo').classList.add('active');
+  document.getElementById('pmTarjeta').classList.remove('active');
+  document.getElementById('pmTransfer').classList.remove('active');
+  document.getElementById('payCashSection').style.display = '';
+  document.getElementById('payCashInput').value = '';
+  document.getElementById('payConfirmBtn').disabled = false;
+  document.getElementById('payConfirmLabel').textContent = `Confirmar cobro $${total.toLocaleString('es-MX')}`;
+  calcChange();
+
+  // Mostrar
+  document.getElementById('payModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('payCashInput')?.focus(), 200);
+}
+
+function closePayModal() {
+  document.getElementById('payModal').classList.add('hidden');
+}
+
+function setPayMethod(method) {
+  payModalMethod = method;
+  document.getElementById('pmEfectivo').classList.toggle('active', method === 'efectivo');
+  document.getElementById('pmTarjeta').classList.toggle('active', method === 'tarjeta');
+  document.getElementById('pmTransfer').classList.toggle('active', method === 'transferencia');
+  document.getElementById('payCashSection').style.display = method === 'efectivo' ? '' : 'none';
+}
+
+function setQuickBill(amount) {
+  document.getElementById('payCashInput').value = amount;
+  calcChange();
+}
+
+function calcChange() {
+  const total    = getTotal();
+  const received = parseFloat(document.getElementById('payCashInput')?.value) || 0;
+  const change   = received - total;
+  const display  = document.getElementById('payChangeDisplay');
+  const amountEl = document.getElementById('payChangeAmount');
+
+  if (received === 0) {
+    display.className = 'pay-change-display zero';
+    amountEl.textContent = '$0';
+  } else if (change >= 0) {
+    display.className = 'pay-change-display positive';
+    amountEl.textContent = `$${change.toLocaleString('es-MX')}`;
+  } else {
+    display.className = 'pay-change-display negative';
+    amountEl.textContent = `-$${Math.abs(change).toLocaleString('es-MX')}`;
+  }
+}
+
+async function confirmPay() {
+  if (!editingOrderId) return;
   const orderId = editingOrderId;
   const total   = getTotal();
+  const btn     = document.getElementById('payConfirmBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cobrando...'; }
 
-  // 1. Guardar cambios primero (PATCH)
-  try {
-    await fetch(`/api/orders/${orderId}/items`, {
-      method:  'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body:    JSON.stringify({
-        items: ticket.map(t => ({ key: t.key, title: t.title, emoji: t.emoji, qty: t.qty, price: t.price, subtotal: t.price * t.qty })),
-        total
-      })
-    });
-  } catch { /* continuar a cobrar */ }
-
-  // 2. Cobrar
   try {
     const res = await fetch(`/api/orders/${orderId}/pay`, {
-      method:  'PATCH',
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body:    JSON.stringify({ paymentMethod: pendingPayMethod })
+      body: JSON.stringify({ paymentMethod: payModalMethod })
     });
     if (res.status === 401) { window.location.href = '/login'; return; }
     if (res.ok) {
       const order = pendingOrders.find(o => o.id === orderId);
-      showPosToast(`✅ Cobrado: ${order?.clientName || ''} — $${total.toLocaleString('es-MX')}`);
+      let msg = `✅ Cobrado: ${order?.clientName || ''} — $${total.toLocaleString('es-MX')}`;
+      if (payModalMethod === 'efectivo') {
+        const received = parseFloat(document.getElementById('payCashInput')?.value) || 0;
+        if (received > total) {
+          msg += ` · Cambio: $${(received - total).toLocaleString('es-MX')}`;
+        }
+      }
+      showPosToast(msg);
+      closePayModal();
       cancelEditing();
       await loadPendingOrders();
     } else {
@@ -479,7 +563,11 @@ async function cobrarEditingOrder() {
       showPosToast(`❌ ${err.error || 'Error al cobrar'}`);
     }
   } catch (e) { showPosToast('❌ Sin conexión'); }
+  finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> <span id="payConfirmLabel">Confirmar cobro</span>'; }
+  }
 }
+
 
 // ── Cancelar edición → volver a modo nueva orden ─────────────
 function cancelEditing() {
