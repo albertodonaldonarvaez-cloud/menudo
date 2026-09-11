@@ -1,0 +1,19 @@
+{
+  "_comentarios": "Copia este archivo como config.json y edita los valores",
+
+  "serverUrl":     "https://menudo.tecti-cloud.com",
+  "username":      "admin",
+  "password":      "TU_CONTRASENA_AQUI",
+
+  "comPort":       "COM5",
+  "_comPort_nota": "En Windows: Panel de control > Bluetooth > Mas opciones de Bluetooth > Puertos COM",
+  "_comPort_linux": "En Linux/RPi usar: /dev/rfcomm0 (despues de: sudo rfcomm bind 0 MAC_IMPRESORA)",
+
+  "paperWidth":    58,
+  "_paperWidth":   "Opciones: 58 (rollo pequeño) o 80 (rollo grande)",
+
+  "businessName":  "Barbacoa y Antojitos",
+
+  "pollMs":        5000,
+  "_pollMs":       "Cada cuantos milisegundos consultar el servidor (5000 = 5 segundos)"
+}

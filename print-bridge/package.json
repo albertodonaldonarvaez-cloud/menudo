@@ -1,0 +1,13 @@
+{
+  "name": "menudo-print-bridge",
+  "version": "1.0.0",
+  "description": "Print bridge para impresora termica Bluetooth — Menudo POS",
+  "main": "bridge.js",
+  "scripts": {
+    "start": "node bridge.js"
+  },
+  "dependencies": {
+    "serialport": "^12.0.0"
+  },
+  "engines": { "node": ">=16" }
+}
