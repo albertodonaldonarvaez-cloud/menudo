@@ -368,71 +368,52 @@
       .por-cobrar-section{border-bottom:none;border-top:none;flex:1 1 0}
       .new-order-section{flex:1 1 0}
     }
+
+    /* ── Tablet/Desktop: Por Cobrar prominente ─── */
     @media(min-width:640px){
-      /* En desktop/tablet, por cobrar siempre visible */
-      .por-cobrar-section{display:flex!important}
-    }
-
-    /* ── Tablet: Por Cobrar arriba, Nueva Orden abajo ─── */
-    @media(min-width:768px){
-      /* Productos: 42% izquierda */
-      .pos-left{width:42%}
-
-      /* Panel derecho: columna, Por Cobrar ARRIBA */
-      .pos-right{flex-direction:column}
-
-      /* Por Cobrar: primer lugar, ocupa 58% del panel derecho */
+      /* Por cobrar siempre visible y prominente */
       .por-cobrar-section{
-        order:0;
-        flex:58 1 0;           /* 58% del espacio disponible */
-        max-height:none;       /* sin límite */
-        border-top:none;
-        border-bottom:2px solid var(--border);
         display:flex!important;
+        flex:3 1 0!important;   /* 60% del panel — FORZADO */
+        border-bottom:2px solid var(--border);
         background:var(--bg2);
       }
-
-      /* Nueva Orden: segundo lugar, ocupa 42% */
       .new-order-section{
-        order:1;
-        flex:42 1 0;           /* 42% del espacio disponible */
-        border-top:1.5px solid var(--border);
+        flex:2 1 0!important;   /* 40% del panel — FORZADO */
         overflow:hidden;
       }
 
-      /* Botones de producto más grandes (touch-friendly) */
-      .pos-btn{min-height:110px}
-      .pos-btn-emoji{font-size:1.95rem}
-      .pos-btn-name{font-size:0.82rem}
+      /* Productos: botones más grandes */
+      .pos-btn{min-height:108px}
+      .pos-btn-emoji{font-size:1.9rem}
+      .pos-btn-name{font-size:0.8rem}
       .pos-btn-price{font-size:0.85rem}
 
       /* Cards de órdenes: texto legible */
-      .pending-card{padding:13px 15px;border-radius:13px;gap:3px}
-      .pending-name{font-size:1.05rem}
-      .pending-total{font-size:1.05rem;margin-top:5px}
-      .pending-items{font-size:0.8rem;white-space:normal;line-height:1.5}
-      .pending-type{font-size:0.74rem;padding:3px 10px;border-radius:9px}
-      .pending-time{font-size:0.7rem}
+      .pending-card{padding:12px 14px;border-radius:12px}
+      .pending-name{font-size:1rem}
+      .pending-total{font-size:1rem;margin-top:4px}
+      .pending-items{font-size:0.78rem;white-space:normal;line-height:1.4}
+      .pending-type{font-size:0.72rem;padding:3px 9px;border-radius:9px}
 
       /* Header Por Cobrar */
       .por-cobrar-title{font-size:0.8rem}
-      .por-cobrar-header{padding:10px 16px 8px}
+      .por-cobrar-header{padding:10px 14px 8px}
 
-      /* Pay section más grande */
-      .pending-pay-btn{padding:12px 4px;font-size:0.82rem}
-      .cobrar-pendiente-btn{padding:15px;font-size:1.05rem}
-      .pay-item-row{font-size:0.88rem;padding:4px 0}
-      .pay-items-list{max-height:180px}
+      /* Pay section */
+      .pending-pay-btn{padding:11px 4px;font-size:0.8rem}
+      .cobrar-pendiente-btn{padding:15px;font-size:1rem}
+      .pay-item-row{font-size:0.85rem;padding:3px 0}
+      .pay-items-list{max-height:160px}
 
       /* Inputs nueva orden */
       .client-name-input{font-size:1rem;padding:11px 13px}
       .order-type-btn{font-size:0.85rem;padding:9px}
       .ticket-row{padding:9px 10px}
-      .ticket-name{font-size:0.9rem}
-      .ticket-qty-ctrl button{width:28px;height:28px;font-size:0.9rem}
-      .ticket-sub{font-size:0.9rem}
-      .ticket-total-amount{font-size:1.5rem}
-      .enviar-btn{padding:16px;font-size:1.05rem}
+      .ticket-name{font-size:0.88rem}
+      .ticket-qty-ctrl button{width:26px;height:26px}
+      .ticket-total-amount{font-size:1.4rem}
+      .enviar-btn{padding:14px;font-size:1rem}
     }
 
     /* Tablet grande / escritorio */
@@ -443,6 +424,7 @@
       .pending-name{font-size:1.1rem}
       .pending-card{padding:15px 16px}
     }
+
 
 
     /* ── Modal precio libre ──────────────────── */
@@ -759,7 +741,7 @@
     </div>
   </div>
 
-  <script src="data.js?v=20260910c"></script>
-  <script src="caja.js?v=20260910c"></script>
+  <script src="data.js?v=20260910d"></script>
+  <script src="caja.js?v=20260910d"></script>
 </body>
 </html>

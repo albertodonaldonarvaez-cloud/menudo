@@ -1,11 +1,11 @@
 'use strict';
 /**
- * SW.JS — Service Worker v1.0
- * Cache-first para assets estáticos, network-first para API.
- * Offline fallback para el POS.
+ * SW.JS — Service Worker v7
+ * Network-first para HTML/JS (siempre actualizado).
+ * Cache-first solo para fuentes, íconos y CDN.
  */
 
-const CACHE_NAME  = 'menudo-pos-v6';
+const CACHE_NAME  = 'menudo-pos-v7';
 const STATIC_URLS = [
   '/manifest.json',
   '/icon.svg',
@@ -17,7 +17,6 @@ const STATIC_URLS = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      // Intentar cachear, ignorar errores en recursos externos
       return Promise.allSettled(STATIC_URLS.map(url => cache.add(url)));
     }).then(() => self.skipWaiting())
   );
@@ -36,7 +35,10 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // API calls: Network-first (siempre intentar red primero)
+  // POST/PATCH/DELETE: siempre red, no interceptar
+  if (event.request.method !== 'GET') return;
+
+  // API calls: Network-only con fallback offline
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(event.request).catch(() =>
@@ -49,28 +51,45 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // POST/PATCH/DELETE: siempre red
-  if (event.request.method !== 'GET') return;
-
-  // Assets estáticos: Cache-first
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        // Cachear respuestas exitosas de nuestro dominio
-        if (response.ok && url.origin === self.location.origin) {
+  // HTML y JS de nuestro dominio: NETWORK-FIRST
+  // Siempre intenta la red primero para obtener la versión más nueva.
+  // Solo usa cache si no hay red (offline).
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        // Guardar en cache para offline
+        if (response.ok) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
         return response;
       }).catch(() => {
-        // Fallback offline para navegación
-        if (event.request.mode === 'navigate') {
-          return caches.match('/caja') ||
-            new Response('<h1 style="font-family:sans-serif;text-align:center;padding:40px">Sin conexión — regresa cuando haya red 📡</h1>', {
-              headers: { 'Content-Type': 'text/html' }
-            });
+        // Sin red: intentar cache
+        return caches.match(event.request).then(cached => {
+          if (cached) return cached;
+          // Fallback offline para navegación
+          if (event.request.mode === 'navigate') {
+            return new Response(
+              '<h1 style="font-family:sans-serif;text-align:center;padding:40px">Sin conexión — regresa cuando haya red 📡</h1>',
+              { headers: { 'Content-Type': 'text/html' } }
+            );
+          }
+        });
+      })
+    );
+    return;
+  }
+
+  // Assets externos (CDN fonts, icons): Cache-first
+  event.respondWith(
+    caches.match(event.request).then(cached => {
+      if (cached) return cached;
+      return fetch(event.request).then(response => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
+        return response;
       });
     })
   );
