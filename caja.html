@@ -180,7 +180,7 @@
 
     /* Sección nueva orden */
     .new-order-section{
-      flex:1 1 0;min-height:0;display:flex;flex-direction:column;overflow:hidden;
+      flex:3 1 0;min-height:0;display:flex;flex-direction:column;overflow:hidden;
     }
 
     /* Nombre + tipo en la parte superior */
@@ -263,9 +263,9 @@
     .enviar-btn:active:not(:disabled){transform:scale(0.97)}
     .enviar-btn:disabled{background:#E5E7EB;color:#9CA3AF;cursor:not-allowed;box-shadow:none}
 
-    /* ── Sección "Por Cobrar" ─ 50% del panel ─ */
+    /* ── Sección "Por Cobrar" ─ 40% del panel ─ */
     .por-cobrar-section{
-      flex:1 1 0;            /* 50% del panel derecho */
+      flex:2 1 0;            /* 40% del panel derecho */
       min-height:0;
       display:flex;flex-direction:column;overflow:hidden;
       border-bottom:2px solid var(--border);background:var(--bg2);
@@ -371,15 +371,15 @@
 
     /* ── Tablet/Desktop: Por Cobrar prominente ─── */
     @media(min-width:640px){
-      /* Por cobrar siempre visible y prominente */
+      /* Por cobrar siempre visible */
       .por-cobrar-section{
         display:flex!important;
-        flex:1 1 0!important;   /* 50% del panel */
+        flex:2 1 0!important;   /* 40% del panel */
         border-bottom:2px solid var(--border);
         background:var(--bg2);
       }
       .new-order-section{
-        flex:1 1 0!important;   /* 50% del panel */
+        flex:3 1 0!important;   /* 60% del panel */
         overflow:hidden;
       }
 
@@ -715,7 +715,7 @@
     </div>
   </div>
 
-  <script src="data.js?v=20260910e"></script>
-  <script src="caja.js?v=20260910e"></script>
+  <script src="data.js?v=20260910f"></script>
+  <script src="caja.js?v=20260910f"></script>
 </body>
 </html>

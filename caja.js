@@ -17,8 +17,9 @@ let pendingPayMethod  = 'efectivo'; // método de pago en "Por Cobrar"
 let pendingPollTimer  = null;
 
 // ── Estado de edición de orden existente ──
-let editingOrderId    = null;       // ID de la orden que se está editando (null = orden nueva)
-let originalItemCount = 0;          // cantidad de ítems al cargar la orden (para detectar nuevos)
+let editingOrderId       = null;    // ID de la orden que se está editando (null = orden nueva)
+let originalItemsSnapshot = '[]';   // JSON snapshot para detectar CUALQUIER cambio
+
 
 
 // ── Tabs móvil (3 tabs) ───────────────────────────────────────
@@ -289,7 +290,8 @@ function renderTicket() {
   const sendBtn = document.getElementById('enviarCocinaBtn');
   const total   = getTotal();
   const isEditing = !!editingOrderId;
-  const hasNewItems = ticket.length > originalItemCount;
+  const currentSnap = JSON.stringify(ticket.map(t => ({k:t.key,q:t.qty,p:t.price})));
+  const hasChanges = isEditing && currentSnap !== originalItemsSnapshot;
 
   if (list) {
     if (ticket.length === 0) {
@@ -327,9 +329,9 @@ function renderTicket() {
       // Modo edición: mostrar botones de Enviar (si hay nuevos) + Cobrar + Cancelar
       enviarWrap.innerHTML = `
         <div style="display:flex;gap:6px;margin-bottom:6px">
-          <button class="enviar-btn" onclick="sendEditedToKitchen()" ${!hasNewItems ? 'disabled' : ''}
+          <button class="enviar-btn" onclick="sendEditedToKitchen()" ${!hasChanges ? 'disabled' : ''}
             style="flex:1;background:linear-gradient(135deg,#D97706,#B45309);padding:12px;font-size:0.9rem">
-            <i class="fa-solid fa-fire-burner"></i> Enviar nuevos
+            <i class="fa-solid fa-fire-burner"></i> Actualizar cocina
           </button>
           <button class="enviar-btn" onclick="cobrarEditingOrder()"
             style="flex:1;padding:12px;font-size:0.9rem" ${ticket.length === 0 ? 'disabled' : ''}>
@@ -392,7 +394,7 @@ function selectPendingOrder(id) {
     priceNote: it.priceNote || '',
     qty:       it.qty
   }));
-  originalItemCount = ticket.length;
+  originalItemsSnapshot = JSON.stringify(ticket.map(t => ({k:t.key,q:t.qty,p:t.price})));
   orderType         = order.orderType || 'aqui';
   pendingPayMethod  = 'efectivo';
 
@@ -413,7 +415,9 @@ function selectPendingOrder(id) {
 
 // ── Enviar ítems nuevos a cocina (PATCH) ──────────────────────
 async function sendEditedToKitchen() {
-  if (!editingOrderId || ticket.length <= originalItemCount) return;
+  if (!editingOrderId) return;
+  const currentSnap = JSON.stringify(ticket.map(t => ({k:t.key,q:t.qty,p:t.price})));
+  if (currentSnap === originalItemsSnapshot) return; // sin cambios
   const total = getTotal();
 
   try {
@@ -428,7 +432,8 @@ async function sendEditedToKitchen() {
     if (res.status === 401) { window.location.href = '/login'; return; }
     if (res.ok) {
       showPosToast('🍳 Cocina verá los cambios');
-      originalItemCount = ticket.length; // ya no son "nuevos"
+      originalItemsSnapshot = JSON.stringify(ticket.map(t => ({k:t.key,q:t.qty,p:t.price})));
+
       renderTicket();
       await loadPendingOrders();
     } else {
@@ -478,9 +483,10 @@ async function cobrarEditingOrder() {
 
 // ── Cancelar edición → volver a modo nueva orden ─────────────
 function cancelEditing() {
-  editingOrderId    = null;
-  originalItemCount = 0;
-  selectedPendingId = null;
+  editingOrderId       = null;
+  originalItemsSnapshot = '[]';
+  selectedPendingId    = null;
+
   ticket = [];
   const nameInput = document.getElementById('clientNameInput');
   if (nameInput) { nameInput.value = ''; nameInput.disabled = false; }
