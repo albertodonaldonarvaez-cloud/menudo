@@ -101,8 +101,7 @@ class MainActivity : AppCompatActivity() {
     private fun addLog(msg: String) {
         logs.add(0, msg)
         if (logs.size > 20) logs.removeLast()
-        binding.tvLogs.text = logs.joinToString("
-")
+        binding.tvLogs.text = logs.joinToString("\n")
     }
 
     private fun updateUI() {
