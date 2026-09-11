@@ -645,23 +645,35 @@ function updateEditTotal() {
   if (btn) btn.disabled = editItems.length === 0;
 }
 
-async function saveEditedOrder() {
+async function saveEditedOrder(action = 'cocina') {
   if (!editOrderId || editItems.length === 0) return;
-  const total  = editItems.reduce((s, it) => s + Number(it.price) * it.qty, 0);
-  const btn    = document.getElementById('editSaveBtn');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...'; }
+  const total      = editItems.reduce((s, it) => s + Number(it.price) * it.qty, 0);
+  const savedId    = editOrderId;
+  const allBtns    = [document.getElementById('editSaveBtn'), document.getElementById('editSaveCobrarBtn')];
+  allBtns.forEach(b => { if (b) b.disabled = true; });
 
   try {
-    const res = await fetch(`/api/orders/${editOrderId}/items`, {
+    const res = await fetch(`/api/orders/${savedId}/items`, {
       method:  'PATCH',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body:    JSON.stringify({ items: editItems, total })
     });
     if (res.status === 401) { window.location.href = '/login'; return; }
     if (res.ok) {
-      showPosToast('✅ Orden actualizada');
       closeEditModal();
       await loadPendingOrders();
+
+      if (action === 'cobrar') {
+        // Seleccionar la orden para cobro inmediato
+        selectedPendingId = savedId;
+        pendingPayMethod  = 'efectivo';
+        renderPendingOrders();
+        // En móvil: cambiar al tab de cobrar
+        if (window.innerWidth < 640) switchMobileTab('cobrar');
+        showPosToast('✅ Orden lista para cobrar');
+      } else {
+        showPosToast('🍳 Cocina verá los cambios en segundos');
+      }
     } else {
       const err = await res.json().catch(() => ({}));
       showPosToast(`❌ ${err.error || 'Error al guardar'}`);
@@ -669,7 +681,7 @@ async function saveEditedOrder() {
   } catch (e) {
     showPosToast('❌ Sin conexión');
   } finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar cambios'; }
+    allBtns.forEach(b => { if (b) b.disabled = false; });
   }
 }
 

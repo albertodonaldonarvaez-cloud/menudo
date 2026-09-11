@@ -180,7 +180,7 @@
 
     /* Sección nueva orden */
     .new-order-section{
-      flex:1 1 0;min-height:0;display:flex;flex-direction:column;overflow:hidden;
+      flex:2 1 0;min-height:0;display:flex;flex-direction:column;overflow:hidden;
     }
 
     /* Nombre + tipo en la parte superior */
@@ -263,12 +263,14 @@
     .enviar-btn:active:not(:disabled){transform:scale(0.97)}
     .enviar-btn:disabled{background:#E5E7EB;color:#9CA3AF;cursor:not-allowed;box-shadow:none}
 
-    /* ── Sección "Por Cobrar" ────────────────── */
+    /* ── Sección "Por Cobrar" ─ PRIMERO en el panel (flex:3 = 60%) ─ */
     .por-cobrar-section{
-      flex-shrink:0;max-height:45%;min-height:0;
+      flex:3 1 0;           /* toma 60% del panel derecho */
+      min-height:0;
       display:flex;flex-direction:column;overflow:hidden;
-      border-top:2px solid var(--border);background:var(--bg2);
+      border-bottom:2px solid var(--border);background:var(--bg2);
     }
+
     .por-cobrar-header{
       flex-shrink:0;padding:8px 12px 6px;
       display:flex;align-items:center;justify-content:space-between;
@@ -362,14 +364,12 @@
       }
       .mobile-hidden{display:none!important}
       .mobile-hidden-section{display:none!important}
-      /* En móvil la sección por cobrar ocupa todo el panel derecho */
-      .por-cobrar-section{
-        border-top:none;max-height:unset;flex:1 1 0;
-      }
+      /* En móvil ambas secciones ocupan todo el espacio (controlado por tabs) */
+      .por-cobrar-section{border-bottom:none;border-top:none;flex:1 1 0}
       .new-order-section{flex:1 1 0}
     }
     @media(min-width:640px){
-      /* En desktop, por cobrar siempre visible */
+      /* En desktop/tablet, por cobrar siempre visible */
       .por-cobrar-section{display:flex!important}
     }
 
@@ -507,55 +507,10 @@
       </div>
     </div>
 
-    <!-- Panel derecho: nueva orden + por cobrar -->
+    <!-- Panel derecho: por cobrar (arriba) + nueva orden (abajo) -->
     <div class="pos-right" id="posRightPanel">
 
-      <!-- ── Sección: Nueva Orden ── -->
-      <div class="new-order-section" id="newOrderSection">
-
-        <!-- Nombre + tipo -->
-        <div class="order-meta-bar">
-          <div class="client-name-label">
-            <i class="fa-solid fa-user"></i> Nombre del cliente <span class="req">*</span>
-          </div>
-          <input type="text" id="clientNameInput" class="client-name-input"
-            placeholder="Juan, Mesa 3, Para llevar..." autocomplete="off" maxlength="40">
-
-          <div class="order-type-toggle">
-            <button id="btnTypeAqui" class="order-type-btn active" onclick="setOrderType('aqui')">
-              <i class="fa-solid fa-utensils"></i> Aquí
-            </button>
-            <button id="btnTypeLlevar" class="order-type-btn llevar" onclick="setOrderType('llevar')">
-              <i class="fa-solid fa-bag-shopping"></i> Para Llevar
-            </button>
-          </div>
-        </div>
-
-        <!-- Ticket -->
-        <div class="ticket-list" id="ticketList">
-          <div class="ticket-empty">
-            <i class="fa-regular fa-receipt"></i>
-            <span>Ticket vacío<br>Toca un producto</span>
-          </div>
-        </div>
-
-        <!-- Total -->
-        <div class="ticket-total-bar">
-          <span class="ticket-total-label">Total</span>
-          <span class="ticket-total-amount" id="ticketTotal">$0</span>
-        </div>
-
-        <!-- Botón Enviar a Cocina -->
-        <div class="enviar-wrap">
-          <button class="enviar-btn" id="enviarCocinaBtn" onclick="sendToKitchenPrimary()" disabled>
-            <i class="fa-solid fa-fire-burner"></i>
-            Enviar a Cocina
-          </button>
-        </div>
-
-      </div><!-- /new-order-section -->
-
-      <!-- ── Sección: Por Cobrar ── -->
+      <!-- ── Sección: Por Cobrar ── PRIMERO = arriba (60%) -->
       <div class="por-cobrar-section" id="porCobrarSection">
 
         <div class="por-cobrar-header">
@@ -603,6 +558,51 @@
         </div>
 
       </div><!-- /por-cobrar-section -->
+
+      <!-- ── Sección: Nueva Orden ── SEGUNDO = abajo (40%) -->
+      <div class="new-order-section" id="newOrderSection">
+
+        <!-- Nombre + tipo -->
+        <div class="order-meta-bar">
+          <div class="client-name-label">
+            <i class="fa-solid fa-user"></i> Nombre del cliente <span class="req">*</span>
+          </div>
+          <input type="text" id="clientNameInput" class="client-name-input"
+            placeholder="Juan, Mesa 3, Para llevar..." autocomplete="off" maxlength="40">
+
+          <div class="order-type-toggle">
+            <button id="btnTypeAqui" class="order-type-btn active" onclick="setOrderType('aqui')">
+              <i class="fa-solid fa-utensils"></i> Aquí
+            </button>
+            <button id="btnTypeLlevar" class="order-type-btn llevar" onclick="setOrderType('llevar')">
+              <i class="fa-solid fa-bag-shopping"></i> Para Llevar
+            </button>
+          </div>
+        </div>
+
+        <!-- Ticket -->
+        <div class="ticket-list" id="ticketList">
+          <div class="ticket-empty">
+            <i class="fa-regular fa-receipt"></i>
+            <span>Ticket vacío<br>Toca un producto</span>
+          </div>
+        </div>
+
+        <!-- Total -->
+        <div class="ticket-total-bar">
+          <span class="ticket-total-label">Total</span>
+          <span class="ticket-total-amount" id="ticketTotal">$0</span>
+        </div>
+
+        <!-- Botón Enviar a Cocina -->
+        <div class="enviar-wrap">
+          <button class="enviar-btn" id="enviarCocinaBtn" onclick="sendToKitchenPrimary()" disabled>
+            <i class="fa-solid fa-fire-burner"></i>
+            Enviar a Cocina
+          </button>
+        </div>
+
+      </div><!-- /new-order-section -->
 
     </div><!-- /pos-right -->
 
@@ -737,19 +737,29 @@
       </div>
 
       <!-- Footer -->
-      <div class="edit-modal-footer">
-        <div>
-          <div class="edit-total-label">Total actualizado</div>
-          <div class="edit-total-display" id="editTotalDisplay">$0</div>
+      <div class="edit-modal-footer" style="flex-direction:column;gap:8px;align-items:stretch">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div class="edit-total-label">Total actualizado</div>
+            <div class="edit-total-display" id="editTotalDisplay">$0</div>
+          </div>
+          <button class="edit-modal-close" onclick="closeEditModal()" style="font-size:1rem;padding:6px 12px">Cancelar</button>
         </div>
-        <button class="edit-save-btn" id="editSaveBtn" onclick="saveEditedOrder()">
-          <i class="fa-solid fa-floppy-disk"></i> Guardar cambios
-        </button>
+        <div style="display:flex;gap:8px">
+          <button class="edit-save-btn" id="editSaveBtn" onclick="saveEditedOrder('cocina')"
+            style="flex:1;background:var(--amber);justify-content:center">
+            <i class="fa-solid fa-fire-burner"></i> Mandar a cocina
+          </button>
+          <button class="edit-save-btn" id="editSaveCobrarBtn" onclick="saveEditedOrder('cobrar')"
+            style="flex:1;background:var(--green);justify-content:center">
+            <i class="fa-solid fa-circle-check"></i> Cobrar
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-  <script src="data.js?v=20260910b"></script>
-  <script src="caja.js?v=20260910b"></script>
+  <script src="data.js?v=20260910c"></script>
+  <script src="caja.js?v=20260910c"></script>
 </body>
 </html>
