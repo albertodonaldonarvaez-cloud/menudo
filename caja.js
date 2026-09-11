@@ -432,7 +432,7 @@ function renderPendingOrders() {
           </div>
         </div>
         <div class="pending-name"><i class="fa-solid fa-user"></i> ${o.clientName || 'Cliente'}</div>
-        <div class="pending-items">${itemsText}${(o.items||[]).length > 3 ? ' ...' : ''}</div>
+        <div class="pending-items">${itemsText}${(o.items||[]).length > 3 ? ` <span style="color:var(--primary);font-weight:700">+${(o.items||[]).length-3} más</span>` : ''}</div>
         <div class="pending-total">$${Number(o.total).toLocaleString('es-MX')}</div>
       </div>`;
   }).join('');
@@ -451,6 +451,18 @@ function renderPendingOrders() {
   const totalEl = document.getElementById('payOrderTotal');
   if (nameEl)  nameEl.textContent  = selOrder.clientName || 'Cliente';
   if (totalEl) totalEl.textContent = `$${Number(selOrder.total).toLocaleString('es-MX')}`;
+
+  // Mostrar ítems de la orden en el panel de pago
+  const itemsEl = document.getElementById('payOrderItems');
+  if (itemsEl) {
+    itemsEl.innerHTML = (selOrder.items || []).map(it =>
+      `<div class="pay-item-row">
+        <span class="pay-item-qty">${it.qty}×</span>
+        <span class="pay-item-name">${it.emoji || ''} ${it.title}</span>
+        <span class="pay-item-sub">$${(Number(it.price) * it.qty).toLocaleString('es-MX')}</span>
+      </div>`
+    ).join('');
+  }
 
   // Actualizar botones de método de pago
   ['efectivo','tarjeta','transferencia'].forEach(m => {

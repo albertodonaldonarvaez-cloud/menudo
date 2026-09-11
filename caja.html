@@ -316,6 +316,22 @@
     .pending-pay-section.hidden{display:none}
     .pending-pay-who{font-size:0.75rem;font-weight:700;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:5px}
     .pending-pay-who strong{color:var(--text)}
+    /* Lista de ítems en la sección de pago */
+    .pay-items-list{
+      display:flex;flex-direction:column;gap:2px;
+      margin-bottom:8px;max-height:120px;overflow-y:auto;
+    }
+    .pay-item-row{
+      display:flex;align-items:center;gap:6px;
+      font-size:0.78rem;padding:2px 0;
+    }
+    .pay-item-qty{font-weight:800;color:var(--muted);min-width:22px}
+    .pay-item-name{flex:1;color:var(--text);font-weight:600}
+    .pay-item-sub{font-weight:800;color:var(--primary);text-align:right}
+    @media(min-width:768px){
+      .pay-items-list{max-height:160px}
+      .pay-item-row{font-size:0.85rem;padding:3px 0}
+    }
     .pending-pay-btns{display:flex;gap:5px;margin-bottom:6px}
     .pending-pay-btn{
       flex:1;padding:8px 4px;border:2px solid var(--border);border-radius:9px;
@@ -332,6 +348,10 @@
       box-shadow:0 3px 12px rgba(22,163,74,0.3);
     }
     .cobrar-pendiente-btn:disabled{background:#E5E7EB;color:#9CA3AF;box-shadow:none}
+    /* Botón editar en pending card */
+    .pending-edit-btn{background:none;border:1.5px solid var(--border);border-radius:7px;padding:3px 7px;cursor:pointer;color:var(--muted);font-size:0.78rem;transition:all 0.15s}
+    .pending-edit-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+
 
     /* ── Mobile overrides ────────────────────── */
     @media(max-width:639px){
@@ -352,6 +372,56 @@
       /* En desktop, por cobrar siempre visible */
       .por-cobrar-section{display:flex!important}
     }
+
+    /* ── Tablet: 3 columnas ─────────────────── */
+    @media(min-width:768px){
+      /* Left: productos — 44% */
+      .pos-left{width:44%}
+      /* Right: nueva orden + por cobrar en fila */
+      .pos-right{flex-direction:row}
+      .new-order-section{
+        flex:0 0 56%;width:56%;border-right:1.5px solid var(--border);
+      }
+      /* Por cobrar: columna derecha completa */
+      .por-cobrar-section{
+        flex:1 1 0;max-height:none;border-top:none;
+        border-left:none;display:flex!important;
+        background:var(--bg);
+      }
+      /* Botones de producto más grandes en tablet */
+      .pos-btn{min-height:108px}
+      .pos-btn-emoji{font-size:1.9rem}
+      .pos-btn-name{font-size:0.8rem}
+      .pos-btn-price{font-size:0.85rem}
+      /* Cards de órdenes pendientes más grandes */
+      .pending-card{padding:12px 14px;border-radius:12px}
+      .pending-name{font-size:1rem}
+      .pending-total{font-size:1rem;margin-top:4px}
+      .pending-items{font-size:0.78rem;white-space:normal;line-height:1.4}
+      .pending-type{font-size:0.72rem;padding:3px 9px}
+      .pending-time{font-size:0.7rem}
+      /* Header por cobrar más visible */
+      .por-cobrar-title{font-size:0.78rem}
+      .por-cobrar-header{padding:10px 14px 8px}
+      /* Pay section más grande */
+      .pending-pay-btn{padding:11px 4px;font-size:0.8rem}
+      .cobrar-pendiente-btn{padding:15px;font-size:1rem}
+      /* Inputs del nuevo pedido */
+      .client-name-input{font-size:1rem;padding:11px 13px}
+      .order-type-btn{font-size:0.85rem;padding:9px}
+      .ticket-row{padding:9px 10px}
+      .ticket-name{font-size:0.88rem}
+      .ticket-qty-ctrl button{width:26px;height:26px}
+    }
+    /* Tablet grande / escritorio */
+    @media(min-width:1024px){
+      .pos-left{width:48%}
+      .new-order-section{flex:0 0 52%;width:52%}
+      .pos-btn{min-height:118px}
+      .pos-btn-emoji{font-size:2.1rem}
+      .pending-name{font-size:1.08rem}
+    }
+
 
     /* ── Modal precio libre ──────────────────── */
     .modal-overlay{
@@ -488,6 +558,8 @@
             Cobrar a: <strong id="payOrderName">—</strong>
             &nbsp;·&nbsp; <span id="payOrderTotal" style="color:var(--primary);font-weight:800">$0</span>
           </div>
+          <!-- Ítems de la orden seleccionada -->
+          <div class="pay-items-list" id="payOrderItems"></div>
           <div class="pending-pay-btns">
             <button id="pendPayEfectivo" class="pending-pay-btn active"
               onclick="selectPendingPayment('efectivo',this)">
@@ -615,11 +687,6 @@
     </div>
   </div>
 
-  <style>
-    .pending-edit-btn{background:none;border:1.5px solid var(--border);border-radius:7px;padding:3px 7px;cursor:pointer;color:var(--muted);font-size:0.78rem;transition:all 0.15s}
-    .pending-edit-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
-  </style>
-
   <!-- ── Modal Editar Orden ───────────────────────────────────── -->
   <div id="editOrderModal" class="hidden" onclick="if(event.target===this)closeEditModal()">
     <div class="edit-modal-box">
@@ -660,7 +727,7 @@
     </div>
   </div>
 
-  <script src="data.js?v=20260908"></script>
-  <script src="caja.js?v=20260908"></script>
+  <script src="data.js?v=20260910"></script>
+  <script src="caja.js?v=20260910"></script>
 </body>
 </html>
