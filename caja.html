@@ -180,7 +180,7 @@
 
     /* Sección nueva orden */
     .new-order-section{
-      flex:2 1 0;min-height:0;display:flex;flex-direction:column;overflow:hidden;
+      flex:1 1 0;min-height:0;display:flex;flex-direction:column;overflow:hidden;
     }
 
     /* Nombre + tipo en la parte superior */
@@ -263,9 +263,9 @@
     .enviar-btn:active:not(:disabled){transform:scale(0.97)}
     .enviar-btn:disabled{background:#E5E7EB;color:#9CA3AF;cursor:not-allowed;box-shadow:none}
 
-    /* ── Sección "Por Cobrar" ─ PRIMERO en el panel (flex:3 = 60%) ─ */
+    /* ── Sección "Por Cobrar" ─ 50% del panel ─ */
     .por-cobrar-section{
-      flex:3 1 0;           /* toma 60% del panel derecho */
+      flex:1 1 0;            /* 50% del panel derecho */
       min-height:0;
       display:flex;flex-direction:column;overflow:hidden;
       border-bottom:2px solid var(--border);background:var(--bg2);
@@ -374,12 +374,12 @@
       /* Por cobrar siempre visible y prominente */
       .por-cobrar-section{
         display:flex!important;
-        flex:3 1 0!important;   /* 60% del panel — FORZADO */
+        flex:1 1 0!important;   /* 50% del panel */
         border-bottom:2px solid var(--border);
         background:var(--bg2);
       }
       .new-order-section{
-        flex:2 1 0!important;   /* 40% del panel — FORZADO */
+        flex:1 1 0!important;   /* 50% del panel */
         overflow:hidden;
       }
 
@@ -511,41 +511,15 @@
           </div>
         </div>
 
-        <!-- Panel de cobro al seleccionar una orden -->
-        <div class="pending-pay-section hidden" id="pendingPaySection">
-          <div class="pending-pay-who">
-            Cobrar a: <strong id="payOrderName">—</strong>
-            &nbsp;·&nbsp; <span id="payOrderTotal" style="color:var(--primary);font-weight:800">$0</span>
-          </div>
-          <!-- Ítems de la orden seleccionada -->
-          <div class="pay-items-list" id="payOrderItems"></div>
-          <div class="pending-pay-btns">
-            <button id="pendPayEfectivo" class="pending-pay-btn active"
-              onclick="selectPendingPayment('efectivo',this)">
-              <i class="fa-solid fa-money-bills"></i> Efectivo
-            </button>
-            <button id="pendPayTarjeta" class="pending-pay-btn"
-              onclick="selectPendingPayment('tarjeta',this)">
-              <i class="fa-solid fa-credit-card"></i> Tarjeta
-            </button>
-            <button id="pendPayTransferencia" class="pending-pay-btn"
-              onclick="selectPendingPayment('transferencia',this)">
-              <i class="fa-solid fa-mobile-screen-button"></i> Transfer
-            </button>
-          </div>
-          <button class="cobrar-pendiente-btn" id="cobrarPendienteBtn" onclick="collectPayment()">
-            <i class="fa-solid fa-circle-check"></i>
-            <span id="cobrarPendienteLabel">Cobrar</span>
-          </button>
-        </div>
-
       </div><!-- /por-cobrar-section -->
 
-      <!-- ── Sección: Nueva Orden ── SEGUNDO = abajo (40%) -->
+      <!-- ── Sección: Nueva Orden ── (50%) -->
       <div class="new-order-section" id="newOrderSection">
 
-        <!-- Nombre + tipo -->
+        <!-- Nombre + tipo + label edición -->
         <div class="order-meta-bar">
+          <div class="editing-label" id="editingLabel" style="display:none;font-size:0.82rem;font-weight:800;color:var(--primary);padding:4px 0">
+          </div>
           <div class="client-name-label">
             <i class="fa-solid fa-user"></i> Nombre del cliente <span class="req">*</span>
           </div>
@@ -576,8 +550,8 @@
           <span class="ticket-total-amount" id="ticketTotal">$0</span>
         </div>
 
-        <!-- Botón Enviar a Cocina -->
-        <div class="enviar-wrap">
+        <!-- Botones de acción (dinámicos desde caja.js) -->
+        <div class="enviar-wrap" id="enviarWrap">
           <button class="enviar-btn" id="enviarCocinaBtn" onclick="sendToKitchenPrimary()" disabled>
             <i class="fa-solid fa-fire-burner"></i>
             Enviar a Cocina
@@ -741,7 +715,7 @@
     </div>
   </div>
 
-  <script src="data.js?v=20260910d"></script>
-  <script src="caja.js?v=20260910d"></script>
+  <script src="data.js?v=20260910e"></script>
+  <script src="caja.js?v=20260910e"></script>
 </body>
 </html>

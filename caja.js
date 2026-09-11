@@ -16,6 +16,11 @@ let selectedPendingId = null;       // orden seleccionada en "Por Cobrar"
 let pendingPayMethod  = 'efectivo'; // método de pago en "Por Cobrar"
 let pendingPollTimer  = null;
 
+// ── Estado de edición de orden existente ──
+let editingOrderId    = null;       // ID de la orden que se está editando (null = orden nueva)
+let originalItemCount = 0;          // cantidad de ítems al cargar la orden (para detectar nuevos)
+
+
 // ── Tabs móvil (3 tabs) ───────────────────────────────────────
 function switchMobileTab(tab) {
   mobileTab = tab;
@@ -283,6 +288,8 @@ function renderTicket() {
   const totalEl = document.getElementById('ticketTotal');
   const sendBtn = document.getElementById('enviarCocinaBtn');
   const total   = getTotal();
+  const isEditing = !!editingOrderId;
+  const hasNewItems = ticket.length > originalItemCount;
 
   if (list) {
     if (ticket.length === 0) {
@@ -313,16 +320,173 @@ function renderTicket() {
     }
   }
 
-  if (sendBtn) sendBtn.disabled = ticket.length === 0;
+  // ── Botones según modo ──
+  const enviarWrap = document.getElementById('enviarWrap');
+  if (enviarWrap) {
+    if (isEditing) {
+      // Modo edición: mostrar botones de Enviar (si hay nuevos) + Cobrar + Cancelar
+      enviarWrap.innerHTML = `
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <button class="enviar-btn" onclick="sendEditedToKitchen()" ${!hasNewItems ? 'disabled' : ''}
+            style="flex:1;background:linear-gradient(135deg,#D97706,#B45309);padding:12px;font-size:0.9rem">
+            <i class="fa-solid fa-fire-burner"></i> Enviar nuevos
+          </button>
+          <button class="enviar-btn" onclick="cobrarEditingOrder()"
+            style="flex:1;padding:12px;font-size:0.9rem" ${ticket.length === 0 ? 'disabled' : ''}>
+            <i class="fa-solid fa-circle-check"></i> Cobrar $${total.toLocaleString('es-MX')}
+          </button>
+        </div>
+        <button class="enviar-btn" onclick="cancelEditing()"
+          style="background:#6B7280;padding:10px;font-size:0.82rem">
+          <i class="fa-solid fa-xmark"></i> Nueva orden
+        </button>`;
+    } else {
+      // Modo normal
+      enviarWrap.innerHTML = `
+        <button class="enviar-btn" id="enviarCocinaBtn" onclick="sendToKitchenPrimary()" ${ticket.length === 0 ? 'disabled' : ''}>
+          <i class="fa-solid fa-fire-burner"></i> Enviar a Cocina
+        </button>`;
+    }
+  }
 
   updateBadges();
   updateMobileTabBadge();
   updateLibreBadge();
+
+  // Actualizar label del meta bar
+  const metaLabel = document.getElementById('editingLabel');
+  if (metaLabel) {
+    if (isEditing) {
+      const order = pendingOrders.find(o => o.id === editingOrderId);
+      metaLabel.textContent = `✏️ Editando: ${order?.clientName || ''}`;
+      metaLabel.style.display = 'block';
+    } else {
+      metaLabel.style.display = 'none';
+    }
+  }
 }
 
 // ── Nombre del cliente ────────────────────────────────────────
 function getClientName() {
   return (document.getElementById('clientNameInput')?.value || '').trim();
+}
+
+// ── Cargar orden pendiente al ticket ──────────────────────────
+function selectPendingOrder(id) {
+  const order = pendingOrders.find(o => o.id === id);
+  if (!order) return;
+
+  // Si ya la estamos editando, deseleccionar
+  if (editingOrderId === id) {
+    cancelEditing();
+    return;
+  }
+
+  // Cargar ítems al ticket
+  editingOrderId    = id;
+  ticket            = (order.items || []).map(it => ({
+    key:       it.key,
+    title:     it.title,
+    emoji:     it.emoji || '',
+    price:     Number(it.price),
+    priceNote: it.priceNote || '',
+    qty:       it.qty
+  }));
+  originalItemCount = ticket.length;
+  orderType         = order.orderType || 'aqui';
+  pendingPayMethod  = 'efectivo';
+
+  // Mostrar nombre del cliente
+  const nameInput = document.getElementById('clientNameInput');
+  if (nameInput) { nameInput.value = order.clientName || ''; nameInput.disabled = true; }
+
+  setOrderType(orderType);
+  renderTicket();
+
+  // Highlight en la lista
+  selectedPendingId = id;
+  renderPendingOrders();
+
+  // En móvil: cambiar al tab de ticket
+  if (window.innerWidth < 640) switchMobileTab('ticket');
+}
+
+// ── Enviar ítems nuevos a cocina (PATCH) ──────────────────────
+async function sendEditedToKitchen() {
+  if (!editingOrderId || ticket.length <= originalItemCount) return;
+  const total = getTotal();
+
+  try {
+    const res = await fetch(`/api/orders/${editingOrderId}/items`, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body:    JSON.stringify({
+        items: ticket.map(t => ({ key: t.key, title: t.title, emoji: t.emoji, qty: t.qty, price: t.price, subtotal: t.price * t.qty })),
+        total
+      })
+    });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    if (res.ok) {
+      showPosToast('🍳 Cocina verá los cambios');
+      originalItemCount = ticket.length; // ya no son "nuevos"
+      renderTicket();
+      await loadPendingOrders();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      showPosToast(`❌ ${err.error || 'Error al guardar'}`);
+    }
+  } catch (e) { showPosToast('❌ Sin conexión'); }
+}
+
+// ── Cobrar orden editada ──────────────────────────────────────
+async function cobrarEditingOrder() {
+  if (!editingOrderId || ticket.length === 0) return;
+  const orderId = editingOrderId;
+  const total   = getTotal();
+
+  // 1. Guardar cambios primero (PATCH)
+  try {
+    await fetch(`/api/orders/${orderId}/items`, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body:    JSON.stringify({
+        items: ticket.map(t => ({ key: t.key, title: t.title, emoji: t.emoji, qty: t.qty, price: t.price, subtotal: t.price * t.qty })),
+        total
+      })
+    });
+  } catch { /* continuar a cobrar */ }
+
+  // 2. Cobrar
+  try {
+    const res = await fetch(`/api/orders/${orderId}/pay`, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body:    JSON.stringify({ paymentMethod: pendingPayMethod })
+    });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    if (res.ok) {
+      const order = pendingOrders.find(o => o.id === orderId);
+      showPosToast(`✅ Cobrado: ${order?.clientName || ''} — $${total.toLocaleString('es-MX')}`);
+      cancelEditing();
+      await loadPendingOrders();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      showPosToast(`❌ ${err.error || 'Error al cobrar'}`);
+    }
+  } catch (e) { showPosToast('❌ Sin conexión'); }
+}
+
+// ── Cancelar edición → volver a modo nueva orden ─────────────
+function cancelEditing() {
+  editingOrderId    = null;
+  originalItemCount = 0;
+  selectedPendingId = null;
+  ticket = [];
+  const nameInput = document.getElementById('clientNameInput');
+  if (nameInput) { nameInput.value = ''; nameInput.disabled = false; }
+  setOrderType('aqui');
+  renderTicket();
+  renderPendingOrders();
 }
 
 // ── ACCIÓN PRINCIPAL: Enviar a Cocina ─────────────────────────
@@ -406,7 +570,6 @@ function renderPendingOrders() {
 
   if (pendingOrders.length === 0) {
     list.innerHTML = `<div class="pending-empty"><i class="fa-solid fa-check-circle"></i><span>No hay órdenes<br>pendientes de cobro</span></div>`;
-    document.getElementById('pendingPaySection')?.classList.add('hidden');
     selectedPendingId = null;
     return;
   }
@@ -417,71 +580,22 @@ function renderPendingOrders() {
   }
 
   list.innerHTML = pendingOrders.map(o => {
-    const isSelected = o.id === selectedPendingId;
-    const typeLabel  = o.orderType === 'llevar' ? '🛍️ Para Llevar' : '🍽️ Aquí';
-    const itemsText  = (o.items || []).slice(0, 3).map(it => `${it.qty}x ${it.title}`).join(' · ');
+    const isEditing  = o.id === editingOrderId;
+    const typeLabel  = o.orderType === 'llevar' ? '🛍️ Llevar' : '🍽️ Aquí';
+    const itemsText  = (o.items || []).map(it => `${it.qty}× ${it.title}`).join(' · ');
     return `
-      <div class="pending-card${isSelected ? ' selected' : ''}" onclick="selectPendingOrder('${o.id}')">
+      <div class="pending-card${isEditing ? ' selected' : ''}" onclick="selectPendingOrder('${o.id}')">
         <div class="pending-card-top">
           <span class="pending-type ${o.orderType === 'llevar' ? 'llevar' : 'aqui'}">${typeLabel}</span>
-          <div style="display:flex;align-items:center;gap:6px">
-            <button class="pending-edit-btn" onclick="event.stopPropagation();openEditModal('${o.id}')" title="Editar orden">
-              <i class="fa-solid fa-pen-to-square"></i>
-            </button>
-            <span class="pending-time">${timeAgo(o.timestamp)}</span>
-          </div>
+          <span class="pending-time">${timeAgo(o.timestamp)}</span>
         </div>
         <div class="pending-name"><i class="fa-solid fa-user"></i> ${o.clientName || 'Cliente'}</div>
-        <div class="pending-items">${itemsText}${(o.items||[]).length > 3 ? ` <span style="color:var(--primary);font-weight:700">+${(o.items||[]).length-3} más</span>` : ''}</div>
+        <div class="pending-items">${itemsText}</div>
         <div class="pending-total">$${Number(o.total).toLocaleString('es-MX')}</div>
       </div>`;
   }).join('');
-
-  // Mostrar sección de pago si hay una orden seleccionada
-  const paySection = document.getElementById('pendingPaySection');
-  const selOrder   = pendingOrders.find(o => o.id === selectedPendingId);
-
-  if (!selOrder) {
-    paySection?.classList.add('hidden');
-    return;
-  }
-
-  paySection?.classList.remove('hidden');
-  const nameEl  = document.getElementById('payOrderName');
-  const totalEl = document.getElementById('payOrderTotal');
-  if (nameEl)  nameEl.textContent  = selOrder.clientName || 'Cliente';
-  if (totalEl) totalEl.textContent = `$${Number(selOrder.total).toLocaleString('es-MX')}`;
-
-  // Mostrar ítems de la orden en el panel de pago
-  const itemsEl = document.getElementById('payOrderItems');
-  if (itemsEl) {
-    itemsEl.innerHTML = (selOrder.items || []).map(it =>
-      `<div class="pay-item-row">
-        <span class="pay-item-qty">${it.qty}×</span>
-        <span class="pay-item-name">${it.emoji || ''} ${it.title}</span>
-        <span class="pay-item-sub">$${(Number(it.price) * it.qty).toLocaleString('es-MX')}</span>
-      </div>`
-    ).join('');
-  }
-
-  // Actualizar botones de método de pago
-  ['efectivo','tarjeta','transferencia'].forEach(m => {
-    document.getElementById(`pendPay${m.charAt(0).toUpperCase()+m.slice(1)}`)
-      ?.classList.toggle('active', m === pendingPayMethod);
-  });
 }
 
-function selectPendingOrder(id) {
-  selectedPendingId = (selectedPendingId === id) ? null : id; // toggle
-  pendingPayMethod  = 'efectivo';
-  renderPendingOrders();
-}
-
-function selectPendingPayment(method, btn) {
-  pendingPayMethod = method;
-  document.querySelectorAll('.pending-pay-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-}
 
 async function collectPayment() {
   if (!selectedPendingId) return;
