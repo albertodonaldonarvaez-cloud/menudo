@@ -7,6 +7,16 @@ import java.util.TimeZone
 
 object TsplFormatter {
 
+    // Ancho imprimible: 384 dots (48mm × 8 dots/mm)
+    // Font "2" (12×20): 32 chars max    → body text, separadores
+    // Font "3" (16×24): 24 chars max    → info principal
+    // Font "4" (24×32): 16 chars max    → titulos, totales
+    // Font "5" (32×48): 12 chars max    → encabezados grandes
+
+    private fun maxChars(font: String): Int = when (font) {
+        "1" -> 48; "2" -> 32; "3" -> 24; "4" -> 16; "5" -> 12; else -> 24
+    }
+
     // ── COMANDA DE COCINA ─────────────────────────────────────────
     fun formatComanda(order: OrderPoller.Order, copies: Int = 1): String {
         return buildString {
@@ -17,7 +27,8 @@ object TsplFormatter {
                 val h = when (font) {
                     "5" -> 56; "4" -> 40; "3" -> 30; "2" -> 24; else -> 30
                 }
-                lines.add(Triple(y, font, sanitize(text)))
+                val safe = sanitize(text).take(maxChars(font))
+                lines.add(Triple(y, font, safe))
                 y += h
             }
 
@@ -25,23 +36,23 @@ object TsplFormatter {
             fun dash() { addLine("--------------------------------", "2") }
 
             sep()
-            addLine("  MENUDERIA Y BARBACOA", "3")
+            addLine("MENUDERIA Y BARBACOA", "3")
             sep()
 
-            addLine("  COMANDA #${order.num}", "4")
-            addLine("  Cliente: ${order.clientName}", "3")
+            addLine("COMANDA #${order.num}", "4")
+            addLine("${order.clientName}", "3")
 
             val typeLabel = if (order.orderType == "llevar") "PARA LLEVAR" else "AQUI"
             val timeStr = formatTime(order.timestamp)
-            addLine("  $typeLabel | $timeStr", "3")
+            addLine("$typeLabel | $timeStr", "2")
 
             dash()
             for (item in order.items) {
-                addLine("  ${item.qty}x ${item.title}".take(30), "3")
+                addLine("${item.qty}x ${item.title}", "3")
             }
             dash()
 
-            addLine("  TOTAL: \$${order.total}", "4")
+            addLine("TOTAL: \$${order.total}", "3")
             sep()
 
             y += 20
@@ -71,7 +82,8 @@ object TsplFormatter {
                 val h = when (font) {
                     "5" -> 56; "4" -> 40; "3" -> 30; "2" -> 24; else -> 30
                 }
-                lines.add(Triple(y, font, sanitize(text)))
+                val safe = sanitize(text).take(maxChars(font))
+                lines.add(Triple(y, font, safe))
                 y += h
             }
 
@@ -79,25 +91,25 @@ object TsplFormatter {
             fun dash() { addLine("--------------------------------", "2") }
 
             sep()
-            addLine("  ** ADICIONAL **", "4")
-            addLine("  COMANDA #${comanda.num}", "3")
+            addLine("** ADICIONAL **", "4")
+            addLine("COMANDA #${comanda.num}", "3")
             sep()
 
-            addLine("  Cliente: ${comanda.clientName}", "3")
+            addLine("${comanda.clientName}", "3")
 
-            val typeLabel = if (comanda.orderType == "llevar") "PARA LLEVAR" else "AQUI"
+            val typeLabel = if (comanda.orderType == "llevar") "LLEVAR" else "AQUI"
             val timeStr = formatTime(comanda.timestamp)
-            addLine("  $typeLabel | $timeStr", "2")
+            addLine("$typeLabel | $timeStr", "2")
 
             dash()
-            addLine("  ITEMS NUEVOS:", "3")
+            addLine("ITEMS NUEVOS:", "3")
             dash()
             for (item in comanda.items) {
-                addLine("  ${item.qty}x ${item.title}".take(30), "3")
+                addLine("${item.qty}x ${item.title}", "3")
             }
             dash()
 
-            addLine("  SUBTOTAL: \$${comanda.total}", "4")
+            addLine("SUBTOTAL: \$${comanda.total}", "3")
             sep()
 
             y += 20
@@ -127,7 +139,8 @@ object TsplFormatter {
                 val h = when (font) {
                     "5" -> 56; "4" -> 40; "3" -> 30; "2" -> 24; else -> 30
                 }
-                lines.add(Triple(y, font, sanitize(text)))
+                val safe = sanitize(text).take(maxChars(font))
+                lines.add(Triple(y, font, safe))
                 y += h
             }
 
@@ -135,15 +148,14 @@ object TsplFormatter {
             fun dash() { addLine("--------------------------------", "2") }
 
             sep()
-            addLine("  MENUDERIA Y BARBACOA", "3")
+            addLine("MENUDERIA Y BARBACOA", "3")
             sep()
 
-            addLine("  TICKET DE VENTA", "4")
-            addLine("", "2")
-            addLine("  Cliente: ${ticket.clientName}", "3")
+            addLine("TICKET DE VENTA", "4")
+            addLine("${ticket.clientName}", "3")
 
             val timeStr = formatTime(ticket.timestamp)
-            addLine("  Fecha: $timeStr", "2")
+            addLine("Fecha: $timeStr", "2")
 
             val methodLabel = when(ticket.payMethod) {
                 "efectivo" -> "Efectivo"
@@ -151,29 +163,30 @@ object TsplFormatter {
                 "transferencia" -> "Transferencia"
                 else -> ticket.payMethod
             }
-            addLine("  Metodo: $methodLabel", "3")
+            addLine("Pago: $methodLabel", "3")
 
             dash()
             for (item in ticket.items) {
-                val itemLine = "  ${item.qty}x ${item.title}".take(22)
-                val priceTxt = "\$${item.subtotal}"
-                val pad = 32 - itemLine.length - priceTxt.length
-                val padded = if (pad > 0) itemLine + " ".repeat(pad) + priceTxt else "$itemLine $priceTxt"
-                addLine(padded, "2")
+                // Item + precio en font "2" (32 chars)
+                val name = "${item.qty}x ${item.title}".take(22)
+                val price = "\$${item.price * item.qty}"
+                val gap = 32 - name.length - price.length
+                val line = if (gap > 0) name + ".".repeat(gap) + price else "$name $price"
+                addLine(line, "2")
             }
             dash()
 
-            addLine("  TOTAL:     \$${ticket.total}", "4")
+            addLine("TOTAL: \$${ticket.total}", "3")
 
             if (ticket.payMethod == "efectivo" && ticket.received > 0) {
                 val recInt = ticket.received.toInt()
                 val chgInt = ticket.change.toInt()
-                addLine("  Recibido:  \$$recInt", "3")
-                addLine("  CAMBIO:    \$$chgInt", "4")
+                addLine("Recibido: \$$recInt", "2")
+                addLine("CAMBIO: \$$chgInt", "3")
             }
 
             sep()
-            addLine("  Gracias por su visita!", "3")
+            addLine("Gracias por su visita!", "3")
             sep()
 
             y += 20
@@ -201,11 +214,11 @@ object TsplFormatter {
             appendLine("DIRECTION 0")
             appendLine("CLS")
             appendLine("TEXT 0,10,\"2\",0,1,1,\"================================\"")
-            appendLine("TEXT 0,34,\"4\",0,1,1,\"  PRUEBA IMPRESION\"")
+            appendLine("TEXT 0,34,\"3\",0,1,1,\"PRUEBA DE IMPRESION\"")
             appendLine("TEXT 0,74,\"2\",0,1,1,\"================================\"")
-            appendLine("TEXT 0,100,\"3\",0,1,1,\"  Menudo Printer App\"")
-            appendLine("TEXT 0,130,\"3\",0,1,1,\"  Conexion: OK\"")
-            appendLine("TEXT 0,160,\"2\",0,1,1,\"  $now\"")
+            appendLine("TEXT 0,100,\"3\",0,1,1,\"Menudo Printer App\"")
+            appendLine("TEXT 0,130,\"3\",0,1,1,\"Conexion: OK\"")
+            appendLine("TEXT 0,160,\"2\",0,1,1,\"$now\"")
             appendLine("TEXT 0,184,\"2\",0,1,1,\"================================\"")
             appendLine("PRINT 1,1")
         }
