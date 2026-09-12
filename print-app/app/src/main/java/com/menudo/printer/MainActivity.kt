@@ -87,7 +87,7 @@ class MainActivity : AppCompatActivity() {
                 CoroutineScope(Dispatchers.IO).launch {
                     val printer = BluetoothPrinter(btAdapter)
                     if (printer.connect(deviceAddress)) {
-                        printer.print(EscPosFormatter.formatTest())
+                        printer.sendRaw(TsplFormatter.formatTest())
                         printer.disconnect()
                         runOnUiThread { addLog("Test print sent.") }
                     } else {

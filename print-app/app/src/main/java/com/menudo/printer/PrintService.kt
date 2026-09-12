@@ -21,7 +21,8 @@ class PrintService : Service() {
     private lateinit var poller: OrderPoller
     private lateinit var prefs: PrefsManager
     private val printedOrders = mutableSetOf<String>()
-    
+    private val printedTickets = mutableSetOf<String>()
+
     private val CHANNEL_ID = "PrinterServiceChannel"
 
     companion object {
@@ -41,63 +42,91 @@ class PrintService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val notification = createNotification("Starting printer service...")
+        val notification = createNotification("Iniciando servicio...")
         startForeground(1, notification)
         isRunning = true
-        
-        scope.launch {
-            pollAndPrint()
-        }
-        
+
+        scope.launch { pollAndPrint() }
+
         return START_STICKY
     }
 
     private suspend fun pollAndPrint() {
         var isFirstRun = true
-        
+
         while (isRunning) {
             val deviceAddress = prefs.lastDeviceAddress
             if (deviceAddress != null && !printer.isConnected) {
-                updateStatus("Connecting to printer...")
+                updateStatus("Conectando impresora...")
                 val connected = printer.connect(deviceAddress)
                 if (connected) {
-                    updateStatus("Connected")
+                    updateStatus("Conectada")
                 } else {
-                    updateStatus("Printer connection failed")
+                    updateStatus("Error de conexion")
                 }
             }
 
             if (printer.isConnected) {
+                // 1. Imprimir comandas nuevas
                 try {
                     val orders = poller.fetchOrders(isFirstRun)
-                    
+
                     if (isFirstRun) {
                         orders.forEach { printedOrders.add(it.id) }
                         isFirstRun = false
-                        log("Service started. Ignored ${orders.size} existing orders.")
+                        log("Servicio iniciado. ${orders.size} ordenes existentes ignoradas.")
                     } else {
                         for (order in orders) {
                             if (!printedOrders.contains(order.id)) {
-                                updateStatus("Printing Order #${order.num}")
-                                val data = EscPosFormatter.formatOrder(order)
-                                val success = printer.print(data)
+                                updateStatus("Imprimiendo #${order.num}...")
+                                val copies = order.printCopies
+                                val tspl = TsplFormatter.formatComanda(order, copies)
+                                val success = printer.sendRaw(tspl)
                                 if (success) {
                                     printedOrders.add(order.id)
-                                    log("Printed Order #${order.num}")
+                                    log("Comanda #${order.num} impresa (${copies}x)")
+                                    delay(3000) // Esperar entre copias
                                 } else {
-                                    log("Failed to print Order #${order.num}")
+                                    log("Error imprimiendo #${order.num}")
                                 }
-                                delay(2000) // Delay between prints
                             }
                         }
-                        updateStatus("Connected, polling...")
                     }
                 } catch (e: Exception) {
                     Log.e("PrintService", "Polling error", e)
                 }
+
+                // 2. Imprimir tickets de cobro
+                try {
+                    val tickets = poller.fetchPrintQueue()
+                    val ackIds = mutableListOf<String>()
+
+                    for (ticket in tickets) {
+                        val tid = ticket.orderId
+                        if (tid != null && !printedTickets.contains(tid)) {
+                            updateStatus("Imprimiendo ticket...")
+                            val tspl = TsplFormatter.formatTicketFromJson(ticket)
+                            val success = printer.sendRaw(tspl)
+                            if (success) {
+                                printedTickets.add(tid)
+                                ackIds.add(tid)
+                                log("Ticket cobro impreso: ${ticket.clientName}")
+                                delay(3000)
+                            }
+                        }
+                    }
+
+                    if (ackIds.isNotEmpty()) {
+                        poller.ackPrintQueue(ackIds)
+                    }
+                } catch (e: Exception) {
+                    Log.e("PrintService", "Ticket queue error", e)
+                }
+
+                updateStatus("Conectada, esperando...")
             }
-            
-            delay(8000) // Poll every 8 seconds
+
+            delay(8000)
         }
     }
 
@@ -105,7 +134,7 @@ class PrintService : Service() {
         status = newStatus
         val manager = getSystemService(NotificationManager::class.java)
         manager?.notify(1, createNotification(newStatus))
-        
+
         CoroutineScope(Dispatchers.Main).launch {
             onStatusChanged?.invoke(newStatus)
         }
@@ -127,7 +156,7 @@ class PrintService : Service() {
         }
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Menudo Printer Service")
+            .setContentTitle("Menudo Printer")
             .setContentText(text)
             .setSmallIcon(R.drawable.ic_printer)
             .setContentIntent(pendingIntent)
@@ -139,7 +168,7 @@ class PrintService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Printer Service",
+                "Impresora Menudo",
                 NotificationManager.IMPORTANCE_LOW
             )
             val manager = getSystemService(NotificationManager::class.java)
@@ -152,8 +181,8 @@ class PrintService : Service() {
         isRunning = false
         scope.cancel()
         printer.disconnect()
-        status = "Stopped"
-        onStatusChanged?.invoke("Stopped")
+        status = "Detenido"
+        onStatusChanged?.invoke("Detenido")
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

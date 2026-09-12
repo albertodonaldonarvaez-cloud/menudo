@@ -263,6 +263,22 @@
     .enviar-btn:active:not(:disabled){transform:scale(0.97)}
     .enviar-btn:disabled{background:#E5E7EB;color:#9CA3AF;cursor:not-allowed;box-shadow:none}
 
+    /* ── Selector de copias ──────────────────── */
+    .copies-bar{
+      display:flex;align-items:center;gap:8px;padding:6px 14px;
+      background:#F9FAFB;border-top:1px solid var(--border);
+    }
+    .copies-label{font-size:0.72rem;font-weight:700;color:var(--muted);white-space:nowrap}
+    .copies-btns{display:flex;gap:4px}
+    .copies-btn{
+      width:34px;height:30px;border:1.5px solid var(--border);border-radius:8px;
+      background:#fff;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:800;
+      cursor:pointer;color:var(--text);transition:all 0.15s;
+    }
+    .copies-btn.active{border-color:var(--primary);background:var(--primary);color:#fff}
+    .copies-btn:active{transform:scale(0.9)}
+
+
     /* ── Sección "Por Cobrar" ─ 40% del panel ─ */
     .por-cobrar-section{
       flex:2 1 0;            /* 40% del panel derecho */
@@ -609,10 +625,21 @@
           </div>
         </div>
 
-        <!-- Total -->
+        <!-- Total + Copias -->
         <div class="ticket-total-bar">
           <span class="ticket-total-label">Total</span>
           <span class="ticket-total-amount" id="ticketTotal">$0</span>
+        </div>
+
+        <!-- Selector de copias -->
+        <div class="copies-bar" id="copiesBar">
+          <span class="copies-label"><i class="fa-solid fa-copy"></i> Copias:</span>
+          <div class="copies-btns">
+            <button class="copies-btn active" onclick="setCopies(1,this)">1</button>
+            <button class="copies-btn" onclick="setCopies(2,this)">2</button>
+            <button class="copies-btn" onclick="setCopies(3,this)">3</button>
+          </div>
+          <input type="hidden" id="printCopies" value="1">
         </div>
 
         <!-- Botones de acción (dinámicos desde caja.js) -->
@@ -834,7 +861,7 @@
     </div>
   </div>
 
-  <script src="data.js?v=20260910g"></script>
-  <script src="caja.js?v=20260910g"></script>
+  <script src="data.js?v=20260911a"></script>
+  <script src="caja.js?v=20260911a"></script>
 </body>
 </html>

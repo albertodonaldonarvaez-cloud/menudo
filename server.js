@@ -428,7 +428,7 @@ app.get('/api/orders', requireAnyAuth, (req, res) => {
  */
 app.post('/api/orders', requireAnyAuth, (req, res) => {
   try {
-    const { clientName, orderType, items, total } = req.body;
+    const { clientName, orderType, items, total, printCopies } = req.body;
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'La orden debe tener al menos un ítem' });
     }
@@ -446,21 +446,52 @@ app.post('/api/orders', requireAnyAuth, (req, res) => {
       timestamp:     new Date().toISOString(),
       date:          today,
       status:        'pendiente',
-      paymentStatus: 'pendiente',   // se marca 'cobrado' con PATCH /pay
+      paymentStatus: 'pendiente',
       items,
       total:         Number(total) || 0,
+      printCopies:   Math.min(Math.max(parseInt(printCopies) || 1, 1), 10),
       paymentMethod: null,
       createdBy:     req.session.user || 'caja'
     };
 
     all.push(order);
     writeJSON(ORDERS_FILE, all);
-    console.log(`[${new Date().toISOString()}] Orden #${num} ${order.id} | ${order.clientName} | ${order.orderType} | $${order.total}`);
+    console.log(`[${new Date().toISOString()}] Orden #${num} ${order.id} | ${order.clientName} | ${order.orderType} | $${order.total} | ${order.printCopies} copias`);
     res.json({ ok: true, order });
   } catch (e) {
     console.error('Error orden:', e);
     res.status(500).json({ error: 'No se pudo crear la orden' });
   }
+});
+
+// ── Cola de impresión de tickets de cobro ─────────────────────
+let printQueue = []; // tickets de venta pendientes de imprimir
+
+app.post('/api/print-ticket', requireAnyAuth, (req, res) => {
+  const ticket = req.body;
+  ticket.printedAt = null;
+  ticket.createdAt = new Date().toISOString();
+  printQueue.push(ticket);
+  // Mantener solo los últimos 50
+  if (printQueue.length > 50) printQueue = printQueue.slice(-50);
+  res.json({ ok: true });
+});
+
+app.get('/api/print-queue', (req, res) => {
+  // Devuelve tickets NO impresos
+  const pending = printQueue.filter(t => !t.printedAt);
+  res.json({ pending });
+});
+
+app.patch('/api/print-queue/ack', (req, res) => {
+  // Marca tickets como impresos
+  const { ids } = req.body || {};
+  if (Array.isArray(ids)) {
+    printQueue.forEach(t => {
+      if (ids.includes(t.orderId)) t.printedAt = new Date().toISOString();
+    });
+  }
+  res.json({ ok: true });
 });
 
 /**

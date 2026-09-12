@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "com.menudo.printer.app-merged_res-31:/layout_activity_main.xml.flat",
+        "source": "com.menudo.printer.app-main-33:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.menudo.printer.app-merged_res-31:/drawable_ic_printer.xml.flat",
+        "source": "com.menudo.printer.app-main-33:/drawable/ic_printer.xml"
+    }
+]

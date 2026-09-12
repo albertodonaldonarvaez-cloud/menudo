@@ -368,6 +368,13 @@ function renderTicket() {
   }
 }
 
+// ── Selector de copias ────────────────────────────────────────
+function setCopies(n, btn) {
+  document.getElementById('printCopies').value = n;
+  document.querySelectorAll('.copies-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
 // ── Nombre del cliente ────────────────────────────────────────
 function getClientName() {
   return (document.getElementById('clientNameInput')?.value || '').trim();
@@ -547,13 +554,34 @@ async function confirmPay() {
     if (res.status === 401) { window.location.href = '/login'; return; }
     if (res.ok) {
       const order = pendingOrders.find(o => o.id === orderId);
+      const received = parseFloat(document.getElementById('payCashInput')?.value) || 0;
+      const change = received - total;
       let msg = `✅ Cobrado: ${order?.clientName || ''} — $${total.toLocaleString('es-MX')}`;
-      if (payModalMethod === 'efectivo') {
-        const received = parseFloat(document.getElementById('payCashInput')?.value) || 0;
-        if (received > total) {
-          msg += ` · Cambio: $${(received - total).toLocaleString('es-MX')}`;
-        }
+      if (payModalMethod === 'efectivo' && received > total) {
+        msg += ` · Cambio: $${change.toLocaleString('es-MX')}`;
       }
+
+      // Guardar datos del ticket para imprimir
+      const ticketData = {
+        orderId,
+        clientName: order?.clientName || '',
+        items: [...ticket],
+        total,
+        payMethod: payModalMethod,
+        received: payModalMethod === 'efectivo' ? received : total,
+        change: payModalMethod === 'efectivo' ? Math.max(0, change) : 0,
+        timestamp: new Date().toISOString()
+      };
+
+      // Enviar ticket al servidor para que la app lo imprima
+      try {
+        await fetch('/api/print-ticket', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(ticketData)
+        });
+      } catch { /* no importa si falla */ }
+
       showPosToast(msg);
       closePayModal();
       cancelEditing();
@@ -567,6 +595,7 @@ async function confirmPay() {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> <span id="payConfirmLabel">Confirmar cobro</span>'; }
   }
 }
+
 
 
 // ── Cancelar edición → volver a modo nueva orden ─────────────
@@ -610,11 +639,14 @@ async function sendToKitchenPrimary() {
       subtotal: t.price * t.qty
     }));
 
+    const copies = parseInt(document.getElementById('printCopies')?.value) || 1;
+
     const res = await fetch('/api/orders', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body:    JSON.stringify({ clientName: name, orderType, items, total: getTotal() })
+      body:    JSON.stringify({ clientName: name, orderType, items, total: getTotal(), printCopies: copies })
     });
+
 
     if (res.status === 401) { window.location.href = '/login'; return; }
 
