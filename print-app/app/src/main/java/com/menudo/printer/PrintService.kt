@@ -79,18 +79,24 @@ class PrintService : Service() {
                     } else {
                         for (order in orders) {
                             if (!printedOrders.contains(order.id)) {
-                                updateStatus("Imprimiendo #${order.num}...")
                                 val copies = order.printCopies
                                 val tspl = TsplFormatter.formatComanda(order, copies)
-                                val success = printer.sendRaw(tspl)
-                                if (success) {
-                                    printedOrders.add(order.id)
-                                    printCount++
-                                    log("Comanda #${order.num} impresa (${copies}x)")
-                                    delay(3000) // Esperar entre copias
-                                } else {
-                                    log("Error imprimiendo #${order.num}")
+                                // Imprimir copia por copia con 5s de espera para cortar
+                                for (copy in 1..copies) {
+                                    updateStatus("Imprimiendo #${order.num} ($copy/$copies)...")
+                                    val success = printer.sendRaw(tspl)
+                                    if (!success) {
+                                        log("Error imprimiendo #${order.num}")
+                                        break
+                                    }
+                                    if (copy < copies) {
+                                        delay(5000) // 5 segundos para cortar
+                                    }
                                 }
+                                printedOrders.add(order.id)
+                                printCount++
+                                log("Comanda #${order.num} impresa (${copies}x)")
+                                delay(3000)
                             }
                         }
                     }
@@ -133,14 +139,17 @@ class PrintService : Service() {
                     for (comanda in comandas) {
                         val cid = comanda.createdAt
                         if (cid.isNotEmpty()) {
-                            updateStatus("Imprimiendo adicional #${comanda.num}...")
+                            val copies = comanda.printCopies
                             val tspl = TsplFormatter.formatComandaAddition(comanda)
-                            val success = printer.sendRaw(tspl)
-                            if (success) {
-                                ackIds2.add(cid)
-                                log("Adicional #${comanda.num}: +${comanda.items.size} items")
-                                delay(3000)
+                            for (copy in 1..copies) {
+                                updateStatus("Adicional #${comanda.num} ($copy/$copies)...")
+                                val success = printer.sendRaw(tspl)
+                                if (!success) break
+                                if (copy < copies) delay(5000)
                             }
+                            ackIds2.add(cid)
+                            log("Adicional #${comanda.num}: +${comanda.items.size} items (${copies}x)")
+                            delay(3000)
                         }
                     }
 

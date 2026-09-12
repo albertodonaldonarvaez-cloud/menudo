@@ -67,8 +67,8 @@ object TsplFormatter {
                 appendLine("TEXT 0,${line.first},\"${line.second}\",0,1,1,\"${line.third}\"")
             }
 
-            val c = maxOf(copies, 1)
-            appendLine("PRINT $c,1")
+            // Siempre PRINT 1 — las copias se manejan en PrintService con delay
+            appendLine("PRINT 1,1")
         }
     }
 
@@ -124,8 +124,7 @@ object TsplFormatter {
                 appendLine("TEXT 0,${line.first},\"${line.second}\",0,1,1,\"${line.third}\"")
             }
 
-            val c = maxOf(comanda.printCopies, 1)
-            appendLine("PRINT $c,1")
+            appendLine("PRINT 1,1")
         }
     }
 
@@ -167,12 +166,7 @@ object TsplFormatter {
 
             dash()
             for (item in ticket.items) {
-                // Item + precio en font "2" (32 chars)
-                val name = "${item.qty}x ${item.title}".take(22)
-                val price = "\$${item.price * item.qty}"
-                val gap = 32 - name.length - price.length
-                val line = if (gap > 0) name + ".".repeat(gap) + price else "$name $price"
-                addLine(line, "2")
+                addLine("${item.qty}x ${item.title}", "3")
             }
             dash()
 
