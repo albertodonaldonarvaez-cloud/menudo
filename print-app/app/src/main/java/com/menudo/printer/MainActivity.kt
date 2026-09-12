@@ -53,9 +53,26 @@ class MainActivity : AppCompatActivity() {
 
         binding.tvStatus.text = PrintService.status
 
+        // Pedir exclusión de optimización de batería (Huawei mata servicios)
+        requestBatteryExclusion()
+
         // Auto-iniciar servicio si ya tiene impresora guardada
         if (!PrintService.isRunning && prefs.lastDeviceAddress != null) {
             autoStartService()
+        }
+    }
+
+    @SuppressLint("BatteryLife")
+    private fun requestBatteryExclusion() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val pm = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+            if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                try {
+                    val intent = Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                    intent.data = android.net.Uri.parse("package:$packageName")
+                    startActivity(intent)
+                } catch (_: Exception) { }
+            }
         }
     }
 
