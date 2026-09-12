@@ -56,6 +56,17 @@ class OrderPoller(private val prefs: PrefsManager) {
         val timestamp: String
     )
 
+    data class ComandaAddition(
+        val createdAt: String,
+        val num: Int,
+        val clientName: String,
+        val orderType: String,
+        val items: List<OrderItem>,
+        val total: Int,
+        val printCopies: Int,
+        val timestamp: String
+    )
+
     suspend fun fetchOrders(isFirstRun: Boolean): List<Order> = withContext(Dispatchers.IO) {
         val url = prefs.serverUrl.trimEnd('/') + "/api/orders"
         val request = Request.Builder().url(url).build()
@@ -152,6 +163,67 @@ class OrderPoller(private val prefs: PrefsManager) {
 
     suspend fun ackPrintQueue(ids: List<String>) = withContext(Dispatchers.IO) {
         val url = prefs.serverUrl.trimEnd('/') + "/api/print-queue/ack"
+        val jsonBody = JSONObject()
+        jsonBody.put("ids", JSONArray(ids))
+        val mediaType = "application/json".toMediaType()
+        val requestBody = jsonBody.toString().toRequestBody(mediaType)
+        val request = Request.Builder().url(url).patch(requestBody).build()
+
+        try {
+            client.newCall(request).execute()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    suspend fun fetchComandaQueue(): List<ComandaAddition> = withContext(Dispatchers.IO) {
+        val url = prefs.serverUrl.trimEnd('/') + "/api/print-comanda-queue"
+        val request = Request.Builder().url(url).build()
+
+        try {
+            val response = client.newCall(request).execute()
+            if (!response.isSuccessful) return@withContext emptyList()
+
+            val body = response.body?.string() ?: return@withContext emptyList()
+            val json = JSONObject(body)
+            val arr = json.optJSONArray("pending") ?: return@withContext emptyList()
+
+            val result = mutableListOf<ComandaAddition>()
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                val itemsArray = obj.optJSONArray("items")
+                val itemsList = mutableListOf<OrderItem>()
+                if (itemsArray != null) {
+                    for (j in 0 until itemsArray.length()) {
+                        val itemObj = itemsArray.getJSONObject(j)
+                        itemsList.add(OrderItem(
+                            title = itemObj.optString("title", "Item"),
+                            qty = itemObj.optInt("qty", 1),
+                            price = itemObj.optInt("price", 0),
+                            subtotal = itemObj.optInt("subtotal", 0)
+                        ))
+                    }
+                }
+                result.add(ComandaAddition(
+                    createdAt = obj.optString("createdAt", ""),
+                    num = obj.optInt("num", 0),
+                    clientName = obj.optString("clientName", ""),
+                    orderType = obj.optString("orderType", "aqui"),
+                    items = itemsList,
+                    total = obj.optInt("total", 0),
+                    printCopies = obj.optInt("printCopies", 1),
+                    timestamp = obj.optString("timestamp", "")
+                ))
+            }
+            return@withContext result
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return@withContext emptyList()
+        }
+    }
+
+    suspend fun ackComandaQueue(ids: List<String>) = withContext(Dispatchers.IO) {
+        val url = prefs.serverUrl.trimEnd('/') + "/api/print-comanda-queue/ack"
         val jsonBody = JSONObject()
         jsonBody.put("ids", JSONArray(ids))
         val mediaType = "application/json".toMediaType()

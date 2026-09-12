@@ -22,12 +22,13 @@ class PrintService : Service() {
     private lateinit var prefs: PrefsManager
     private val printedOrders = mutableSetOf<String>()
     private val printedTickets = mutableSetOf<String>()
+    private var printCount = 0
 
     private val CHANNEL_ID = "PrinterServiceChannel"
 
     companion object {
         var isRunning = false
-        var status = "Stopped"
+        var status = "Detenido"
         var onStatusChanged: ((String) -> Unit)? = null
         var onLogAdded: ((String) -> Unit)? = null
     }
@@ -84,6 +85,7 @@ class PrintService : Service() {
                                 val success = printer.sendRaw(tspl)
                                 if (success) {
                                     printedOrders.add(order.id)
+                                    printCount++
                                     log("Comanda #${order.num} impresa (${copies}x)")
                                     delay(3000) // Esperar entre copias
                                 } else {
@@ -123,6 +125,32 @@ class PrintService : Service() {
                     Log.e("PrintService", "Ticket queue error", e)
                 }
 
+                // 3. Imprimir comandas adicionales (excedente)
+                try {
+                    val comandas = poller.fetchComandaQueue()
+                    val ackIds2 = mutableListOf<String>()
+
+                    for (comanda in comandas) {
+                        val cid = comanda.createdAt
+                        if (cid.isNotEmpty()) {
+                            updateStatus("Imprimiendo adicional #${comanda.num}...")
+                            val tspl = TsplFormatter.formatComandaAddition(comanda)
+                            val success = printer.sendRaw(tspl)
+                            if (success) {
+                                ackIds2.add(cid)
+                                log("Adicional #${comanda.num}: +${comanda.items.size} items")
+                                delay(3000)
+                            }
+                        }
+                    }
+
+                    if (ackIds2.isNotEmpty()) {
+                        poller.ackComandaQueue(ackIds2)
+                    }
+                } catch (e: Exception) {
+                    Log.e("PrintService", "Comanda queue error", e)
+                }
+
                 updateStatus("Conectada, esperando...")
             }
 
@@ -132,11 +160,12 @@ class PrintService : Service() {
 
     private fun updateStatus(newStatus: String) {
         status = newStatus
+        val notifText = if (printCount > 0) "$newStatus | $printCount impresas" else newStatus
         val manager = getSystemService(NotificationManager::class.java)
-        manager?.notify(1, createNotification(newStatus))
+        manager?.notify(1, createNotification(notifText))
 
         CoroutineScope(Dispatchers.Main).launch {
-            onStatusChanged?.invoke(newStatus)
+            onStatusChanged?.invoke(notifText)
         }
     }
 
@@ -149,10 +178,11 @@ class PrintService : Service() {
     @SuppressLint("UnspecifiedImmutableFlag")
     private fun createNotification(text: String): Notification {
         val intent = Intent(this, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+            PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         } else {
-            PendingIntent.getActivity(this, 0, intent, 0)
+            PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
         }
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
@@ -161,6 +191,9 @@ class PrintService : Service() {
             .setSmallIcon(R.drawable.ic_printer)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
+            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setSilent(true)
             .build()
     }
 

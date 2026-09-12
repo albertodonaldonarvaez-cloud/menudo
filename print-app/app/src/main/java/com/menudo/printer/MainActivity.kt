@@ -40,58 +40,99 @@ class MainActivity : AppCompatActivity() {
         btAdapter = btManager.adapter
 
         requestPermissions()
-
         setupUI()
         updateUI()
 
         PrintService.onStatusChanged = { status ->
-            binding.tvStatus.text = "Status: $status"
+            binding.tvStatus.text = status
         }
-        
+
         PrintService.onLogAdded = { log ->
             addLog(log)
         }
-        
-        binding.tvStatus.text = "Status: ${PrintService.status}"
+
+        binding.tvStatus.text = PrintService.status
+
+        // Auto-iniciar servicio si ya tiene impresora guardada
+        if (!PrintService.isRunning && prefs.lastDeviceAddress != null) {
+            autoStartService()
+        }
+    }
+
+    private fun autoStartService() {
+        // Guardar URL actual
+        prefs.serverUrl = binding.etServerUrl.text.toString()
+
+        val intent = Intent(this, PrintService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+        addLog("Servicio auto-iniciado")
+        updateUI()
     }
 
     private fun setupUI() {
+        // Guardar configuracion
         binding.btnConnect.setOnClickListener {
             prefs.serverUrl = binding.etServerUrl.text.toString()
             val selectedItem = binding.spinnerDevices.selectedItem as? String
             if (selectedItem != null) {
                 val address = selectedItem.substringAfterLast("(").substringBeforeLast(")")
                 prefs.lastDeviceAddress = address
-                Toast.makeText(this, "Saved $address. Restart service to connect.", Toast.LENGTH_SHORT).show()
+                val name = selectedItem.substringBeforeLast("(").trim()
+                Toast.makeText(this, "Impresora: $name", Toast.LENGTH_SHORT).show()
+
+                // Si el servicio ya corre, reiniciarlo con la nueva impresora
+                if (PrintService.isRunning) {
+                    stopService(Intent(this, PrintService::class.java))
+                }
+                autoStartService()
             }
         }
 
+        // Toggle servicio
         binding.btnToggleService.setOnClickListener {
             if (PrintService.isRunning) {
                 stopService(Intent(this, PrintService::class.java))
-                binding.btnToggleService.text = "Start Service"
+                addLog("Servicio detenido")
             } else {
-                val intent = Intent(this, PrintService::class.java)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(intent)
-                } else {
-                    startService(intent)
-                }
-                binding.btnToggleService.text = "Stop Service"
+                prefs.serverUrl = binding.etServerUrl.text.toString()
+                autoStartService()
             }
+            updateUI()
         }
 
+        // Test print
         binding.btnTestPrint.setOnClickListener {
             val deviceAddress = prefs.lastDeviceAddress
-            if (deviceAddress != null) {
-                CoroutineScope(Dispatchers.IO).launch {
-                    val printer = BluetoothPrinter(btAdapter)
-                    if (printer.connect(deviceAddress)) {
-                        printer.sendRaw(TsplFormatter.formatTest())
-                        printer.disconnect()
-                        runOnUiThread { addLog("Test print sent.") }
+            if (deviceAddress == null) {
+                Toast.makeText(this, "Selecciona una impresora primero", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            binding.btnTestPrint.isEnabled = false
+            binding.btnTestPrint.text = "Imprimiendo..."
+            addLog("Enviando prueba...")
+
+            CoroutineScope(Dispatchers.IO).launch {
+                val printer = BluetoothPrinter(btAdapter)
+                val success = if (printer.connect(deviceAddress)) {
+                    val result = printer.sendRaw(TsplFormatter.formatTest())
+                    Thread.sleep(2000)
+                    printer.disconnect()
+                    result
+                } else false
+
+                runOnUiThread {
+                    binding.btnTestPrint.isEnabled = true
+                    binding.btnTestPrint.text = "Test Print"
+                    if (success) {
+                        addLog("Prueba impresa OK")
+                        Toast.makeText(this@MainActivity, "Impreso!", Toast.LENGTH_SHORT).show()
                     } else {
-                        runOnUiThread { addLog("Test print failed.") }
+                        addLog("Error: no se pudo imprimir")
+                        Toast.makeText(this@MainActivity, "Error de conexion", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -99,32 +140,33 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addLog(msg: String) {
-        logs.add(0, msg)
-        if (logs.size > 20) logs.removeLast()
+        val time = java.text.SimpleDateFormat("h:mm:ss a", java.util.Locale.US).format(java.util.Date())
+        logs.add(0, "[$time] $msg")
+        if (logs.size > 30) logs.removeLast()
         binding.tvLogs.text = logs.joinToString("\n")
     }
 
     private fun updateUI() {
-        binding.btnToggleService.text = if (PrintService.isRunning) "Stop Service" else "Start Service"
+        binding.btnToggleService.text = if (PrintService.isRunning) "Detener Servicio" else "Iniciar Servicio"
         loadPairedDevices()
     }
 
     @SuppressLint("MissingPermission")
     private fun loadPairedDevices() {
         if (!hasBtPermissions()) return
-        
+
         val pairedDevices: Set<BluetoothDevice>? = btAdapter?.bondedDevices
         val list = mutableListOf<String>()
         var selectedIndex = 0
-        
+
         pairedDevices?.forEachIndexed { index, device ->
-            val name = device.name ?: "Unknown"
+            val name = device.name ?: "Desconocido"
             list.add("$name (${device.address})")
             if (device.address == prefs.lastDeviceAddress) {
                 selectedIndex = index
             }
         }
-        
+
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, list)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.spinnerDevices.adapter = adapter
@@ -146,7 +188,7 @@ class MainActivity : AppCompatActivity() {
             Manifest.permission.INTERNET,
             Manifest.permission.FOREGROUND_SERVICE
         )
-        
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             perms.add(Manifest.permission.BLUETOOTH_CONNECT)
             perms.add(Manifest.permission.BLUETOOTH_SCAN)
@@ -154,21 +196,31 @@ class MainActivity : AppCompatActivity() {
             perms.add(Manifest.permission.BLUETOOTH)
             perms.add(Manifest.permission.BLUETOOTH_ADMIN)
         }
-        
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             perms.add(Manifest.permission.POST_NOTIFICATIONS)
         }
-        
+
         val missing = perms.filter { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }
         if (missing.isNotEmpty()) {
             ActivityCompat.requestPermissions(this, missing.toTypedArray(), PERMISSION_REQUEST)
         }
     }
-    
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST) {
             loadPairedDevices()
+            // Auto-iniciar si ya hay impresora guardada
+            if (prefs.lastDeviceAddress != null && !PrintService.isRunning) {
+                autoStartService()
+            }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateUI()
+        binding.tvStatus.text = PrintService.status
     }
 }

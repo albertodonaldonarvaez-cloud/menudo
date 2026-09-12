@@ -61,6 +61,62 @@ object TsplFormatter {
         }
     }
 
+    // ── COMANDA ADICIONAL (EXCEDENTE) ─────────────────────────────
+    fun formatComandaAddition(comanda: OrderPoller.ComandaAddition): String {
+        return buildString {
+            val lines = mutableListOf<Triple<Int, String, String>>()
+            var y = 10
+
+            fun addLine(text: String, font: String) {
+                val h = when (font) {
+                    "5" -> 56; "4" -> 40; "3" -> 30; "2" -> 24; else -> 30
+                }
+                lines.add(Triple(y, font, sanitize(text)))
+                y += h
+            }
+
+            fun sep() { addLine("================================", "2") }
+            fun dash() { addLine("--------------------------------", "2") }
+
+            sep()
+            addLine("  ** ADICIONAL **", "4")
+            addLine("  COMANDA #${comanda.num}", "3")
+            sep()
+
+            addLine("  Cliente: ${comanda.clientName}", "3")
+
+            val typeLabel = if (comanda.orderType == "llevar") "PARA LLEVAR" else "AQUI"
+            val timeStr = formatTime(comanda.timestamp)
+            addLine("  $typeLabel | $timeStr", "2")
+
+            dash()
+            addLine("  ITEMS NUEVOS:", "3")
+            dash()
+            for (item in comanda.items) {
+                addLine("  ${item.qty}x ${item.title}".take(30), "3")
+            }
+            dash()
+
+            addLine("  SUBTOTAL: \$${comanda.total}", "4")
+            sep()
+
+            y += 20
+            val heightMm = maxOf((y / 8.0).toInt() + 2, 40)
+
+            appendLine("SIZE 48 mm,$heightMm mm")
+            appendLine("GAP 0 mm,0 mm")
+            appendLine("DIRECTION 0")
+            appendLine("CLS")
+
+            for (line in lines) {
+                appendLine("TEXT 0,${line.first},\"${line.second}\",0,1,1,\"${line.third}\"")
+            }
+
+            val c = maxOf(comanda.printCopies, 1)
+            appendLine("PRINT $c,1")
+        }
+    }
+
     // ── TICKET DE VENTA (COBRO) ───────────────────────────────────
     fun formatTicketFromJson(ticket: OrderPoller.TicketData): String {
         return buildString {

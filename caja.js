@@ -427,6 +427,21 @@ async function sendEditedToKitchen() {
   if (currentSnap === originalItemsSnapshot) return; // sin cambios
   const total = getTotal();
 
+  // Calcular excedente (items nuevos o cantidades aumentadas)
+  const origItems = JSON.parse(originalItemsSnapshot); // [{k,q,p}]
+  const diffItems = [];
+  for (const t of ticket) {
+    const orig = origItems.find(o => o.k === t.key && o.p === t.price);
+    if (!orig) {
+      // Item completamente nuevo
+      diffItems.push({ key: t.key, title: t.title, emoji: t.emoji, qty: t.qty, price: t.price, subtotal: t.price * t.qty });
+    } else if (t.qty > orig.q) {
+      // Cantidad aumentada — solo el excedente
+      const extra = t.qty - orig.q;
+      diffItems.push({ key: t.key, title: t.title, emoji: t.emoji, qty: extra, price: t.price, subtotal: t.price * extra });
+    }
+  }
+
   try {
     const res = await fetch(`/api/orders/${editingOrderId}/items`, {
       method:  'PATCH',
@@ -438,9 +453,33 @@ async function sendEditedToKitchen() {
     });
     if (res.status === 401) { window.location.href = '/login'; return; }
     if (res.ok) {
-      showPosToast('🍳 Cocina verá los cambios');
-      originalItemsSnapshot = JSON.stringify(ticket.map(t => ({k:t.key,q:t.qty,p:t.price})));
+      // Mandar excedente a imprimir si hay items nuevos
+      if (diffItems.length > 0) {
+        const order = pendingOrders.find(o => o.id === editingOrderId);
+        const copies = parseInt(document.getElementById('printCopies')?.value) || 1;
+        try {
+          await fetch('/api/print-comanda', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId: editingOrderId,
+              num: order?.num || 0,
+              clientName: order?.clientName || getClientName(),
+              orderType: order?.orderType || orderType,
+              items: diffItems,
+              total: diffItems.reduce((s, i) => s + i.subtotal, 0),
+              printCopies: copies,
+              isAddition: true,
+              timestamp: new Date().toISOString()
+            })
+          });
+        } catch { /* no importa si falla */ }
+        showPosToast(`🍳 +${diffItems.length} items enviados a cocina e impresora`);
+      } else {
+        showPosToast('🍳 Cocina verá los cambios');
+      }
 
+      originalItemsSnapshot = JSON.stringify(ticket.map(t => ({k:t.key,q:t.qty,p:t.price})));
       renderTicket();
       await loadPendingOrders();
     } else {
@@ -449,6 +488,7 @@ async function sendEditedToKitchen() {
     }
   } catch (e) { showPosToast('❌ Sin conexión'); }
 }
+
 
 // ── Cobrar orden editada → abre modal de pago ────────────────
 async function cobrarEditingOrder() {

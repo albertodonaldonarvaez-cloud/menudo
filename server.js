@@ -501,6 +501,34 @@ app.patch('/api/print-queue/ack', (req, res) => {
   res.json({ ok: true });
 });
 
+// ── Cola de impresión de comandas adicionales ─────────────────
+let comandaQueue = [];
+
+app.post('/api/print-comanda', requireAnyAuth, (req, res) => {
+  const comanda = req.body;
+  comanda.printedAt = null;
+  comanda.createdAt = new Date().toISOString();
+  comandaQueue.push(comanda);
+  if (comandaQueue.length > 50) comandaQueue = comandaQueue.slice(-50);
+  console.log(`[PRINT] Comanda adicional #${comanda.num} — ${comanda.items?.length || 0} items`);
+  res.json({ ok: true });
+});
+
+app.get('/api/print-comanda-queue', (req, res) => {
+  const pending = comandaQueue.filter(c => !c.printedAt);
+  res.json({ pending });
+});
+
+app.patch('/api/print-comanda-queue/ack', (req, res) => {
+  const { ids } = req.body || {};
+  if (Array.isArray(ids)) {
+    comandaQueue.forEach(c => {
+      if (ids.includes(c.createdAt)) c.printedAt = new Date().toISOString();
+    });
+  }
+  res.json({ ok: true });
+});
+
 /**
  * PATCH /api/orders/:id/items
  * Edita los ítems de una orden que aún no ha sido cobrada.
