@@ -11,9 +11,20 @@ import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 class OrderPoller(private val prefs: PrefsManager) {
+    companion object {
+        const val API_KEY = "menudo-printer-2026"
+    }
+
     private val client = OkHttpClient.Builder()
         .connectTimeout(5, TimeUnit.SECONDS)
         .readTimeout(5, TimeUnit.SECONDS)
+        .addInterceptor { chain ->
+            val request = chain.request().newBuilder()
+                .addHeader("X-Print-Key", API_KEY)
+                .addHeader("Accept", "application/json")
+                .build()
+            chain.proceed(request)
+        }
         .build()
 
     data class Order(

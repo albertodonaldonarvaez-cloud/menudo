@@ -84,13 +84,20 @@ app.use(session({
 }));
 
 // ── Auth middlewares ──────────────────────────────────────────
+const PRINT_API_KEY = process.env.PRINT_API_KEY || 'menudo-printer-2026';
+
 function requireAnyAuth(req, res, next) {
+  // 1. Session auth (web browser)
   if (req.session?.authenticated) return next();
+  // 2. API key auth (printer app)
+  if (req.headers['x-print-key'] === PRINT_API_KEY) return next();
+  // 3. Not authenticated
   if (req.headers['accept']?.includes('application/json')) {
     return res.status(401).json({ error: 'Sesión expirada, vuelve a iniciar sesión.' });
   }
   res.redirect('/login');
 }
+
 
 // requireCajaAccess: admin + cajero + mesero (NO cocina)
 function requireCajaAccess(req, res, next) {
