@@ -5,7 +5,7 @@
  * Soporta múltiples órdenes simultáneas y tipo Aquí/Para Llevar.
  */
 
-const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco', 'cafe', 'pan'];
+const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco', 'cafe', 'pan', 'carlota', 'arrozconleche'];
 
 let storeConfig       = {};
 let ticket            = [];         // [{ key, title, emoji, price, priceNote, qty }]

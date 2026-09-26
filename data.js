@@ -97,6 +97,31 @@ const DEFAULT_STORE_DATA = {
       priceNote: 'la pieza',
       badge:     '🏠 Casero',
       image:     'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=900&q=80'
+    },
+
+    // ── Postres ────────────────────────────────────────────────────
+    carlota: {
+      enabled:   true,
+      emoji:     '🍰',
+      title:     'Carlota',
+      description: 'Carlota de limón casera, cremosita y fresquita. El postre perfecto después de un buen menudo.',
+      price:     40,
+      priceNote: 'la porción',
+      badge:     '🍋 Casera y fresquita',
+      category:  'postre',
+      image:     'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=900&q=80'
+    },
+
+    arrozconleche: {
+      enabled:   true,
+      emoji:     '🍚',
+      title:     'Arroz con Leche',
+      description: 'Arroz con leche tradicional con canela y pasas. Servido calientito o frío, como más te guste.',
+      price:     35,
+      priceNote: 'la porción',
+      badge:     '✨ Tradicional con canela',
+      category:  'postre',
+      image:     'https://images.unsplash.com/photo-1596695684152-52751fa48579?auto=format&fit=crop&w=900&q=80'
     }
   },
 
