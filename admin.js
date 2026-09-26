@@ -951,7 +951,8 @@ function renderUsersList(users) {
   const ROLE_ICONS = {
     cajero:  { icon: 'fa-cash-register', label: 'Cajero',  color: '#2563EB' },
     mesero:  { icon: 'fa-utensils',      label: 'Mesero',  color: '#D97706' },
-    cocina:  { icon: 'fa-fire-burner',   label: 'Cocina',  color: '#C84B31' }
+    cocina:  { icon: 'fa-fire-burner',   label: 'Cocina',  color: '#C84B31' },
+    totem:   { icon: 'fa-tablet-screen-button', label: 'Tótem', color: '#059669' }
   };
 
   if (!users.length) {

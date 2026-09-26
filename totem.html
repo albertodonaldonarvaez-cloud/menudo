@@ -341,6 +341,58 @@
             color: #aaa;
             font-size: 1.2rem;
         }
+
+        /* ── Optimización para pantalla VERTICAL (portrait) ── */
+        @media (orientation: portrait) {
+            body, html { font-size: 18px; }
+            .header { padding: 20px; font-size: 2rem; }
+            .content { padding: 15px 20px; }
+            .welcome-title { font-size: 3rem; }
+
+            .order-types {
+                flex-direction: column;
+                gap: 20px;
+                max-width: 100%;
+            }
+            .order-types .btn {
+                height: 180px;
+                font-size: 2rem;
+            }
+
+            .menu-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            .menu-card { padding: 15px; }
+            .menu-emoji { font-size: 3rem; }
+            .menu-title { font-size: 1.2rem; }
+            .menu-desc { font-size: 0.85rem; display: none; }
+
+            .bottom-bar {
+                padding: 12px 15px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .bottom-bar .btn { font-size: 1rem; min-height: 50px; padding: 0 15px; }
+            .cart-summary { font-size: 1.4rem; }
+
+            .cart-item { padding: 12px; }
+            .cart-item-title { font-size: 1.2rem; }
+            .cart-total-display { font-size: 2.2rem; margin: 20px 0; }
+            .cart-actions { flex-direction: column; gap: 10px; }
+
+            input[type="text"], input[type="number"] {
+                font-size: 2rem;
+                padding: 15px;
+                max-width: 100%;
+            }
+        }
+
+        /* Pantallas pequeñas portrait (celular) */
+        @media (orientation: portrait) and (max-width: 600px) {
+            .menu-grid { grid-template-columns: 1fr; }
+            .order-types .btn { height: 130px; font-size: 1.6rem; }
+        }
     </style>
 </head>
 <body>

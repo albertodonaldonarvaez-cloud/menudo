@@ -143,6 +143,7 @@ app.get('/login', (req, res) => {
     const role = req.session.role;
     if (role === 'admin') return res.redirect('/admin.html');
     if (role === 'cocina') return res.redirect('/cocina');
+    if (role === 'totem') return res.redirect('/totem');
     return res.redirect('/caja');
   }
   noCache(res);
@@ -158,6 +159,7 @@ app.post('/login', (req, res) => {
     req.session.user = result.username;
     if (result.role === 'admin') return res.redirect('/admin.html');
     if (result.role === 'cocina') return res.redirect('/cocina');
+    if (result.role === 'totem') return res.redirect('/totem');
     return res.redirect('/caja');
   }
   res.redirect('/login?error=1');
@@ -231,7 +233,7 @@ app.post('/api/users', requireAdmin, (req, res) => {
     return res.status(400).json({ error: 'Ese nombre de usuario está reservado para el administrador.' });
   }
 
-  const validRoles = ['cajero', 'mesero', 'cocina'];
+  const validRoles = ['cajero', 'mesero', 'cocina', 'totem'];
   const userRole = validRoles.includes(role) ? role : 'cajero';
 
   const users = loadUsers();
@@ -663,9 +665,13 @@ app.patch('/api/orders/:id/pay', requireAnyAuth, (req, res) => {
 // ── Health check ──────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '2.4' }));
 
-// ── Tótem / Pantalla interactiva (público, sin auth) ─────────
-app.get('/totem', (req, res) => { noCache(res); sendFile(res, 'totem.html'); });
-app.get('/totem.html', (req, res) => { noCache(res); sendFile(res, 'totem.html'); });
+// ── Tótem / Pantalla interactiva (requiere cuenta totem) ─────
+function requireTotemAccess(req, res, next) {
+  if (req.session?.authenticated && (req.session.role === 'totem' || req.session.role === 'admin')) return next();
+  res.redirect('/login');
+}
+app.get('/totem', requireTotemAccess, (req, res) => { noCache(res); sendFile(res, 'totem.html'); });
+app.get('/totem.html', requireTotemAccess, (req, res) => { noCache(res); sendFile(res, 'totem.html'); });
 app.get('/totem.js', (req, res) => sendFile(res, 'totem.js'));
 
 /**
@@ -674,7 +680,7 @@ app.get('/totem.js', (req, res) => sendFile(res, 'totem.js'));
  * No requiere autenticación.
  * Body: { clientName, orderType, items, total }
  */
-app.post('/api/totem-order', (req, res) => {
+app.post('/api/totem-order', requireTotemAccess, (req, res) => {
   try {
     const { clientName, orderType, items, total } = req.body;
     if (!Array.isArray(items) || items.length === 0) {
