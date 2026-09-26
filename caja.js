@@ -15,6 +15,8 @@ let pendingOrders     = [];         // órdenes pendientes de cobro
 let selectedPendingId = null;       // orden seleccionada en "Por Cobrar"
 let pendingPayMethod  = 'efectivo'; // método de pago en "Por Cobrar"
 let pendingPollTimer  = null;
+let knownOrderIds     = new Set();  // Para detectar órdenes nuevas del tótem
+let isFirstPoll       = true;       // No notificar en el primer poll
 
 // ── Estado de edición de orden existente ──
 let editingOrderId       = null;    // ID de la orden que se está editando (null = orden nueva)
@@ -723,10 +725,68 @@ async function loadPendingOrders() {
     if (!res.ok) return;
     const data = await res.json();
     pendingOrders = data.pendingPayment || [];
+
+    // Detectar órdenes nuevas del tótem
+    if (!isFirstPoll) {
+      for (const order of pendingOrders) {
+        if (!knownOrderIds.has(order.id) && order.createdBy === 'totem') {
+          notifyTotemOrder(order);
+        }
+      }
+    }
+
+    // Actualizar IDs conocidos
+    knownOrderIds = new Set(pendingOrders.map(o => o.id));
+    isFirstPoll = false;
+
     updateCobrarBadge();
     renderPendingOrders();
   } catch (e) {
     console.warn('Poll pending orders error:', e);
+  }
+}
+
+/** Notificación visual y sonora cuando llega una orden del tótem */
+function notifyTotemOrder(order) {
+  // Sonido de notificación
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    osc.type = 'sine';
+    gain.gain.value = 0.3;
+    osc.start();
+    osc.stop(ctx.currentTime + 0.15);
+    setTimeout(() => {
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.frequency.value = 1100;
+      osc2.type = 'sine';
+      gain2.gain.value = 0.3;
+      osc2.start();
+      osc2.stop(ctx.currentTime + 0.2);
+    }, 180);
+  } catch (e) { /* silencio si no hay audio */ }
+
+  // Banner de notificación visual
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;padding:16px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-size:1.1rem;font-weight:700;text-align:center;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,0.3);animation:slideDown 0.3s ease;cursor:pointer;';
+  banner.innerHTML = `📱 <b>PEDIDO DEL TÓTEM</b> — #${order.num} · ${order.clientName} · $${order.total} · ${order.orderType === 'llevar' ? 'LLEVAR' : 'AQUÍ'}`;
+  banner.onclick = () => { banner.remove(); switchMobileTab('cobrar'); };
+  document.body.appendChild(banner);
+  setTimeout(() => banner.remove(), 8000);
+
+  // Navegador notification si está disponible
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('📱 Pedido del Tótem', {
+      body: `#${order.num} — ${order.clientName} — $${order.total}`,
+      icon: '/icon.svg'
+    });
   }
 }
 
@@ -1123,5 +1183,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Registrar Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(e => console.warn('SW:', e));
+  }
+
+  // Pedir permiso de notificaciones para el tótem
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
   }
 });

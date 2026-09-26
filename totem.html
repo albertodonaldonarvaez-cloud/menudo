@@ -3,459 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kiosco - Barbacoa & Antojitos</title>
+    <title>Tótem - Pedido</title>
     <style>
         :root {
-            --bg-color: #1a1a2e;
-            --accent-color: #f59e0b;
-            --text-main: #ffffff;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --card-border: rgba(255, 255, 255, 0.1);
-            --btn-height: 80px;
+            --bg: #0f1117;
+            --accent: #f59e0b;
+            --accent2: #d97706;
+            --card: rgba(255,255,255,0.06);
+            --border: rgba(255,255,255,0.1);
+            --text: #ffffff;
+            --muted: #9ca3af;
         }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body, html { width: 100%; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            touch-action: pan-y;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        .view { display: none; width: 100%; height: 100%; flex-direction: column; animation: fadeIn 0.35s ease; }
+        .view.active { display: flex; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(15px); } to { opacity:1; transform:translateY(0); } }
+
+        .header { padding: 18px 20px; text-align: center; font-size: 1.6rem; font-weight: 700; color: var(--accent); background: rgba(0,0,0,0.5); flex-shrink: 0; }
+        .scrollable { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .center-content { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; padding: 20px; gap: 20px; }
+
+        .btn { background: var(--accent); color: #000; border: none; border-radius: 16px; min-height: 64px; font-size: 1.4rem; font-weight: 700; padding: 0 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.1s; width: 100%; max-width: 500px; }
+        .btn:active { transform: scale(0.96); }
+        .btn-ghost { background: transparent; border: 2px solid var(--border); color: var(--text); }
+        .btn-sm { min-height: 48px; font-size: 1.1rem; border-radius: 12px; }
+
+        /* Welcome */
+        .welcome-wrap { text-align: center; }
+        .welcome-title { font-size: 2.8rem; font-weight: 800; color: var(--accent); line-height: 1.2; margin-bottom: 8px; }
+        .welcome-slogan { font-size: 1.1rem; color: var(--muted); margin-bottom: 30px; }
+
+        /* Name */
+        .name-input { width: 100%; max-width: 500px; background: var(--card); border: 2px solid var(--border); color: var(--text); font-size: 2rem; padding: 18px; border-radius: 16px; text-align: center; outline: none; }
+        .name-input:focus { border-color: var(--accent); }
+
+        /* Order type */
+        .type-grid { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 500px; }
+        .type-btn { min-height: 140px; font-size: 1.8rem; flex-direction: column; gap: 5px; border-radius: 20px; }
+        .type-btn span { font-size: 3rem; }
+
+        /* Menu */
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 15px; }
+        .menu-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+        .menu-card-img { width: 100%; height: 120px; object-fit: cover; background: #1a1a2e; }
+        .menu-card-body { padding: 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+        .menu-card-name { font-size: 1rem; font-weight: 700; }
+        .menu-card-price { color: var(--accent); font-weight: 700; font-size: 0.95rem; }
+        .menu-card-note { color: var(--muted); font-size: 0.8rem; }
+
+        .qty-row { display: flex; align-items: center; justify-content: space-between; margin-top: auto; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 6px; }
+        .qty-btn { width: 40px; height: 40px; border-radius: 10px; background: var(--accent); color: #000; border: none; font-size: 1.4rem; font-weight: 700; cursor: pointer; }
+        .qty-val { font-size: 1.3rem; font-weight: 700; min-width: 30px; text-align: center; }
+
+        /* Kilo calc */
+        .kilo-wrap { padding: 8px; }
+        .kilo-row { display: flex; gap: 6px; align-items: center; }
+        .kilo-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: var(--text); font-size: 1.2rem; padding: 8px; border-radius: 8px; text-align: center; outline: none; }
+        .kilo-input:focus { border-color: var(--accent); }
+        .kilo-result { font-size: 0.85rem; color: var(--muted); text-align: center; padding: 4px 0; }
+        .kilo-add { width: 100%; height: 38px; border-radius: 10px; background: var(--accent); color: #000; border: none; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 4px; }
+
+        /* Bottom bar */
+        .bottom-bar { flex-shrink: 0; background: #111118; padding: 10px 15px; display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--border); }
+        .bottom-total { flex: 1; font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+        .bottom-bar .btn { width: auto; min-width: 140px; }
+
+        /* Cart */
+        .cart-list { padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .cart-row { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .cart-row-name { font-weight: 600; font-size: 1rem; }
+        .cart-row-detail { color: var(--muted); font-size: 0.85rem; }
+        .cart-row-price { color: var(--accent); font-weight: 700; font-size: 1.1rem; white-space: nowrap; }
+        .cart-row-del { background: #ef4444; color: #fff; border: none; border-radius: 8px; width: 34px; height: 34px; font-size: 1rem; cursor: pointer; margin-left: 10px; }
+        .cart-grand { text-align: right; padding: 10px 15px; font-size: 2rem; font-weight: 800; color: var(--accent); }
+        .cart-actions { display: flex; flex-direction: column; gap: 10px; padding: 0 15px 15px; }
+
+        /* Done */
+        .done-icon { font-size: 5rem; color: #10b981; }
+        .done-msg { font-size: 1.6rem; text-align: center; line-height: 1.4; }
+        .done-timer { color: var(--muted); font-size: 1rem; }
+
+        /* Landscape tweaks */
+        @media (orientation: landscape) {
+            .menu-grid { grid-template-columns: repeat(3, 1fr); }
+            .type-grid { flex-direction: row; max-width: 700px; }
+            .type-btn { min-height: 200px; }
         }
-
-        body, html {
-            width: 100%;
-            height: 100%;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            overflow: hidden;
-            font-size: 20px;
-        }
-
-        .view {
-            display: none;
-            width: 100%;
-            height: 100%;
-            flex-direction: column;
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        .view.active {
-            display: flex;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .header {
-            padding: 30px;
-            text-align: center;
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: var(--accent-color);
-            background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 100%);
-        }
-
-        .content {
-            flex: 1;
-            padding: 20px 40px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .content-top {
-            justify-content: flex-start;
-        }
-
-        .btn {
-            background-color: var(--accent-color);
-            color: #1a1a2e;
-            border: none;
-            border-radius: 20px;
-            min-height: var(--btn-height);
-            font-size: 1.8rem;
-            font-weight: bold;
-            padding: 0 40px;
-            cursor: pointer;
-            box-shadow: 0 8px 16px rgba(245, 158, 11, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            transition: transform 0.1s;
-        }
-
-        .btn:active {
-            transform: scale(0.95);
-        }
-
-        .btn-secondary {
-            background-color: var(--card-bg);
-            color: var(--text-main);
-            border: 2px solid var(--card-border);
-            box-shadow: none;
-        }
-
-        input[type="text"], input[type="number"] {
-            width: 100%;
-            max-width: 600px;
-            background: var(--card-bg);
-            border: 2px solid var(--card-border);
-            color: var(--text-main);
-            font-size: 2.5rem;
-            padding: 20px;
-            border-radius: 20px;
-            text-align: center;
-            outline: none;
-            margin-bottom: 40px;
-        }
-
-        input[type="text"]:focus, input[type="number"]:focus {
-            border-color: var(--accent-color);
-        }
-
-        #view-welcome .content {
-            gap: 40px;
-        }
-        
-        .welcome-title {
-            font-size: 4rem;
-            text-align: center;
-            color: var(--accent-color);
-            margin-bottom: 20px;
-        }
-
-        .order-types {
-            display: flex;
-            gap: 40px;
-            width: 100%;
-            max-width: 800px;
-        }
-
-        .order-types .btn {
-            flex: 1;
-            height: 250px;
-            font-size: 2.5rem;
-            flex-direction: column;
-        }
-
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            width: 100%;
-            align-items: start;
-        }
-
-        .menu-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 20px;
-            padding: 25px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .menu-emoji {
-            font-size: 4rem;
-            text-align: center;
-        }
-
-        .menu-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .menu-price {
-            color: var(--accent-color);
-            font-size: 1.3rem;
-            text-align: center;
-        }
-
-        .menu-desc {
-            font-size: 1rem;
-            color: #aaa;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        .qty-controls {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(0,0,0,0.3);
-            border-radius: 15px;
-            padding: 10px;
-        }
-
-        .qty-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            background: var(--accent-color);
-            color: #000;
-            border: none;
-            font-size: 1.5rem;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .qty-value {
-            font-size: 1.8rem;
-            font-weight: bold;
-        }
-
-        .kilo-calc {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .kilo-input {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 15px;
-            padding: 10px;
-        }
-
-        .kilo-input input {
-            flex: 1;
-            margin: 0;
-            padding: 10px;
-            font-size: 1.5rem;
-            border-radius: 10px;
-        }
-
-        .kilo-result {
-            font-size: 1.1rem;
-            text-align: center;
-            color: #aaa;
-        }
-
-        .kilo-add-btn {
-            width: 100%;
-            height: 50px;
-            border-radius: 12px;
-            background: var(--accent-color);
-            color: #000;
-            border: none;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .bottom-bar {
-            background: #111122;
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-top: 1px solid var(--card-border);
-        }
-
-        .cart-summary {
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--accent-color);
-        }
-
-        .cart-list {
-            width: 100%;
-            max-width: 800px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .cart-item {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 20px;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .cart-item-info {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .cart-item-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        .cart-item-price {
-            color: var(--accent-color);
-            font-size: 1.2rem;
-        }
-
-        .cart-total-display {
-            font-size: 3rem;
-            font-weight: bold;
-            color: var(--accent-color);
-            text-align: right;
-            margin: 40px 0;
-            width: 100%;
-            max-width: 800px;
-        }
-
-        .cart-actions {
-            display: flex;
-            gap: 20px;
-            width: 100%;
-            max-width: 800px;
-        }
-
-        .cart-actions .btn {
-            flex: 1;
-        }
-
-        .done-icon {
-            font-size: 6rem;
-            color: #10b981;
-            margin-bottom: 20px;
-        }
-        
-        .done-message {
-            font-size: 2rem;
-            text-align: center;
-            max-width: 600px;
-            line-height: 1.5;
-        }
-        
-        .done-timer {
-            margin-top: 40px;
-            color: #aaa;
-            font-size: 1.2rem;
-        }
-
-        /* ── Optimización para pantalla VERTICAL (portrait) ── */
-        @media (orientation: portrait) {
-            body, html { font-size: 18px; }
-            .header { padding: 20px; font-size: 2rem; }
-            .content { padding: 15px 20px; }
-            .welcome-title { font-size: 3rem; }
-
-            .order-types {
-                flex-direction: column;
-                gap: 20px;
-                max-width: 100%;
-            }
-            .order-types .btn {
-                height: 180px;
-                font-size: 2rem;
-            }
-
-            .menu-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-            }
-            .menu-card { padding: 15px; }
-            .menu-emoji { font-size: 3rem; }
-            .menu-title { font-size: 1.2rem; }
-            .menu-desc { font-size: 0.85rem; display: none; }
-
-            .bottom-bar {
-                padding: 12px 15px;
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-            .bottom-bar .btn { font-size: 1rem; min-height: 50px; padding: 0 15px; }
-            .cart-summary { font-size: 1.4rem; }
-
-            .cart-item { padding: 12px; }
-            .cart-item-title { font-size: 1.2rem; }
-            .cart-total-display { font-size: 2.2rem; margin: 20px 0; }
-            .cart-actions { flex-direction: column; gap: 10px; }
-
-            input[type="text"], input[type="number"] {
-                font-size: 2rem;
-                padding: 15px;
-                max-width: 100%;
-            }
-        }
-
-        /* Pantallas pequeñas portrait (celular) */
-        @media (orientation: portrait) and (max-width: 600px) {
-            .menu-grid { grid-template-columns: 1fr; }
-            .order-types .btn { height: 130px; font-size: 1.6rem; }
+        @media (min-width: 1024px) {
+            .menu-grid { grid-template-columns: repeat(4, 1fr); }
         }
     </style>
 </head>
 <body>
 
-    <div id="view-welcome" class="view active" onclick="app.goToName()">
-        <div class="content">
-            <h1 class="welcome-title">Barbacoa & Antojitos</h1>
-            <button class="btn">Toca aquí para ordenar 👆</button>
+    <!-- BIENVENIDA -->
+    <div id="v-welcome" class="view active" onclick="T.go('name')">
+        <div class="center-content">
+            <div class="welcome-wrap">
+                <div class="welcome-title" id="biz-name">Cargando...</div>
+                <div class="welcome-slogan" id="biz-slogan"></div>
+            </div>
+            <button class="btn">Toca para ordenar 👆</button>
         </div>
     </div>
 
-    <div id="view-name" class="view">
+    <!-- NOMBRE -->
+    <div id="v-name" class="view">
         <div class="header">¿Cuál es tu nombre?</div>
-        <div class="content">
-            <input type="text" id="client-name" placeholder="Tu nombre..." autocomplete="off">
-            <button class="btn" onclick="app.submitName()">Continuar ➔</button>
-            <button class="btn btn-secondary" style="margin-top: 20px;" onclick="app.goToWelcome()">Cancelar</button>
+        <div class="center-content">
+            <input type="text" id="inp-name" class="name-input" placeholder="Tu nombre..." autocomplete="off">
+            <button class="btn" onclick="T.submitName()">Continuar ➔</button>
+            <button class="btn btn-ghost btn-sm" onclick="T.go('welcome')">Cancelar</button>
         </div>
     </div>
 
-    <div id="view-order-type" class="view">
+    <!-- TIPO DE ORDEN -->
+    <div id="v-type" class="view">
         <div class="header">¿Dónde vas a comer?</div>
-        <div class="content">
-            <div class="order-types">
-                <button class="btn" onclick="app.setOrderType('aqui')">Para Aquí 🍽️</button>
-                <button class="btn" onclick="app.setOrderType('llevar')">Para Llevar 🛍️</button>
+        <div class="center-content">
+            <div class="type-grid">
+                <button class="btn type-btn" onclick="T.setType('aqui')"><span>🍽️</span> Para Aquí</button>
+                <button class="btn type-btn" onclick="T.setType('llevar')"><span>🛍️</span> Para Llevar</button>
             </div>
-            <button class="btn btn-secondary" style="margin-top: 40px;" onclick="app.goToName()">Atrás</button>
+            <button class="btn btn-ghost btn-sm" style="margin-top:10px;max-width:300px;" onclick="T.go('name')">Atrás</button>
         </div>
     </div>
 
-    <div id="view-menu" class="view">
-        <div class="header">Nuestro Menú</div>
-        <div class="content content-top" style="flex: 1; overflow-y: auto; width: 100%; padding-bottom: 120px;">
-            <div class="menu-grid" id="menu-container">
-            </div>
+    <!-- MENÚ -->
+    <div id="v-menu" class="view">
+        <div class="header" id="menu-header">Nuestro Menú</div>
+        <div class="scrollable" style="padding-bottom:80px;">
+            <div class="menu-grid" id="menu-grid"></div>
         </div>
         <div class="bottom-bar">
-            <button class="btn btn-secondary" onclick="app.goToOrderType()">Atrás</button>
-            <div class="cart-summary" id="cart-summary-text">Total: $0.00</div>
-            <button class="btn" onclick="app.goToCart()">Ver Orden 🛒</button>
+            <button class="btn btn-ghost btn-sm" style="min-width:80px;" onclick="T.go('type')">← Atrás</button>
+            <div class="bottom-total" id="bar-total">$0</div>
+            <button class="btn btn-sm" onclick="T.go('cart')">Ver Orden 🛒</button>
         </div>
     </div>
 
-    <div id="view-cart" class="view">
+    <!-- CARRITO -->
+    <div id="v-cart" class="view">
         <div class="header">Revisa tu Orden</div>
-        <div class="content content-top" style="flex: 1; overflow-y: auto; width: 100%;">
-            <div class="cart-list" id="cart-container">
-            </div>
-            <div class="cart-total-display" id="cart-total-display">
-                Total: $0.00
-            </div>
+        <div class="scrollable">
+            <div class="cart-list" id="cart-list"></div>
+            <div class="cart-grand" id="cart-grand">$0</div>
             <div class="cart-actions">
-                <button class="btn btn-secondary" onclick="app.goToMenu()">Seguir Comprando</button>
-                <button class="btn" onclick="app.submitOrder()">Confirmar Orden ✅</button>
+                <button class="btn" onclick="T.submitOrder()">Confirmar Orden ✅</button>
+                <button class="btn btn-ghost btn-sm" onclick="T.go('menu')">Seguir Comprando</button>
             </div>
         </div>
     </div>
 
-    <div id="view-done" class="view">
-        <div class="content">
+    <!-- LISTO -->
+    <div id="v-done" class="view">
+        <div class="center-content">
             <div class="done-icon">✅</div>
-            <div class="done-message">¡Tu pedido fue enviado!<br>Tu nombre será llamado cuando esté listo.</div>
+            <div class="done-msg">¡Tu pedido fue enviado!<br>Tu nombre será llamado cuando esté listo.</div>
             <div class="done-timer" id="done-timer">Reiniciando en 10...</div>
         </div>
     </div>
