@@ -1040,11 +1040,21 @@ function updateKiloCalc() {
     const total = (val * priceKg);
     resultEl.textContent = `→ Total: $${total % 1 === 0 ? total.toFixed(0) : total.toFixed(2)}`;
   } else {
-    const grams = Math.round((val / priceKg) * 1000);
-    const kgDisplay = (val / priceKg).toFixed(3).replace(/\.?0+$/, '');
-    resultEl.textContent = `→ ${grams} gramos (${kgDisplay} kg)`;
+    let grams = Math.round((val / priceKg) * 1000);
+    // Mostrar gramaje ajustado
+    let note = '';
+    if (val < 50) {
+      grams = Math.round(grams * 0.70);
+      note = ' (ajuste -30%)';
+    } else if (val < 100) {
+      grams = Math.round(grams * 0.90);
+      note = ' (ajuste -10%)';
+    }
+    const kgDisplay = (grams / 1000).toFixed(3).replace(/\.?0+$/, '');
+    resultEl.textContent = `→ ${grams} gramos (${kgDisplay} kg)${note}`;
   }
 }
+
 
 function confirmKiloModal() {
   const p       = storeConfig.products?.[_kiloProductKey] || DEFAULT_STORE_DATA.products[_kiloProductKey];
@@ -1059,8 +1069,17 @@ function confirmKiloModal() {
     label = `${p.title} (${kgStr} kg)`;
   } else {
     finalPrice = val;
-    const grams = Math.round((val / priceKg) * 1000);
-    label = `${p.title} (${grams} g)`;
+    // Ajuste de gramaje por porción pequeña (costo de empaque)
+    let gramsRaw = Math.round((val / priceKg) * 1000);
+    let adjustLabel = '';
+    if (val < 50) {
+      gramsRaw = Math.round(gramsRaw * 0.70); // 30% menos gramos
+      adjustLabel = '';
+    } else if (val < 100) {
+      gramsRaw = Math.round(gramsRaw * 0.90); // 10% menos gramos
+      adjustLabel = '';
+    }
+    label = `${p.title} (${gramsRaw} g)`;
   }
 
   ticket.push({
@@ -1076,6 +1095,7 @@ function confirmKiloModal() {
   renderTicket();
   if (window.innerWidth < 640) switchMobileTab('ticket');
 }
+
 
 // ── Init ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {

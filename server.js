@@ -663,6 +663,55 @@ app.patch('/api/orders/:id/pay', requireAnyAuth, (req, res) => {
 // ── Health check ──────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '2.4' }));
 
+// ── Tótem / Pantalla interactiva (público, sin auth) ─────────
+app.get('/totem', (req, res) => { noCache(res); sendFile(res, 'totem.html'); });
+app.get('/totem.html', (req, res) => { noCache(res); sendFile(res, 'totem.html'); });
+app.get('/totem.js', (req, res) => sendFile(res, 'totem.js'));
+
+/**
+ * POST /api/totem-order
+ * Crea una orden desde el tótem/pantalla interactiva.
+ * No requiere autenticación.
+ * Body: { clientName, orderType, items, total }
+ */
+app.post('/api/totem-order', (req, res) => {
+  try {
+    const { clientName, orderType, items, total } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'La orden debe tener al menos un ítem' });
+    }
+    const all = readJSON(ORDERS_FILE) || [];
+
+    const today = new Date().toISOString().slice(0, 10);
+    const todayOrders = all.filter(o => o.date === today);
+    const num = todayOrders.length + 1;
+
+    const order = {
+      id:            'ord_' + Date.now(),
+      num,
+      clientName:    (clientName || '').trim() || `Cliente #${num}`,
+      orderType:     orderType === 'llevar' ? 'llevar' : 'aqui',
+      timestamp:     new Date().toISOString(),
+      date:          today,
+      status:        'pendiente',
+      paymentStatus: 'pendiente',
+      items,
+      total:         Number(total) || 0,
+      printCopies:   1,
+      paymentMethod: null,
+      createdBy:     'totem'
+    };
+
+    all.push(order);
+    writeJSON(ORDERS_FILE, all);
+    console.log(`[${new Date().toISOString()}] TOTEM Orden #${num} ${order.id} | ${order.clientName} | ${order.orderType} | $${order.total}`);
+    res.json({ ok: true, order });
+  } catch (e) {
+    console.error('Error totem-order:', e);
+    res.status(500).json({ error: 'No se pudo crear la orden' });
+  }
+});
+
 // ── Archivos públicos del menú ────────────────────────────────
 ['index.html', 'app.js', 'data.js', 'styles.css', 'manifest.json', 'sw.js', 'icon.svg'].forEach(file => {
   app.get(`/${file}`, (req, res) => {
