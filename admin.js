@@ -7,7 +7,7 @@
 const STORAGE_KEY = 'menudo_store_config_v2';
 let storeData = JSON.parse(JSON.stringify(DEFAULT_STORE_DATA));
 
-const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco', 'cafe', 'pan'];
+const PRODUCT_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco', 'cafe', 'pan', 'carlota', 'arrozconleche'];
 
 // ── Migración ─────────────────────────────────────────────────
 function migrateData(data) {
@@ -96,10 +96,12 @@ function initTabs() {
 // TAB: PRODUCTOS
 // ════════════════════════════════════════════════════════════════
 const PRODUCT_NAMES = {
-  menudo:      '🍲 Menudo Tradicional',
-  birria:      '🥩 Barbacoa × Kilo',
-  tacos:       '🌮 Tacos de Barbacoa',
-  quesadillas: '🧀 Quesadilla Gigante de Barbacoa'
+  menudo:        '🍲 Menudo Tradicional',
+  birria:        '🥩 Barbacoa × Kilo',
+  tacos:         '🌮 Tacos de Barbacoa',
+  quesadillas:   '🧀 Quesadilla Gigante de Barbacoa',
+  carlota:       '🍰 Carlota',
+  arrozconleche: '🍚 Arroz con Leche'
 };
 
 function renderProductEditors() {
