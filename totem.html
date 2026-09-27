@@ -26,6 +26,7 @@
         .header { padding: 24px 20px; text-align: center; font-size: 2.6rem; font-weight: 800; color: #fff; background: linear-gradient(135deg, var(--accent-dark), var(--accent)); flex-shrink: 0; }
         .scrollable { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         .center-content { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; padding: 20px; gap: 16px; }
+        .view-question { font-size: 3rem; font-weight: 800; color: var(--accent-dark); text-align: center; line-height: 1.2; margin-bottom: 10px; }
 
         .btn { background: var(--accent); color: #fff; border: none; border-radius: 16px; min-height: 70px; font-size: 1.6rem; font-weight: 700; padding: 0 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.1s; width: 100%; max-width: 500px; box-shadow: 0 2px 8px rgba(217,119,6,0.25); }
         .btn:active { transform: scale(0.96); }
@@ -126,8 +127,8 @@
 
     <!-- NOMBRE -->
     <div id="v-name" class="view">
-        <div class="header">¿Cuál es tu nombre?</div>
         <div class="center-content">
+            <div class="view-question">¿Cuál es tu nombre? 😊</div>
             <input type="text" id="inp-name" class="name-input" placeholder="Tu nombre..." autocomplete="off">
             <button class="btn" onclick="T.submitName()">Continuar ➔</button>
             <button class="btn btn-ghost btn-sm" onclick="T.go('welcome')">Cancelar</button>
@@ -136,8 +137,8 @@
 
     <!-- TIPO DE ORDEN -->
     <div id="v-type" class="view">
-        <div class="header">¿Dónde vas a comer?</div>
         <div class="center-content">
+            <div class="view-question">¿Dónde vas a comer? 🍽️</div>
             <div class="type-grid">
                 <button class="btn type-btn" onclick="T.setType('aqui')"><span>🍽️</span> Para Aquí</button>
                 <button class="btn type-btn" onclick="T.setType('llevar')"><span>🛍️</span> Para Llevar</button>
@@ -148,8 +149,8 @@
 
     <!-- MENÚ -->
     <div id="v-menu" class="view">
-        <div class="header" id="menu-header">Nuestro Menú</div>
         <div class="scrollable" style="padding-bottom:70px;">
+            <div class="view-question" style="padding:20px 16px 0;font-size:2.4rem;">Nuestro Menú 🔥</div>
             <div id="menu-container"></div>
         </div>
         <div class="bottom-bar">
@@ -161,7 +162,6 @@
 
     <!-- SUGERENCIAS -->
     <div id="v-suggest" class="view">
-        <div class="header">¡Casi listo!</div>
         <div class="scrollable">
             <div class="suggest-title">¿Se te antoja algo más? 😋</div>
             <div class="suggest-sub">Aprovecha y agrega un postrecito o bebida</div>
@@ -176,8 +176,8 @@
 
     <!-- CARRITO -->
     <div id="v-cart" class="view">
-        <div class="header">Revisa tu Orden</div>
         <div class="scrollable">
+            <div class="view-question" style="padding:20px 16px 0;font-size:2.2rem;">Revisa tu Orden ✅</div>
             <div class="cart-list" id="cart-list"></div>
             <div class="cart-grand" id="cart-grand">$0</div>
             <div class="cart-actions">

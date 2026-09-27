@@ -742,43 +742,39 @@ async function loadPendingOrders() {
 
 /** Notificación visual y sonora cuando llega una orden del tótem */
 function notifyTotemOrder(order) {
-  // Sonido de notificación
+  // Sonido campana suave — 3 notas ascendentes (Do-Mi-Sol)
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.value = 880;
-    osc.type = 'sine';
-    gain.gain.value = 0.3;
-    osc.start();
-    osc.stop(ctx.currentTime + 0.15);
-    setTimeout(() => {
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.frequency.value = 1100;
-      osc2.type = 'sine';
-      gain2.gain.value = 0.3;
-      osc2.start();
-      osc2.stop(ctx.currentTime + 0.2);
-    }, 180);
-  } catch (e) { /* silencio si no hay audio */ }
+    const notes = [523, 659, 784]; // C5, E5, G5
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.2);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.2 + 0.4);
+      osc.start(ctx.currentTime + i * 0.2);
+      osc.stop(ctx.currentTime + i * 0.2 + 0.4);
+    });
+  } catch (e) { /* sin audio */ }
+
+  // Auto-cambiar a tab "Por Cobrar"
+  if (typeof switchMobileTab === 'function') switchMobileTab('cobrar');
 
   // Banner de notificación visual
   const banner = document.createElement('div');
-  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;padding:16px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-size:1.1rem;font-weight:700;text-align:center;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,0.3);animation:slideDown 0.3s ease;cursor:pointer;';
-  banner.innerHTML = `📱 <b>PEDIDO DEL TÓTEM</b> — #${order.num} · ${order.clientName} · $${order.total} · ${order.orderType === 'llevar' ? 'LLEVAR' : 'AQUÍ'}`;
-  banner.onclick = () => { banner.remove(); switchMobileTab('cobrar'); };
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;padding:14px 16px;background:#059669;color:#fff;font-size:1.05rem;font-weight:700;text-align:center;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.25);cursor:pointer;';
+  banner.innerHTML = `📱 NUEVO PEDIDO TÓTEM — <b>${order.clientName}</b> · $${order.total} · ${order.orderType === 'llevar' ? 'Llevar' : 'Aquí'}`;
+  banner.onclick = () => banner.remove();
   document.body.appendChild(banner);
-  setTimeout(() => banner.remove(), 8000);
+  setTimeout(() => banner.remove(), 6000);
 
-  // Navegador notification si está disponible
+  // Notificación del navegador
   if ('Notification' in window && Notification.permission === 'granted') {
     new Notification('📱 Pedido del Tótem', {
-      body: `#${order.num} — ${order.clientName} — $${order.total}`,
+      body: `${order.clientName} — $${order.total}`,
       icon: '/icon.svg'
     });
   }
@@ -1171,7 +1167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Carga inicial de órdenes pendientes + polling cada 12s
   await loadPendingOrders();
-  pendingPollTimer = setInterval(loadPendingOrders, 12_000);
+  pendingPollTimer = setInterval(loadPendingOrders, 5_000);
 
   // Refresca al volver a enfocar la pestaña
   document.addEventListener('visibilitychange', () => {
