@@ -15,8 +15,7 @@ let pendingOrders     = [];         // órdenes pendientes de cobro
 let selectedPendingId = null;       // orden seleccionada en "Por Cobrar"
 let pendingPayMethod  = 'efectivo'; // método de pago en "Por Cobrar"
 let pendingPollTimer  = null;
-let knownOrderIds     = new Set();  // Para detectar órdenes nuevas del tótem
-let isFirstPoll       = true;       // No notificar en el primer poll
+let notifiedTotemIds  = new Set();  // IDs de tótem ya notificados — nunca se borran
 
 // ── Estado de edición de orden existente ──
 let editingOrderId       = null;    // ID de la orden que se está editando (null = orden nueva)
@@ -726,18 +725,13 @@ async function loadPendingOrders() {
     const data = await res.json();
     pendingOrders = data.pendingPayment || [];
 
-    // Detectar órdenes nuevas del tótem
-    if (!isFirstPoll) {
-      for (const order of pendingOrders) {
-        if (!knownOrderIds.has(order.id) && order.createdBy === 'totem') {
-          notifyTotemOrder(order);
-        }
+    // Notificar órdenes del tótem solo 1 vez por ID
+    for (const order of pendingOrders) {
+      if (order.createdBy === 'totem' && !notifiedTotemIds.has(order.id)) {
+        notifiedTotemIds.add(order.id);
+        notifyTotemOrder(order);
       }
     }
-
-    // Actualizar IDs conocidos
-    knownOrderIds = new Set(pendingOrders.map(o => o.id));
-    isFirstPoll = false;
 
     updateCobrarBadge();
     renderPendingOrders();
@@ -807,12 +801,16 @@ function renderPendingOrders() {
 
   list.innerHTML = pendingOrders.map(o => {
     const isEditing  = o.id === editingOrderId;
+    const isTotem    = o.createdBy === 'totem';
     const typeLabel  = o.orderType === 'llevar' ? '🛍️ Llevar' : '🍽️ Aquí';
+    const totemBadge = isTotem ? '<span style="background:#059669;color:#fff;font-size:0.7rem;padding:2px 6px;border-radius:6px;font-weight:700;margin-left:4px;">📱 TÓTEM</span>' : '';
     const itemsText  = (o.items || []).map(it => `${it.qty}× ${it.title}`).join(' · ');
+    const borderStyle = isTotem ? 'border-left:4px solid #059669;' : '';
     return `
-      <div class="pending-card${isEditing ? ' selected' : ''}" onclick="selectPendingOrder('${o.id}')">
+      <div class="pending-card${isEditing ? ' selected' : ''}" style="${borderStyle}" onclick="selectPendingOrder('${o.id}')">
         <div class="pending-card-top">
           <span class="pending-type ${o.orderType === 'llevar' ? 'llevar' : 'aqui'}">${typeLabel}</span>
+          ${totemBadge}
           <span class="pending-time">${timeAgo(o.timestamp)}</span>
         </div>
         <div class="pending-name"><i class="fa-solid fa-user"></i> ${o.clientName || 'Cliente'}</div>
