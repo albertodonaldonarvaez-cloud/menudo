@@ -157,8 +157,8 @@ const T = {
     if (!val || val <= 0) { el.textContent = ''; return; }
     let grams = Math.round((val / priceKg) * 1000);
     let note = '';
-    if (val < 50) { grams = Math.round(grams * 0.70); note = ' (porción)'; }
-    else if (val < 100) { grams = Math.round(grams * 0.90); note = ' (porción)'; }
+    if (val < 80) { grams = Math.round(grams * 0.80); note = ' (ajuste -20%)'; }
+    else if (val < 150) { grams = Math.round(grams * 0.90); note = ' (ajuste -10%)'; }
     el.textContent = `→ ${grams}g${note}`;
   },
 
@@ -168,8 +168,8 @@ const T = {
     const val = parseFloat(document.getElementById('kilo-inp')?.value);
     if (!val || val <= 0) { document.getElementById('kilo-inp')?.focus(); return; }
     let grams = Math.round((val / priceKg) * 1000);
-    if (val < 50) grams = Math.round(grams * 0.70);
-    else if (val < 100) grams = Math.round(grams * 0.90);
+    if (val < 80) grams = Math.round(grams * 0.80);
+    else if (val < 150) grams = Math.round(grams * 0.90);
     this.cart.push({
       key: 'birria_kilo_' + Date.now(),
       title: `${p.title || 'Barbacoa × Kilo'} (${grams}g)`,

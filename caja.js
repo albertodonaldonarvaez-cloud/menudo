@@ -1097,10 +1097,10 @@ function updateKiloCalc() {
     let grams = Math.round((val / priceKg) * 1000);
     // Mostrar gramaje ajustado
     let note = '';
-    if (val < 50) {
-      grams = Math.round(grams * 0.70);
-      note = ' (ajuste -30%)';
-    } else if (val < 100) {
+    if (val < 80) {
+      grams = Math.round(grams * 0.80);
+      note = ' (ajuste -20%)';
+    } else if (val < 150) {
       grams = Math.round(grams * 0.90);
       note = ' (ajuste -10%)';
     }
@@ -1126,10 +1126,10 @@ function confirmKiloModal() {
     // Ajuste de gramaje por porción pequeña (costo de empaque)
     let gramsRaw = Math.round((val / priceKg) * 1000);
     let adjustLabel = '';
-    if (val < 50) {
-      gramsRaw = Math.round(gramsRaw * 0.70); // 30% menos gramos
+    if (val < 80) {
+      gramsRaw = Math.round(gramsRaw * 0.80); // 20% menos gramos
       adjustLabel = '';
-    } else if (val < 100) {
+    } else if (val < 150) {
       gramsRaw = Math.round(gramsRaw * 0.90); // 10% menos gramos
       adjustLabel = '';
     }
