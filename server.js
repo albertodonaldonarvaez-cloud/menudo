@@ -300,7 +300,7 @@ app.delete('/api/users/:username', requireAdmin, (req, res) => {
 });
 
 // ── API — Imágenes ────────────────────────────────────────────
-const VALID_IMG_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco', 'cafe', 'pan'];
+const VALID_IMG_KEYS = ['menudo', 'birria', 'tacos', 'quesadillas', 'refresco', 'cafe', 'pan', 'carlota', 'arrozconleche'];
 
 function isValidImgKey(key) {
   return VALID_IMG_KEYS.includes(key) || /^extra_\d+$/.test(key);
