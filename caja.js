@@ -1099,13 +1099,11 @@ function updateKiloCalc() {
     let note = '';
     if (val < 80) {
       grams = Math.round(grams * 0.80);
-      note = ' (ajuste -20%)';
     } else if (val < 150) {
       grams = Math.round(grams * 0.90);
-      note = ' (ajuste -10%)';
     }
     const kgDisplay = (grams / 1000).toFixed(3).replace(/\.?0+$/, '');
-    resultEl.textContent = `→ ${grams} gramos (${kgDisplay} kg)${note}`;
+    resultEl.textContent = `→ ${grams} gramos (${kgDisplay} kg)`;
   }
 }
 

@@ -156,10 +156,9 @@ const T = {
     if (!el) return;
     if (!val || val <= 0) { el.textContent = ''; return; }
     let grams = Math.round((val / priceKg) * 1000);
-    let note = '';
-    if (val < 80) { grams = Math.round(grams * 0.80); note = ' (ajuste -20%)'; }
-    else if (val < 150) { grams = Math.round(grams * 0.90); note = ' (ajuste -10%)'; }
-    el.textContent = `→ ${grams}g${note}`;
+    if (val < 80) grams = Math.round(grams * 0.80);
+    else if (val < 150) grams = Math.round(grams * 0.90);
+    el.textContent = `→ ${grams}g`;
   },
 
   addKilo() {
