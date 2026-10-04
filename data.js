@@ -146,29 +146,37 @@ const DEFAULT_STORE_DATA = {
 const KILO_RULES = {
   minAmount:    50,                  // monto mínimo en el tótem
   quickAmounts: [50, 100, 175, 350], // botones rápidos del tótem
+  // "below" puede ser un monto fijo en $ o 'kg' (= precio de 1 kg configurado en el admin)
   tiers: [
-    { below: 80,  factor: 0.80 },    // menos de $80    → 20% menos gramos
-    { below: 150, factor: 0.90 }     // de $80 a $149   → 10% menos gramos
-  ]                                  // $150 en adelante → gramaje completo
+    { below: 130,  factor: 0.70 },   // menos de $130            → 30% menos gramos
+    { below: 'kg', factor: 0.90 }    // de $130 a menos de 1 kg  → 10% menos gramos
+  ]                                  // 1 kg ($350) o más        → gramaje completo
 };
 
-function kiloFactor(amount) {
-  const tier = KILO_RULES.tiers.find(t => amount < t.below);
+/** Rangos con montos reales según el precio por kg, ordenados de menor a mayor. */
+function kiloTiers(priceKg) {
+  return KILO_RULES.tiers
+    .map(t => ({ below: t.below === 'kg' ? priceKg : t.below, factor: t.factor }))
+    .sort((a, b) => a.below - b.below);
+}
+
+function kiloFactor(amount, priceKg) {
+  const tier = kiloTiers(priceKg).find(t => amount < t.below);
   return tier ? tier.factor : 1;
 }
 
 /** Gramos que se entregan por un monto en pesos. */
 function kiloGramsFor(amount, priceKg) {
   if (!(amount > 0) || !(priceKg > 0)) return 0;
-  return Math.round((amount / priceKg) * 1000 * kiloFactor(amount));
+  return Math.round((amount / priceKg) * 1000 * kiloFactor(amount, priceKg));
 }
 
 /** Precio a cobrar por cierta cantidad de gramos (inverso, aplica el mismo ajuste). */
 function kiloPriceFor(grams, priceKg) {
   if (!(grams > 0) || !(priceKg > 0)) return 0;
   const raw = (grams / 1000) * priceKg;
-  // Rangos de precio: [0,80)→0.80 · [80,150)→0.90 · [150,∞)→1
-  const sorted = [...KILO_RULES.tiers].sort((a, b) => a.below - b.below);
+  // Rangos de precio: [0,130)→0.70 · [130,1kg)→0.90 · [1kg,∞)→1
+  const sorted = kiloTiers(priceKg);
   const bands = sorted.map((t, i) => ({ min: i ? sorted[i - 1].below : 0, max: t.below, factor: t.factor }));
   bands.push({ min: sorted[sorted.length - 1].below, max: Infinity, factor: 1 });
   // Del rango más alto al más bajo: el primero cuyo precio cae en su rango gana.
