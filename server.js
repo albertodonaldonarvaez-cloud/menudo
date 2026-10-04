@@ -9,6 +9,8 @@ const session = require('express-session');
 const crypto  = require('crypto');
 const fs      = require('fs');
 const path    = require('path');
+// Productos por defecto + reglas de barbacoa × kilo (mismo archivo que usa el navegador)
+const SHARED  = require('./data.js');
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -635,7 +637,7 @@ app.patch('/api/orders/:id/pay', requireAnyAuth, (req, res) => {
       id:            'tx_' + Date.now(),
       timestamp:     now,
       date:          order.date,
-      hour:          new Date().getHours(),
+      hour:          Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: 'America/Mexico_City' }).format(new Date())),
       clientName:    order.clientName || null,
       orderType:     order.orderType || null,
       orderId:       order.id,
@@ -675,17 +677,55 @@ app.get('/totem.html', requireTotemAccess, (req, res) => { noCache(res); sendFil
 app.get('/totem.js', (req, res) => sendFile(res, 'totem.js'));
 
 /**
+ * Recalcula los ítems del tótem con los precios ACTUALES del admin.
+ * El tótem es público: nunca se confía en el precio que manda el navegador.
+ */
+function priceTotemItems(items) {
+  const cfg  = readJSON(CONFIG_FILE) || {};
+  const prod = k => ({ ...(SHARED.DEFAULT_STORE_DATA.products[k] || {}), ...((cfg.products || {})[k] || {}) });
+  return items.map(it => {
+    const key = String(it.key || '');
+    const qty = Math.max(1, Math.min(99, parseInt(it.qty) || 1));
+    if (key.startsWith('birria_kilo_')) {
+      const p = prod('birria');
+      const priceKg = Number(p.price) || 0;
+      const amount  = Math.round(Number(it.price) || 0);
+      if (p.enabled === false || !priceKg) throw new Error('La barbacoa por kilo no está disponible');
+      if (amount < SHARED.KILO_RULES.minAmount) throw new Error(`El mínimo de barbacoa es $${SHARED.KILO_RULES.minAmount}`);
+      const grams = SHARED.kiloGramsFor(amount, priceKg);
+      return { key, title: `${p.title} (${grams}g)`, emoji: p.emoji || '🥩', qty, price: amount, subtotal: amount * qty, grams };
+    }
+    if (key.startsWith('extra_')) {
+      const ep = (cfg.extraProducts || []).find(x => 'extra_' + x.id === key);
+      if (!ep || ep.enabled === false) throw new Error(`"${it.title || key}" ya no está disponible`);
+      const price = Number(ep.price) || 0;
+      return { key, title: ep.title, emoji: ep.emoji || '🍽️', qty, price, subtotal: price * qty };
+    }
+    const p = prod(key);
+    if (!SHARED.DEFAULT_STORE_DATA.products[key] || p.enabled === false || p.calcMode === 'kilo') {
+      throw new Error(`"${it.title || key}" ya no está disponible`);
+    }
+    const price = Number(p.price) || 0;
+    return { key, title: p.title, emoji: p.emoji || '', qty, price, priceNote: p.priceNote || '', subtotal: price * qty };
+  });
+}
+
+/**
  * POST /api/totem-order
- * Crea una orden desde el tótem/pantalla interactiva.
- * No requiere autenticación.
- * Body: { clientName, orderType, items, total }
+ * Crea una orden desde el tótem/pantalla interactiva (cuenta rol totem).
+ * Body: { clientName, orderType, items }  — los precios se recalculan aquí.
  */
 app.post('/api/totem-order', requireTotemAccess, (req, res) => {
   try {
-    const { clientName, orderType, items, total } = req.body;
-    if (!Array.isArray(items) || items.length === 0) {
+    const { clientName, orderType, items: rawItems } = req.body;
+    if (!Array.isArray(rawItems) || rawItems.length === 0) {
       return res.status(400).json({ error: 'La orden debe tener al menos un ítem' });
     }
+    let items;
+    try { items = priceTotemItems(rawItems); }
+    catch (err) { return res.status(400).json({ error: err.message, code: 'STALE_MENU' }); }
+    const total = items.reduce((s, i) => s + i.subtotal, 0);
+
     const all = readJSON(ORDERS_FILE) || [];
 
     const today = new Date().toISOString().slice(0, 10);
@@ -695,14 +735,14 @@ app.post('/api/totem-order', requireTotemAccess, (req, res) => {
     const order = {
       id:            'ord_' + Date.now(),
       num,
-      clientName:    (clientName || '').trim() || `Cliente #${num}`,
+      clientName:    (clientName || '').trim().slice(0, 40) || `Cliente #${num}`,
       orderType:     orderType === 'llevar' ? 'llevar' : 'aqui',
       timestamp:     new Date().toISOString(),
       date:          today,
       status:        'pendiente',
       paymentStatus: 'pendiente',
       items,
-      total:         Number(total) || 0,
+      total,
       printCopies:   1,
       paymentMethod: null,
       createdBy:     'totem'

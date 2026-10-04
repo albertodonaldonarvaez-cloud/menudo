@@ -335,6 +335,41 @@
         </a>
       </div>
 
+      <!-- ── Venta del día (se actualiza sola cada minuto) ── -->
+      <style>
+        .today-card { background: linear-gradient(135deg, #7c2d12 0%, #C84B31 55%, #E38B29 100%); color: #fff; border-radius: 18px; padding: 20px 22px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(200,75,49,0.25); }
+        .today-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+        .today-label { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85; }
+        .today-total { font-size: 2.6rem; font-weight: 900; line-height: 1.1; margin: 4px 0 2px; }
+        .today-sub { font-size: 0.9rem; opacity: 0.9; }
+        .today-live { font-size: 0.75rem; background: rgba(255,255,255,0.18); padding: 4px 10px; border-radius: 999px; font-weight: 700; white-space: nowrap; }
+        .today-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 16px; }
+        .today-cell { background: rgba(255,255,255,0.14); border-radius: 12px; padding: 10px 12px; }
+        .today-cell-label { font-size: 0.72rem; font-weight: 700; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.5px; }
+        .today-cell-value { font-size: 1.25rem; font-weight: 800; margin-top: 2px; }
+        .today-cell.pending { background: rgba(255,255,255,0.95); color: #92400e; }
+        .today-top-products { margin-top: 12px; font-size: 0.85rem; opacity: 0.95; }
+      </style>
+      <div class="today-card" id="todayCard">
+        <div class="today-top">
+          <div>
+            <div class="today-label">💰 Venta de hoy · <span id="todayDate"></span></div>
+            <div class="today-total" id="todayTotal">$0</div>
+            <div class="today-sub" id="todaySub">Cargando…</div>
+          </div>
+          <span class="today-live" id="todayLive">● En vivo</span>
+        </div>
+        <div class="today-grid">
+          <div class="today-cell"><div class="today-cell-label">👥 Clientes</div><div class="today-cell-value" id="todayClients">0</div></div>
+          <div class="today-cell"><div class="today-cell-label">🧾 Ticket prom.</div><div class="today-cell-value" id="todayAvg">$0</div></div>
+          <div class="today-cell"><div class="today-cell-label">💵 Efectivo</div><div class="today-cell-value" id="todayCash">$0</div></div>
+          <div class="today-cell"><div class="today-cell-label">💳 Tarjeta</div><div class="today-cell-value" id="todayCard2">$0</div></div>
+          <div class="today-cell"><div class="today-cell-label">📱 Transferencia</div><div class="today-cell-value" id="todayTransfer">$0</div></div>
+          <div class="today-cell pending"><div class="today-cell-label">⏳ Por cobrar</div><div class="today-cell-value" id="todayPending">$0</div></div>
+        </div>
+        <div class="today-top-products" id="todayTop"></div>
+      </div>
+
       <!-- Métricas principales -->
       <div class="analytics-kpi-row" id="analyticsKpis">
         <div class="caja-stat-card">
@@ -521,7 +556,7 @@
     <span id="toastMsg"></span>
   </div>
 
-  <script src="data.js?v=20260829"></script>
-  <script src="admin.js?v=20260829"></script>
+  <script src="data.js?v=20261004"></script>
+  <script src="admin.js?v=20261004"></script>
 </body>
 </html>

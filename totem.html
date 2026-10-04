@@ -6,236 +6,344 @@
     <title>Tótem - Pedido</title>
     <style>
         :root {
-            --bg: #f5f5f0;
+            --bg: #f7f5f0;
             --accent: #d97706;
+            --accent-2: #f59e0b;
             --accent-light: #fef3c7;
             --accent-dark: #92400e;
             --card: #ffffff;
-            --border: #e5e5e0;
-            --text: #1a1a1a;
-            --muted: #6b7280;
+            --border: #ece8df;
+            --text: #1c1917;
+            --muted: #78716c;
             --success: #059669;
+            --success-light: #ecfdf5;
+            --danger: #dc2626;
+            --radius: 18px;
+            --shadow: 0 4px 18px rgba(68, 40, 10, 0.08);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
-        body, html { width: 100%; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
+        html, body { width: 100%; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
+        body { display: flex; flex-direction: column; }
+        button { font-family: inherit; cursor: pointer; }
 
-        .view { display: none; width: 100%; height: 100%; flex-direction: column; animation: fadeIn 0.35s ease; }
+        /* ── Barra superior: pasos + cancelar ── */
+        #topbar { display: none; flex-shrink: 0; align-items: center; gap: 12px; padding: 14px 18px; background: #fff; border-bottom: 1.5px solid var(--border); }
+        #topbar.show { display: flex; }
+        .steps { flex: 1; display: flex; gap: 8px; }
+        .step { flex: 1; display: flex; align-items: center; gap: 8px; font-size: 1.05rem; font-weight: 700; color: #a8a29e; }
+        .step-dot { width: 34px; height: 34px; border-radius: 50%; background: #f1efe9; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+        .step.done { color: var(--success); }
+        .step.done .step-dot { background: var(--success); color: #fff; }
+        .step.active { color: var(--accent-dark); }
+        .step.active .step-dot { background: var(--accent); color: #fff; box-shadow: 0 0 0 5px rgba(217,119,6,0.18); }
+        .cancel-btn { background: #fff; border: 2px solid #fecaca; color: var(--danger); border-radius: 12px; padding: 10px 16px; font-size: 1.05rem; font-weight: 700; white-space: nowrap; }
+
+        /* ── Vistas ── */
+        #views { flex: 1; position: relative; overflow: hidden; }
+        .view { position: absolute; inset: 0; display: none; flex-direction: column; animation: fadeIn 0.35s ease; }
         .view.active { display: flex; }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes popIn { 0% { transform:scale(1); } 50% { transform:scale(1.15); } 100% { transform:scale(1); } }
-        @keyframes pulse { 0%,100% { box-shadow:0 0 0 0 rgba(217,119,6,0.4); } 50% { box-shadow:0 0 0 10px rgba(217,119,6,0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+        @keyframes popIn { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(217,119,6,0.45); } 50% { box-shadow: 0 0 0 12px rgba(217,119,6,0); } }
+        @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
         .scrollable { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        .center-content { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; padding: 24px; gap: 20px; }
-        .view-question { font-size: 3rem; font-weight: 800; color: var(--accent-dark); text-align: center; line-height: 1.2; margin-bottom: 10px; }
+        .center-content { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; padding: 28px; gap: 22px; }
+        .view-question { font-size: 3rem; font-weight: 800; color: var(--accent-dark); text-align: center; line-height: 1.15; }
+        .view-hint { font-size: 1.3rem; color: var(--muted); text-align: center; margin-top: -8px; }
 
-        /* ── Botones generales ── */
-        .btn { background: var(--accent); color: #fff; border: none; border-radius: 16px; min-height: 70px; font-size: 1.6rem; font-weight: 700; padding: 0 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.1s; width: 100%; max-width: 500px; box-shadow: 0 3px 12px rgba(217,119,6,0.25); }
+        /* ── Botones ── */
+        .btn { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border: none; border-radius: 16px; min-height: 72px; font-size: 1.6rem; font-weight: 800; padding: 0 30px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.1s, opacity 0.2s; width: 100%; max-width: 560px; box-shadow: 0 4px 14px rgba(217,119,6,0.3); }
         .btn:active { transform: scale(0.96); }
+        .btn:disabled { opacity: 0.45; box-shadow: none; }
         .btn-ghost { background: #fff; border: 2px solid var(--border); color: var(--text); box-shadow: none; }
-        .btn-sm { min-height: 54px; font-size: 1.2rem; border-radius: 12px; }
-        .btn-pulse { animation: pulse 1.5s infinite; }
+        .btn-sm { min-height: 56px; font-size: 1.25rem; border-radius: 14px; }
+        .btn-pulse { animation: pulse 1.6s infinite; }
+        .link-btn { background: none; border: none; color: var(--accent); font-weight: 700; font-size: 1.1rem; text-decoration: underline; }
 
         /* ── Bienvenida ── */
-        .welcome-wrap { text-align: center; }
-        .welcome-title { font-size: 4rem; font-weight: 800; color: var(--accent-dark); line-height: 1.2; margin-bottom: 10px; }
-        .welcome-slogan { font-size: 1.4rem; color: var(--muted); margin-bottom: 30px; }
+        #v-welcome { background: radial-gradient(ellipse at top, #fde68a 0%, var(--bg) 55%); }
+        .welcome-hero { width: min(80vw, 640px); aspect-ratio: 4/3; border-radius: 32px; overflow: hidden; box-shadow: 0 18px 50px rgba(146,64,14,0.25); position: relative; animation: floaty 5s ease-in-out infinite; }
+        .welcome-hero img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.8s; }
+        .welcome-title { font-size: 4.2rem; font-weight: 900; color: var(--accent-dark); line-height: 1.1; text-align: center; }
+        .welcome-slogan { font-size: 1.5rem; color: var(--muted); text-align: center; max-width: 700px; }
+        .welcome-cta { font-size: 2rem; min-height: 96px; max-width: 620px; border-radius: 24px; }
+        .welcome-perks { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+        .perk { background: #fff; border: 1.5px solid var(--border); border-radius: 999px; padding: 10px 18px; font-size: 1.15rem; font-weight: 700; color: var(--accent-dark); }
 
-        /* ── Nombre ── */
-        .name-input { width: 100%; max-width: 500px; background: #fff; border: 2px solid var(--border); color: var(--text); font-size: 2.4rem; padding: 20px; border-radius: 16px; text-align: center; outline: none; }
-        .name-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(217,119,6,0.15); }
+        /* ── Nombre + teclado en pantalla ── */
+        .name-display { width: 100%; max-width: 680px; min-height: 92px; background: #fff; border: 3px solid var(--accent); border-radius: 18px; font-size: 2.8rem; font-weight: 800; display: flex; align-items: center; justify-content: center; padding: 10px 20px; color: var(--text); box-shadow: 0 0 0 6px rgba(217,119,6,0.12); }
+        .name-display.empty { color: #c7c2b8; font-weight: 600; }
+        .name-display .caret { display: inline-block; width: 3px; height: 1em; background: var(--accent); margin-left: 4px; animation: blink 1s steps(1) infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        .kbd { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 10px; }
+        .kbd-row { display: flex; gap: 8px; justify-content: center; }
+        .key { flex: 1; max-width: 82px; height: 78px; background: #fff; border: 1.5px solid var(--border); border-radius: 14px; font-size: 1.7rem; font-weight: 700; color: var(--text); box-shadow: 0 3px 0 #e2ddd2; transition: transform 0.06s; }
+        .key:active { transform: translateY(3px); box-shadow: none; background: var(--accent-light); }
+        .key-wide { max-width: 420px; flex: 5; font-size: 1.3rem; }
+        .key-del { max-width: 150px; flex: 2; background: #fff1f2; color: var(--danger); font-size: 1.4rem; }
 
         /* ── Tipo de orden ── */
-        .type-grid { display: flex; flex-direction: column; gap: 18px; width: 100%; max-width: 500px; }
-        .type-btn { min-height: 160px; font-size: 2.2rem; flex-direction: column; gap: 6px; border-radius: 18px; }
-        .type-btn span { font-size: 3.5rem; }
+        .type-grid { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 620px; }
+        .type-btn { min-height: 190px; font-size: 2.4rem; flex-direction: column; gap: 6px; border-radius: 24px; }
+        .type-btn span { font-size: 4rem; }
+        .type-btn small { font-size: 1.1rem; font-weight: 600; opacity: 0.9; }
 
-        /* ── Menú — tarjetas ── */
-        .menu-section-title { padding: 16px 16px 8px; font-size: 1.4rem; font-weight: 800; color: var(--accent-dark); text-transform: uppercase; letter-spacing: 1px; }
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 4px 14px 14px; }
+        /* ── Menú ── */
+        .menu-greet { padding: 18px 18px 4px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .menu-greet h2 { font-size: 2.2rem; font-weight: 900; color: var(--accent-dark); }
+        .type-pill { background: var(--accent-light); color: var(--accent-dark); border-radius: 999px; padding: 8px 16px; font-weight: 800; font-size: 1.1rem; border: none; }
+        .cat-chips { position: sticky; top: 0; z-index: 5; display: flex; gap: 10px; padding: 12px 18px; background: linear-gradient(var(--bg) 80%, rgba(247,245,240,0)); overflow-x: auto; }
+        .cat-chip { flex-shrink: 0; background: #fff; border: 1.5px solid var(--border); border-radius: 999px; padding: 12px 22px; font-size: 1.2rem; font-weight: 800; color: var(--text); }
+        .cat-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .menu-section-title { padding: 18px 18px 8px; font-size: 1.5rem; font-weight: 900; color: var(--accent-dark); text-transform: uppercase; letter-spacing: 1px; scroll-margin-top: 80px; }
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); grid-auto-flow: dense; gap: 14px; padding: 4px 16px 14px; }
 
-        .menu-card { background: var(--card); border: 1.5px solid var(--border); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: relative; transition: transform 0.15s, box-shadow 0.15s; }
-        .menu-card:active { transform: scale(0.97); }
-        .menu-card.has-items { border-color: var(--accent); box-shadow: 0 2px 12px rgba(217,119,6,0.15); }
-        .menu-card-img { width: 100%; height: 130px; object-fit: cover; background: #fef3c7; }
-        .menu-card-body { padding: 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
-        .menu-card-name { font-size: 1.05rem; font-weight: 700; line-height: 1.2; }
-        .menu-card-price { color: var(--accent); font-weight: 800; font-size: 1.1rem; }
+        .menu-card { background: var(--card); border: 2px solid var(--border); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow); position: relative; transition: border-color 0.2s, box-shadow 0.2s; }
+        .menu-card.has-items { border-color: var(--accent); box-shadow: 0 6px 22px rgba(217,119,6,0.2); }
+        .menu-card-img { width: 100%; height: 170px; object-fit: cover; background: var(--accent-light); display: flex; align-items: center; justify-content: center; font-size: 3.5rem; }
+        .menu-card-body { padding: 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+        .menu-card-name { font-size: 1.3rem; font-weight: 800; line-height: 1.2; }
+        .menu-card-desc { font-size: 0.98rem; color: var(--muted); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .menu-card-price { color: var(--accent); font-weight: 900; font-size: 1.4rem; margin-top: auto; }
+        .menu-card-price small { font-size: 0.95rem; color: var(--muted); font-weight: 700; }
+        .card-badge { position: absolute; top: 10px; right: 10px; background: var(--accent); color: #fff; min-width: 44px; height: 44px; padding: 0 8px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 900; box-shadow: 0 3px 10px rgba(0,0,0,0.25); z-index: 2; border: 3px solid #fff; }
+        .card-badge.pop { animation: popIn 0.35s ease; }
 
-        /* Badge de cantidad flotante */
-        .card-badge { position: absolute; top: 8px; right: 8px; background: var(--accent); color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 2; }
-        .card-badge.pop { animation: popIn 0.3s ease; }
-
-        /* Botón AGREGAR grande */
-        .add-btn { width: 100%; height: 48px; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: 700; cursor: pointer; margin-top: auto; transition: transform 0.1s; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 6px rgba(217,119,6,0.2); }
+        .add-btn { width: 100%; height: 60px; border: none; border-radius: 14px; font-size: 1.35rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 3px 10px rgba(217,119,6,0.28); transition: transform 0.1s; margin-top: 6px; }
         .add-btn:active { transform: scale(0.95); }
-
-        /* Controles ±qty (se muestran cuando qty > 0) */
-        .qty-controls { display: flex; align-items: center; justify-content: space-between; margin-top: auto; background: var(--accent-light); border-radius: 10px; padding: 4px; }
-        .qty-btn { width: 44px; height: 44px; border-radius: 10px; background: var(--accent); color: #fff; border: none; font-size: 1.5rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
+        .qty-controls { display: flex; align-items: center; justify-content: space-between; background: var(--accent-light); border-radius: 14px; padding: 5px; margin-top: 6px; }
+        .qty-btn { width: 56px; height: 52px; border-radius: 12px; background: var(--accent); color: #fff; border: none; font-size: 1.8rem; font-weight: 800; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
+        .qty-btn.minus { background: #fff; color: var(--accent-dark); border: 2px solid #f5d9a8; }
         .qty-btn:active { transform: scale(0.9); }
-        .qty-val { font-size: 1.4rem; font-weight: 800; min-width: 36px; text-align: center; color: var(--accent-dark); }
+        .qty-val { font-size: 1.7rem; font-weight: 900; min-width: 44px; text-align: center; color: var(--accent-dark); }
 
-        /* ── Kilo inline ── */
-        .kilo-wrap { margin-top: auto; display: flex; flex-direction: column; gap: 4px; }
-        .kilo-row { display: flex; gap: 6px; align-items: center; }
-        .kilo-row input { flex: 1; background: #fff; border: 1.5px solid var(--border); color: var(--text); font-size: 1.1rem; padding: 10px; border-radius: 10px; text-align: center; outline: none; }
-        .kilo-row input:focus { border-color: var(--accent); }
-        .kilo-row .kilo-add { height: 44px; min-width: 80px; border-radius: 10px; background: var(--accent); color: #fff; border: none; font-size: 1rem; font-weight: 700; cursor: pointer; }
-        .kilo-result { font-size: 0.85rem; color: var(--muted); text-align: center; }
-        .kilo-chip { display: flex; align-items: center; justify-content: space-between; background: #ecfdf5; color: var(--success); border-radius: 8px; padding: 6px 8px; font-size: 0.9rem; font-weight: 700; }
-        .kilo-chip button { background: #fee2e2; color: #ef4444; border: none; border-radius: 6px; width: 30px; height: 30px; font-weight: 700; cursor: pointer; }
+        /* ── Barbacoa × kilo (tarjeta horizontal compacta, ancho completo) ── */
+        .kilo-card { grid-column: 1 / -1; flex-direction: row; }
+        .kilo-card .menu-card-img { width: 34%; height: auto; min-height: 100%; }
+        .kilo-card .menu-card-body { padding: 16px; gap: 10px; }
+        .kilo-chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .kilo-chip-btn { height: 58px; border-radius: 12px; border: 2px solid var(--border); background: #fff; font-size: 1.35rem; font-weight: 800; color: var(--text); }
+        .kilo-chip-btn.sel { border-color: var(--accent); background: var(--accent-light); color: var(--accent-dark); }
+        .kilo-chip-btn small { display: block; font-size: 0.8rem; color: var(--muted); font-weight: 700; }
+        .kilo-stepper { display: flex; align-items: center; gap: 8px; }
+        .kilo-stepper .qty-btn { width: 64px; font-size: 1.15rem; }
+        .kilo-amount { flex: 1; text-align: center; font-size: 1.8rem; font-weight: 900; color: var(--accent-dark); background: var(--accent-light); border-radius: 12px; height: 52px; display: flex; align-items: center; justify-content: center; }
+        .kilo-grams { font-size: 1.15rem; font-weight: 700; color: var(--success); text-align: center; }
+        .kilo-added { display: flex; flex-wrap: wrap; gap: 8px; }
+        .kilo-tag { display: flex; align-items: center; gap: 8px; background: var(--success-light); color: var(--success); border-radius: 10px; padding: 6px 6px 6px 12px; font-size: 1.05rem; font-weight: 800; }
+        .kilo-tag button { background: #fee2e2; color: var(--danger); border: none; border-radius: 8px; width: 34px; height: 34px; font-weight: 800; font-size: 1rem; }
 
         /* ── Barra inferior ── */
-        .bottom-bar { flex-shrink: 0; background: #fff; padding: 12px 14px; display: flex; align-items: center; gap: 10px; border-top: 1.5px solid var(--border); box-shadow: 0 -4px 16px rgba(0,0,0,0.06); }
-        .bottom-total { flex: 1; font-size: 1.6rem; font-weight: 800; color: var(--accent-dark); }
-        .bottom-items { font-size: 0.85rem; color: var(--muted); }
-        .bottom-bar .btn { width: auto; min-width: 150px; }
+        .bottom-bar { flex-shrink: 0; background: #fff; padding: 14px 18px; display: flex; align-items: center; gap: 12px; border-top: 1.5px solid var(--border); box-shadow: 0 -6px 20px rgba(0,0,0,0.06); }
+        .bottom-info { flex: 1; }
+        .bottom-total { font-size: 2rem; font-weight: 900; color: var(--accent-dark); line-height: 1; }
+        .bottom-items { font-size: 1.05rem; color: var(--muted); font-weight: 600; margin-top: 2px; }
+        .bottom-bar .btn { width: auto; min-width: 220px; }
 
         /* ── Sugerencias ── */
-        .suggest-title { font-size: 2.2rem; font-weight: 800; color: var(--accent-dark); text-align: center; padding: 24px 16px 6px; }
-        .suggest-sub { font-size: 1.15rem; color: var(--muted); text-align: center; margin-bottom: 14px; }
-        .suggest-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 8px 16px; }
-        .suggest-card { background: var(--card); border: 2px solid var(--accent-light); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 10px rgba(217,119,6,0.08); position: relative; }
-        .suggest-card-img { width: 100%; height: 90px; object-fit: cover; background: #fef3c7; }
-        .suggest-card-body { padding: 10px; text-align: center; display: flex; flex-direction: column; gap: 4px; flex: 1; }
-        .suggest-card-name { font-weight: 700; font-size: 1rem; }
-        .suggest-card-price { color: var(--accent); font-weight: 700; font-size: 0.9rem; }
+        .suggest-head { text-align: center; padding: 26px 18px 8px; }
+        .suggest-title { font-size: 2.6rem; font-weight: 900; color: var(--accent-dark); }
+        .suggest-sub { font-size: 1.3rem; color: var(--muted); margin-top: 6px; }
 
         /* ── Carrito ── */
-        .cart-list { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-        .cart-row { background: var(--card); border: 1.5px solid var(--border); border-radius: 14px; padding: 14px; display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
-        .cart-row-info { flex: 1; }
-        .cart-row-name { font-weight: 700; font-size: 1rem; margin-bottom: 2px; }
-        .cart-row-price { color: var(--accent); font-weight: 800; font-size: 1.1rem; }
-        .cart-qty-controls { display: flex; align-items: center; gap: 6px; }
-        .cart-qty-btn { width: 38px; height: 38px; border-radius: 10px; border: none; font-size: 1.2rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .cart-qty-minus { background: #fee2e2; color: #ef4444; }
-        .cart-qty-plus { background: var(--accent-light); color: var(--accent-dark); }
-        .cart-qty-val { font-size: 1.2rem; font-weight: 800; min-width: 24px; text-align: center; }
-        .cart-grand { text-align: right; padding: 10px 14px; font-size: 2rem; font-weight: 800; color: var(--accent-dark); }
-        .cart-actions { display: flex; flex-direction: column; gap: 10px; padding: 0 14px 14px; }
+        .cart-head { padding: 22px 18px 6px; }
+        .cart-head h2 { font-size: 2.4rem; font-weight: 900; color: var(--accent-dark); }
+        .cart-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+        .cart-meta .type-pill { font-size: 1.15rem; }
+        .cart-list { padding: 12px 18px; display: flex; flex-direction: column; gap: 12px; }
+        .cart-row { background: var(--card); border: 1.5px solid var(--border); border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow); }
+        .cart-emoji { font-size: 2.2rem; }
+        .cart-row-info { flex: 1; min-width: 0; }
+        .cart-row-name { font-weight: 800; font-size: 1.25rem; }
+        .cart-row-unit { color: var(--muted); font-size: 1rem; font-weight: 600; }
+        .cart-row-price { color: var(--accent-dark); font-weight: 900; font-size: 1.4rem; min-width: 90px; text-align: right; }
+        .cart-qty { display: flex; align-items: center; gap: 6px; }
+        .cart-qty .qty-btn { width: 50px; height: 50px; font-size: 1.5rem; }
+        .cart-summary { margin: 6px 18px 0; background: #fff; border-radius: 16px; border: 1.5px dashed #e7d7b9; padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; }
+        .cart-summary span { font-size: 1.4rem; font-weight: 700; color: var(--muted); }
+        .cart-summary b { font-size: 2.6rem; font-weight: 900; color: var(--accent-dark); }
+        .cart-actions { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 18px; }
+        .pay-note { text-align: center; color: var(--muted); font-size: 1.1rem; }
 
-        /* ── Done ── */
-        .done-icon { font-size: 6rem; color: var(--success); }
-        .done-msg { font-size: 2rem; text-align: center; line-height: 1.4; color: var(--text); }
-        .done-name { font-size: 3rem; font-weight: 800; color: var(--accent-dark); margin: 12px 0; }
+        /* ── Listo ── */
+        #v-done { background: radial-gradient(ellipse at top, #bbf7d0 0%, var(--bg) 55%); }
+        .done-check { width: 140px; height: 140px; border-radius: 50%; background: var(--success); color: #fff; font-size: 5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 30px rgba(5,150,105,0.35); animation: popIn 0.6s ease; }
+        .done-msg { font-size: 2.2rem; text-align: center; line-height: 1.3; font-weight: 700; }
+        .done-num { font-size: 1.4rem; color: var(--muted); font-weight: 700; text-align: center; }
+        .done-num b { display: block; font-size: 5.5rem; color: var(--accent-dark); line-height: 1; font-weight: 900; }
+        .done-name { font-size: 2.6rem; font-weight: 900; color: var(--accent-dark); }
         .done-timer { color: var(--muted); font-size: 1.2rem; }
 
-        /* ── Modal inactividad ── */
-        .idle-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9999; align-items: center; justify-content: center; }
-        .idle-overlay.active { display: flex; }
-        .idle-box { background: #fff; border-radius: 24px; padding: 40px; text-align: center; max-width: 450px; width: 90%; box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
-        .idle-box h2 { font-size: 2.4rem; margin-bottom: 10px; color: var(--text); }
-        .idle-box p { color: var(--muted); margin-bottom: 20px; font-size: 1.3rem; }
-        .idle-countdown { font-size: 3.5rem; font-weight: 800; color: var(--accent); margin: 14px 0; }
+        /* ── Modales ── */
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(28,25,23,0.55); z-index: 9999; align-items: center; justify-content: center; padding: 20px; }
+        .overlay.active { display: flex; }
+        .modal-box { background: #fff; border-radius: 26px; padding: 36px 32px; text-align: center; max-width: 560px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: fadeIn 0.25s ease; }
+        .modal-box h2 { font-size: 2.3rem; margin-bottom: 10px; }
+        .modal-box p { color: var(--muted); margin-bottom: 22px; font-size: 1.35rem; line-height: 1.4; }
+        .modal-actions { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+        .idle-countdown { font-size: 4.5rem; font-weight: 900; color: var(--accent); margin: 6px 0 18px; }
+
+        /* ── Toast ── */
+        #toast { position: fixed; left: 50%; bottom: 130px; transform: translateX(-50%) translateY(20px); background: var(--text); color: #fff; padding: 14px 26px; border-radius: 999px; font-size: 1.3rem; font-weight: 700; opacity: 0; pointer-events: none; transition: all 0.25s; z-index: 9000; white-space: nowrap; }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
         @media (orientation: landscape) {
-            .menu-grid, .suggest-grid { grid-template-columns: repeat(3, 1fr); }
-            .type-grid { flex-direction: row; max-width: 600px; }
+            .menu-grid { grid-template-columns: repeat(3, 1fr); }
+            .type-grid { flex-direction: row; max-width: 900px; }
+            .welcome-hero { width: min(40vw, 520px); }
+        }
+        @media (max-width: 700px) {
+            .step span:last-child { display: none; }
+            .kilo-card { flex-direction: column; }
+            .kilo-card .menu-card-img { width: 100%; height: 150px; }
+            .kilo-chips { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
 <body>
 
-    <!-- BIENVENIDA -->
-    <div id="v-welcome" class="view active" onclick="T.go('name')">
-        <div class="center-content" style="background: linear-gradient(180deg, #fef3c7 0%, var(--bg) 50%);">
-            <div class="welcome-wrap">
-                <div class="welcome-title" id="biz-name">Cargando...</div>
+    <!-- Barra de pasos -->
+    <div id="topbar">
+        <div class="steps" id="steps"></div>
+        <button class="cancel-btn" onclick="T.askCancel()">✕ Cancelar</button>
+    </div>
+
+    <div id="views">
+        <!-- BIENVENIDA -->
+        <div id="v-welcome" class="view active" onclick="T.start()">
+            <div class="center-content">
+                <div class="welcome-hero"><img id="hero-img" alt=""></div>
+                <div class="welcome-title" id="biz-name">Cargando…</div>
                 <div class="welcome-slogan" id="biz-slogan"></div>
-            </div>
-            <button class="btn" style="font-size:1.8rem;min-height:80px;">Toca para ordenar 👆</button>
-        </div>
-    </div>
-
-    <!-- NOMBRE -->
-    <div id="v-name" class="view">
-        <div class="center-content">
-            <div class="view-question">¿Cuál es tu nombre? 😊</div>
-            <input type="text" id="inp-name" class="name-input" placeholder="Tu nombre..." autocomplete="off">
-            <button class="btn" onclick="T.submitName()">Continuar ➔</button>
-            <button class="btn btn-ghost btn-sm" onclick="T.go('welcome')">Cancelar</button>
-        </div>
-    </div>
-
-    <!-- TIPO DE ORDEN -->
-    <div id="v-type" class="view">
-        <div class="center-content">
-            <div class="view-question">¿Dónde vas a comer? 🍽️</div>
-            <div class="type-grid">
-                <button class="btn type-btn" onclick="T.setType('aqui')"><span>🍽️</span> Para Aquí</button>
-                <button class="btn type-btn" onclick="T.setType('llevar')"><span>🛍️</span> Para Llevar</button>
-            </div>
-            <button class="btn btn-ghost btn-sm" style="margin-top:8px;max-width:240px;" onclick="T.go('name')">← Atrás</button>
-        </div>
-    </div>
-
-    <!-- MENÚ -->
-    <div id="v-menu" class="view">
-        <div class="scrollable" style="padding-bottom:76px;">
-            <div class="view-question" style="padding:20px 16px 0;font-size:2.4rem;">Nuestro Menú 🔥</div>
-            <div id="menu-container"></div>
-        </div>
-        <div class="bottom-bar">
-            <button class="btn btn-ghost btn-sm" style="min-width:60px;width:auto;padding:0 14px;" onclick="T.go('type')">←</button>
-            <div style="flex:1;">
-                <div class="bottom-total" id="bar-total">$0</div>
-                <div class="bottom-items" id="bar-items"></div>
-            </div>
-            <button class="btn btn-sm" id="btn-continue" style="width:auto;" onclick="T.goSuggestions()">Continuar 🛒</button>
-        </div>
-    </div>
-
-    <!-- SUGERENCIAS -->
-    <div id="v-suggest" class="view">
-        <div class="scrollable">
-            <div class="suggest-title">¿Se te antoja algo más? 😋</div>
-            <div class="suggest-sub">Aprovecha y agrega un postrecito o bebida</div>
-            <div class="suggest-grid" id="suggest-grid"></div>
-        </div>
-        <div class="bottom-bar">
-            <button class="btn btn-ghost btn-sm" style="width:auto;min-width:60px;padding:0 14px;" onclick="T.go('menu')">←</button>
-            <div class="bottom-total" id="bar-total-suggest">$0</div>
-            <button class="btn btn-sm" style="width:auto;" onclick="T.go('cart')">Ver Orden ✅</button>
-        </div>
-    </div>
-
-    <!-- CARRITO -->
-    <div id="v-cart" class="view">
-        <div class="scrollable">
-            <div class="view-question" style="padding:20px 16px 0;font-size:2.2rem;">Tu Orden 🧾</div>
-            <div class="cart-list" id="cart-list"></div>
-            <div class="cart-grand" id="cart-grand">$0</div>
-            <div class="cart-actions">
-                <button class="btn" style="min-height:76px;font-size:1.8rem;" onclick="T.submitOrder()">Confirmar Pedido ✅</button>
-                <button class="btn btn-ghost btn-sm" onclick="T.go('suggest')">← Agregar más</button>
+                <button class="btn welcome-cta btn-pulse">👆 Toca para ordenar</button>
+                <div class="welcome-perks">
+                    <span class="perk">⚡ Rápido</span>
+                    <span class="perk">🍽️ Para aquí o para llevar</span>
+                    <span class="perk">💵 Pagas en caja</span>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- LISTO -->
-    <div id="v-done" class="view">
-        <div class="center-content" style="background: linear-gradient(180deg, #ecfdf5 0%, var(--bg) 50%);">
-            <div class="done-icon">✅</div>
-            <div class="done-msg">¡Tu pedido fue enviado!</div>
-            <div class="done-name" id="done-name"></div>
-            <div class="done-msg">Tu nombre será llamado<br>cuando esté listo</div>
-            <div class="done-timer" id="done-timer">Reiniciando en 10...</div>
+        <!-- NOMBRE -->
+        <div id="v-name" class="view">
+            <div class="center-content">
+                <div class="view-question">¿Cuál es tu nombre? 😊</div>
+                <div class="view-hint">Te llamaremos por tu nombre cuando tu pedido esté listo</div>
+                <div class="name-display empty" id="name-display">Escribe tu nombre</div>
+                <div class="kbd" id="kbd"></div>
+                <button class="btn" id="btn-name" onclick="T.submitName()" disabled>Continuar ➔</button>
+            </div>
+        </div>
+
+        <!-- TIPO DE ORDEN -->
+        <div id="v-type" class="view">
+            <div class="center-content">
+                <div class="view-question" id="type-question">¿Dónde vas a comer?</div>
+                <div class="type-grid">
+                    <button class="btn type-btn" onclick="T.setType('aqui')"><span>🍽️</span>Para Aquí<small>Comer en el local</small></button>
+                    <button class="btn type-btn" onclick="T.setType('llevar')"><span>🛍️</span>Para Llevar<small>Incluye barbacoa por kilo</small></button>
+                </div>
+                <button class="btn btn-ghost btn-sm" style="max-width:280px;" onclick="T.go('name')">← Atrás</button>
+            </div>
+        </div>
+
+        <!-- MENÚ -->
+        <div id="v-menu" class="view">
+            <div class="scrollable" id="menu-scroll">
+                <div class="menu-greet">
+                    <h2 id="menu-greet">¿Qué se te antoja? 🔥</h2>
+                    <button class="type-pill" onclick="T.go('type')" id="menu-type-pill"></button>
+                </div>
+                <div class="cat-chips" id="cat-chips"></div>
+                <div id="menu-container"></div>
+                <div style="height:20px;"></div>
+            </div>
+            <div class="bottom-bar">
+                <div class="bottom-info">
+                    <div class="bottom-total" id="bar-total">$0</div>
+                    <div class="bottom-items" id="bar-items">Agrega tus productos</div>
+                </div>
+                <button class="btn btn-sm" id="btn-continue" onclick="T.goNextFromMenu()" disabled>Continuar ➔</button>
+            </div>
+        </div>
+
+        <!-- SUGERENCIAS -->
+        <div id="v-suggest" class="view">
+            <div class="scrollable">
+                <div class="suggest-head">
+                    <div class="suggest-title">¿Algo dulce o de tomar? 😋</div>
+                    <div class="suggest-sub">El complemento perfecto para tu pedido</div>
+                </div>
+                <div class="menu-grid" id="suggest-grid"></div>
+            </div>
+            <div class="bottom-bar">
+                <button class="btn btn-ghost btn-sm" style="min-width:80px;" onclick="T.go('menu')">←</button>
+                <div class="bottom-info">
+                    <div class="bottom-total" id="bar-total-suggest">$0</div>
+                    <div class="bottom-items" id="bar-items-suggest"></div>
+                </div>
+                <button class="btn btn-sm" id="btn-suggest-next" onclick="T.go('cart')">No, gracias ➔</button>
+            </div>
+        </div>
+
+        <!-- CARRITO -->
+        <div id="v-cart" class="view">
+            <div class="scrollable">
+                <div class="cart-head">
+                    <h2>Revisa tu pedido 🧾</h2>
+                    <div class="cart-meta">
+                        <button class="type-pill" onclick="T.go('name')" id="cart-name"></button>
+                        <button class="type-pill" onclick="T.go('type')" id="cart-type"></button>
+                    </div>
+                </div>
+                <div class="cart-list" id="cart-list"></div>
+                <div class="cart-summary"><span>Total a pagar</span><b id="cart-grand">$0</b></div>
+                <div class="cart-actions">
+                    <button class="btn btn-pulse" id="btn-confirm" style="min-height:90px;font-size:2rem;max-width:640px;" onclick="T.submitOrder()">Confirmar pedido ✅</button>
+                    <div class="pay-note">💵 Pagas en caja al recoger tu pedido</div>
+                    <button class="btn btn-ghost btn-sm" style="max-width:340px;" onclick="T.go('menu')">+ Agregar más cosas</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LISTO -->
+        <div id="v-done" class="view" onclick="T.go('welcome')">
+            <div class="center-content">
+                <div class="done-check">✓</div>
+                <div class="done-msg">¡Gracias, <span class="done-name" id="done-name"></span>!</div>
+                <div class="done-num">Tu número de orden<b id="done-num">#0</b></div>
+                <div class="done-msg" style="font-size:1.7rem;font-weight:600;">Pasa a caja a pagar.<br>Te llamaremos cuando esté listo 🔔</div>
+                <button class="btn btn-ghost btn-sm" style="max-width:340px;">Nuevo pedido</button>
+                <div class="done-timer" id="done-timer"></div>
+            </div>
         </div>
     </div>
 
-    <!-- MODAL INACTIVIDAD -->
-    <div id="idle-overlay" class="idle-overlay" onclick="T.dismissIdle()">
-        <div class="idle-box" onclick="event.stopPropagation();">
+    <!-- Modal inactividad -->
+    <div id="idle-overlay" class="overlay" onclick="T.dismissIdle()">
+        <div class="modal-box" onclick="event.stopPropagation();">
             <h2>¿Sigues ahí? 👋</h2>
             <p>Tu pedido se cancelará si no continúas</p>
             <div class="idle-countdown" id="idle-countdown">15</div>
-            <button class="btn" style="max-width:100%;" onclick="T.dismissIdle()">¡Sí, sigo aquí!</button>
+            <div class="modal-actions">
+                <button class="btn" onclick="T.dismissIdle()">¡Sí, sigo aquí!</button>
+            </div>
         </div>
     </div>
 
-    <script src="data.js"></script>
-    <script src="totem.js"></script>
+    <!-- Modal genérico (cancelar, avisos) -->
+    <div id="modal" class="overlay">
+        <div class="modal-box">
+            <h2 id="modal-title"></h2>
+            <p id="modal-text"></p>
+            <div class="modal-actions" id="modal-actions"></div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script src="data.js?v=20261004"></script>
+    <script src="totem.js?v=20261004"></script>
 </body>
 </html>

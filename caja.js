@@ -1081,11 +1081,7 @@ function setKiloMode(mode) {
   document.getElementById('kiloResult').textContent = '';
 }
 
-/** Gramos a entregar por un monto en $ — reglas: <$80 → -20%, $80-$149 → -10%, $150+ → normal */
-function kiloGrams(amount, priceKg) {
-  const factor = amount < 80 ? 0.80 : amount < 150 ? 0.90 : 1;
-  return Math.round((amount / priceKg) * 1000 * factor);
-}
+// Reglas de gramaje: ver KILO_RULES / kiloGramsFor / kiloPriceFor en data.js (las comparte con tótem y servidor)
 
 function updateKiloCalc() {
   const p       = storeConfig.products?.[_kiloProductKey] || DEFAULT_STORE_DATA.products[_kiloProductKey];
@@ -1097,10 +1093,10 @@ function updateKiloCalc() {
   if (!val || val <= 0) { resultEl.textContent = ''; return; }
 
   if (_kiloMode === 'kg') {
-    const total = (val * priceKg);
-    resultEl.textContent = `→ Total: $${total % 1 === 0 ? total.toFixed(0) : total.toFixed(2)}`;
+    const total = kiloPriceFor(val * 1000, priceKg);
+    resultEl.textContent = `→ Total: $${total}`;
   } else {
-    const grams = kiloGrams(val, priceKg);
+    const grams = kiloGramsFor(val, priceKg);
     const kgDisplay = (grams / 1000).toFixed(3).replace(/\.?0+$/, '');
     resultEl.textContent = `→ ${grams} gramos (${kgDisplay} kg)`;
   }
@@ -1115,13 +1111,13 @@ function confirmKiloModal() {
 
   let finalPrice, label;
   if (_kiloMode === 'kg') {
-    finalPrice = val * priceKg;
+    finalPrice = kiloPriceFor(val * 1000, priceKg);
     const kgStr = val % 1 === 0 ? val.toFixed(0) : val.toFixed(3).replace(/\.?0+$/, '');
     label = `${p.title} (${kgStr} kg)`;
   } else {
     finalPrice = val;
     // Ajuste de gramaje por porción pequeña (costo de empaque)
-    label = `${p.title} (${kiloGrams(val, priceKg)} g)`;
+    label = `${p.title} (${kiloGramsFor(val, priceKg)} g)`;
   }
 
   ticket.push({
@@ -1139,6 +1135,24 @@ function confirmKiloModal() {
 }
 
 
+/** Vuelve a leer la config del admin; si cambió algo (precio, nombre, activo), re-dibuja los botones. */
+async function refreshStoreConfig() {
+  let fresh;
+  try {
+    const res = await fetch('/api/config', { cache: 'no-store' });
+    if (!res.ok) return;
+    fresh = await res.json();
+  } catch { return; } // sin red: conservar lo que ya hay
+  const sig = c => JSON.stringify([c.products, c.extraProducts, c.promos, c.business?.name]);
+  if (!fresh?.products || sig(fresh) === sig(storeConfig)) return;
+  storeConfig = fresh;
+  renderProductButtons();
+  renderTicket();
+  const nameEl = document.getElementById('posBusinessName');
+  if (nameEl && storeConfig.business?.name) nameEl.textContent = storeConfig.business.name;
+  showPosToast('🔄 Precios y menú actualizados desde el admin');
+}
+
 // ── Init ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   storeConfig = await loadConfig();
@@ -1153,13 +1167,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderProductButtons();
   renderTicket();
 
-  // Carga inicial de órdenes pendientes + polling cada 12s
+  // Carga inicial de órdenes pendientes + polling cada 5s
   await loadPendingOrders();
   pendingPollTimer = setInterval(loadPendingOrders, 5_000);
 
+  // Precios/productos del admin: revisar cada 30 s
+  setInterval(refreshStoreConfig, 30_000);
+
   // Refresca al volver a enfocar la pestaña
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') loadPendingOrders();
+    if (document.visibilityState === 'visible') { loadPendingOrders(); refreshStoreConfig(); }
   });
 
   // Registrar Service Worker

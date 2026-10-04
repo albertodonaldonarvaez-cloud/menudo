@@ -5,7 +5,7 @@
  * Cache-first solo para fuentes, íconos y CDN.
  */
 
-const CACHE_NAME  = 'menudo-pos-v7';
+const CACHE_NAME  = 'menudo-pos-v8';
 const STATIC_URLS = [
   '/manifest.json',
   '/icon.svg',

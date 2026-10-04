@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title id="pageTitle">Menú Digital</title>
-  <meta name="description" content="Menú digital para consultar en mesa nuestros platillos de birria, menudo, refrescos y promos.">
+  <meta name="description" content="Menú digital para consultar en mesa: barbacoa, menudo, tacos, quesadillas, bebidas, postres y promos.">
   <meta name="theme-color" content="#C84B31">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -18,158 +18,68 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=20260829b">
+  <link rel="stylesheet" href="styles.css?v=20261004">
 </head>
-<body>
+<body class="public-menu">
 
-  <!-- ── Barra de estado: abierto/cerrado ───────────────────── -->
-  <div class="top-announcement">
-    <div class="container announcement-content">
-      <span class="status-pill" id="statusBadge">
-        <span class="status-dot"></span>
+  <!-- ── Barra superior: abierto / cerrado + horario ── -->
+  <div class="pm-topbar">
+    <div class="pm-wrap pm-topbar-inner">
+      <span class="pm-status" id="statusBadge">
+        <span class="pm-status-dot"></span>
         <span id="statusText">Verificando...</span>
       </span>
-      <span class="announcement-text" id="headerSchedule">
+      <span class="pm-topbar-schedule" id="headerSchedule">
         <i class="fa-regular fa-clock"></i> Cargando horario...
-      </span>
-      <span class="table-badge">
-        <i class="fa-solid fa-wifi"></i> Menú Digital en Mesa
       </span>
     </div>
   </div>
 
-  <!-- ── Hero Header ─────────────────────────────────────────── -->
-  <header class="hero-header">
-    <div class="container hero-container">
-      <div class="hero-brand">
-        <div class="brand-avatar" id="heroAvatar">🔥</div>
-        <div class="brand-info">
-          <h1 id="businessName">Birriería &amp; Antojitos</h1>
-          <p class="brand-slogan" id="businessSlogan">La birria más rica, recién hecha y bien calientita 🔥</p>
-          <div class="brand-welcome-tag">
-            <i class="fa-solid fa-utensils"></i> ¡Bienvenidos! Consulta nuestra carta:
-          </div>
-        </div>
+  <!-- ── Hero ── -->
+  <header class="pm-hero">
+    <div class="pm-hero-glow" aria-hidden="true"></div>
+    <div class="pm-wrap pm-hero-inner">
+      <div class="pm-hero-avatar" aria-hidden="true">🔥</div>
+      <h1 class="pm-hero-title" id="businessName">Barbacoa &amp; Antojitos</h1>
+      <p class="pm-hero-slogan" id="businessSlogan">La barbacoa más rica, recién hecha y bien calientita 🔥</p>
+      <div class="pm-hero-chips">
+        <span class="pm-chip"><i class="fa-solid fa-utensils"></i> Menú digital en mesa</span>
+        <span class="pm-chip" id="heroSchedule" hidden></span>
       </div>
     </div>
   </header>
 
-  <!-- ── Navegación por categoría ──────────────────────────── -->
-  <nav class="category-nav-wrapper" id="categoryNav">
-    <div class="container">
-      <div class="category-nav">
-        <button class="cat-tab active" data-category="all">
-          <span class="cat-icon">🍽️</span> Todos
-        </button>
-        <button class="cat-tab" data-category="menudo">
-          <span class="cat-icon">🍲</span> Menudo
-        </button>
-        <button class="cat-tab" data-category="tacos">
-          <span class="cat-icon">🌮</span> Tacos
-        </button>
-        <button class="cat-tab" data-category="quesadillas">
-          <span class="cat-icon">🧀</span> Quesadillas
-        </button>
-        <button class="cat-tab" data-category="cafe">
-          <span class="cat-icon">☕</span> Café
-        </button>
-        <button class="cat-tab" data-category="pan">
-          <span class="cat-icon">🍞</span> Pan
-        </button>
-        <button class="cat-tab" data-category="promos">
-          <span class="cat-icon">🎉</span> Promos
-        </button>
-      </div>
+  <!-- ── Navegación por categoría (se genera dinámicamente) ── -->
+  <nav class="pm-nav" id="categoryNav" aria-label="Categorías del menú">
+    <div class="pm-wrap">
+      <div class="pm-nav-track" id="categoryNavTrack" role="tablist"></div>
     </div>
   </nav>
 
-  <!-- ── Contenido del menú ─────────────────────────────────── -->
-  <main class="main-content container">
-
-    <!-- MENUDO -->
-    <section class="menu-section" id="section-menudo" data-product="menudo">
-      <div class="section-title">
-        <div class="title-left">
-          <h2><span class="section-emoji">🍲</span> Menudo Tradicional</h2>
-          <p class="section-subtitle">Receta casera de la abuela, servida bien calientita</p>
-        </div>
-      </div>
-      <div id="card-menudo"></div>
-    </section>
-
-    <!-- TACOS DE BARBACOA -->
-    <section class="menu-section" id="section-tacos" data-product="tacos">
-      <div class="section-title">
-        <div class="title-left">
-          <h2><span class="section-emoji">🌮</span> Tacos de Barbacoa</h2>
-          <p class="section-subtitle">Recién hechos con barbacoa jugosa y tortilla de maíz</p>
-        </div>
-      </div>
-      <div id="card-tacos"></div>
-    </section>
-
-    <!-- QUESADILLAS GIGANTES DE BARBACOA -->
-    <section class="menu-section" id="section-quesadillas" data-product="quesadillas">
-      <div class="section-title">
-        <div class="title-left">
-          <h2><span class="section-emoji">🧀</span> Quesadillas Gigantes de Barbacoa</h2>
-          <p class="section-subtitle">Caseras, gigantes y rellenas de barbacoa con queso Oaxaca</p>
-        </div>
-      </div>
-      <div id="card-quesadillas"></div>
-    </section>
-
-    <!-- CAFÉ DE OLLA -->
-    <section class="menu-section" id="section-cafe" data-product="cafe">
-      <div class="section-title">
-        <div class="title-left">
-          <h2><span class="section-emoji">☕</span> Café de Olla</h2>
-          <p class="section-subtitle">Con canela y piloncillo, bien calientito</p>
-        </div>
-      </div>
-      <div id="card-cafe"></div>
-    </section>
-
-    <!-- PAN DE DULCE -->
-    <section class="menu-section" id="section-pan" data-product="pan">
-      <div class="section-title">
-        <div class="title-left">
-          <h2><span class="section-emoji">🍞</span> Pan de Dulce</h2>
-          <p class="section-subtitle">Casero, perfecto para acompañar el café</p>
-        </div>
-      </div>
-      <div id="card-pan"></div>
-    </section>
-
-    <!-- PROMOS / COMBOS -->
-    <section class="menu-section" id="section-promos" data-product="promos">
-      <div class="section-title">
-        <div class="title-left">
-          <h2><span class="section-emoji">🎉</span> Promos del Día</h2>
-          <p class="section-subtitle">¡Aprovecha nuestros combos especiales del fin de semana!</p>
-        </div>
-      </div>
-      <div id="card-promos"></div>
-    </section>
-
+  <!-- ── Contenido del menú (se genera dinámicamente desde la configuración) ── -->
+  <main class="pm-main pm-wrap" id="menuMain">
+    <div class="pm-loading" id="menuLoading">
+      <div class="pm-spinner"></div>
+      <p>Cargando menú...</p>
+    </div>
   </main>
 
-  <!-- ── Footer ──────────────────────────────────────────────── -->
-  <footer class="site-footer">
-    <div class="container footer-content">
-      <p id="footerBusinessName">Birriería &amp; Antojitos</p>
-      <p class="footer-sub" id="footerSchedule"></p>
-      <p class="footer-sub">¡Gracias por visitarnos y buen provecho! 🙏</p>
-      <div class="footer-admin-link">
-        <a href="/login" class="admin-link-btn">
+  <!-- ── Footer ── -->
+  <footer class="pm-footer">
+    <div class="pm-wrap pm-footer-inner">
+      <p class="pm-footer-name" id="footerBusinessName">Barbacoa &amp; Antojitos</p>
+      <p class="pm-footer-sub" id="footerSchedule"></p>
+      <p class="pm-footer-sub">¡Gracias por visitarnos y buen provecho! 🙌</p>
+      <div class="pm-footer-admin">
+        <a href="/login" class="pm-admin-link">
           <i class="fa-solid fa-lock"></i> Panel de Administración
         </a>
       </div>
     </div>
   </footer>
 
-  <script src="data.js?v=20260902"></script>
-  <script src="app.js?v=20260902"></script>
+  <script src="data.js?v=20261004"></script>
+  <script src="app.js?v=20261004"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(e => console.warn('SW:', e));

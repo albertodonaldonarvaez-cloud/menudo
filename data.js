@@ -138,3 +138,49 @@ const DEFAULT_STORE_DATA = {
   // ── Historial de cortes de caja ───────────────────────────────
   caja: []
 };
+
+// ── Reglas de Barbacoa × Kilo (FUENTE ÚNICA) ────────────────────
+// Las usan el POS, el tótem y el servidor. El precio por kg sale
+// SIEMPRE del admin (products.birria.price); aquí solo van las reglas.
+// Porciones chicas llevan menos gramos por el costo de empaque.
+const KILO_RULES = {
+  minAmount:    50,                  // monto mínimo en el tótem
+  quickAmounts: [50, 100, 175, 350], // botones rápidos del tótem
+  tiers: [
+    { below: 80,  factor: 0.80 },    // menos de $80    → 20% menos gramos
+    { below: 150, factor: 0.90 }     // de $80 a $149   → 10% menos gramos
+  ]                                  // $150 en adelante → gramaje completo
+};
+
+function kiloFactor(amount) {
+  const tier = KILO_RULES.tiers.find(t => amount < t.below);
+  return tier ? tier.factor : 1;
+}
+
+/** Gramos que se entregan por un monto en pesos. */
+function kiloGramsFor(amount, priceKg) {
+  if (!(amount > 0) || !(priceKg > 0)) return 0;
+  return Math.round((amount / priceKg) * 1000 * kiloFactor(amount));
+}
+
+/** Precio a cobrar por cierta cantidad de gramos (inverso, aplica el mismo ajuste). */
+function kiloPriceFor(grams, priceKg) {
+  if (!(grams > 0) || !(priceKg > 0)) return 0;
+  const raw = (grams / 1000) * priceKg;
+  // Rangos de precio: [0,80)→0.80 · [80,150)→0.90 · [150,∞)→1
+  const sorted = [...KILO_RULES.tiers].sort((a, b) => a.below - b.below);
+  const bands = sorted.map((t, i) => ({ min: i ? sorted[i - 1].below : 0, max: t.below, factor: t.factor }));
+  bands.push({ min: sorted[sorted.length - 1].below, max: Infinity, factor: 1 });
+  // Del rango más alto al más bajo: el primero cuyo precio cae en su rango gana.
+  // Si cae en un "hueco" entre rangos se cobra el inicio del rango superior.
+  for (let i = bands.length - 1; i >= 0; i--) {
+    const p = raw / bands[i].factor;
+    if (p >= bands[i].min) return Math.round(Math.min(p, bands[i].max));
+  }
+  return Math.round(raw);
+}
+
+// Permite usar las mismas reglas en el servidor (Node)
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { DEFAULT_STORE_DATA, KILO_RULES, kiloGramsFor, kiloPriceFor };
+}

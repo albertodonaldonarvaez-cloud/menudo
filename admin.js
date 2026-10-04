@@ -64,16 +64,21 @@ async function loadStoreDataAsync() {
 // ── Guardar en servidor ───────────────────────────────────────
 function saveStoreData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(storeData));
-  fetch('/api/config', {
+  return fetch('/api/config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
     body: JSON.stringify(storeData)
   })
   .then(r => {
-    if (r.status === 401) { window.location.href = '/login'; return; }
+    if (r.status === 401) { window.location.href = '/login'; return false; }
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return true;
   })
-  .catch(e => console.warn('No se pudo sincronizar al servidor:', e));
+  .catch(e => {
+    console.warn('No se pudo sincronizar al servidor:', e);
+    showToast('❌ No se pudo guardar en el servidor. Revisa la conexión e intenta de nuevo.');
+    return false;
+  });
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -112,7 +117,7 @@ function renderProductEditors() {
     return `
       <div class="admin-panel-card" style="margin-bottom:24px;">
         <div class="card-header-styled" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-          <h3 style="margin:0;">${PRODUCT_NAMES[key]}</h3>
+          <h3 style="margin:0;">${PRODUCT_NAMES[key] || `${p.emoji || '🍽️'} ${p.title}`}</h3>
           <label class="switch-label" title="${p.enabled ? 'Visible en menú' : 'Oculto en menú'}">
             <input type="checkbox" ${p.enabled ? 'checked' : ''}
               onchange="toggleProductEnabled('${key}', this.checked)">
@@ -144,7 +149,7 @@ function renderProductEditors() {
             <!-- Precio -->
             <div style="display:flex;gap:10px;">
               <div class="field-item" style="flex:1;">
-                <label>Precio ($)</label>
+                <label>${key === 'birria' ? 'Precio por kg ($)' : 'Precio ($)'}</label>
                 <input type="number" id="pp-${key}" class="form-input" value="${p.price}" min="0" step="0.5">
               </div>
               <div class="field-item" style="flex:1;">
@@ -173,19 +178,21 @@ function toggleProductEnabled(key, enabled) {
   if (storeData.products[key]) storeData.products[key].enabled = enabled;
 }
 
-function saveProductosForm() {
+async function saveProductosForm() {
   PRODUCT_KEYS.forEach(key => {
     const p = storeData.products[key];
     if (!p) return;
+    const priceVal = document.getElementById(`pp-${key}`)?.value;
     p.title       = document.getElementById(`pt-${key}`)?.value.trim() || p.title;
-    p.price       = Number(document.getElementById(`pp-${key}`)?.value) || p.price;
+    p.price       = priceVal !== '' && !isNaN(Number(priceVal)) ? Number(priceVal) : p.price;
     p.priceNote   = document.getElementById(`pn-${key}`)?.value.trim() || '';
     p.badge       = document.getElementById(`pb-${key}`)?.value.trim() || '';
     p.description = document.getElementById(`pd-${key}`)?.value.trim() || p.description;
     // NOTA: p.image NO se toca aquí — se guarda directamente al subir la foto vía handleImageUpload
   });
-  saveStoreData();
-  showToast('✅ Productos guardados');
+  if (await saveStoreData()) {
+    showToast('✅ Productos guardados — POS, tótem y menú ya usan los nuevos precios');
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -643,9 +650,66 @@ async function loadAnalytics() {
     renderProductBreakdown(monthTxs);
     renderDailyTable(monthTxs);
     renderTransactionList(monthTxs);
+    loadTodaySales(allTxs);
   } catch (e) {
     console.error('Error cargando analítica:', e);
     showToast('❌ No se pudo cargar la analítica. Verifica conexión.');
+  }
+}
+
+// ── Venta del día ─────────────────────────────────────────────
+const localDay = d => new Date(d).toLocaleDateString('en-CA'); // YYYY-MM-DD en hora local
+const money    = n => `$${Math.round(n || 0).toLocaleString('es-MX')}`;
+
+async function loadTodaySales(allTxs) {
+  try {
+    if (!allTxs) {
+      const r = await fetch('/api/transactions', { cache: 'no-store', headers: { Accept: 'application/json' } });
+      if (!r.ok) return;
+      allTxs = await r.json();
+    }
+    const today = localDay(Date.now());
+    const txs   = allTxs.filter(t => t.timestamp && localDay(t.timestamp) === today);
+
+    const total  = txs.reduce((s, t) => s + (t.total || 0), 0);
+    const by     = m => txs.filter(t => t.paymentMethod === m).reduce((s, t) => s + (t.total || 0), 0);
+    setText('todayDate',     new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' }));
+    setText('todayTotal',    money(total));
+    setText('todayClients',  txs.length);
+    setText('todayAvg',      money(txs.length ? total / txs.length : 0));
+    setText('todayCash',     money(by('efectivo')));
+    setText('todayCard2',    money(by('tarjeta')));
+    setText('todayTransfer', money(by('transferencia')));
+
+    // Comparativo contra el mismo día de la semana pasada
+    const lastWeek = localDay(Date.now() - 7 * 864e5);
+    const prev = allTxs.filter(t => t.timestamp && localDay(t.timestamp) === lastWeek).reduce((s, t) => s + (t.total || 0), 0);
+    let sub = txs.length ? `${txs.length} venta${txs.length > 1 ? 's' : ''} cobrada${txs.length > 1 ? 's' : ''}` : 'Aún no hay ventas cobradas hoy';
+    if (prev > 0) {
+      const pct = Math.round(((total - prev) / prev) * 100);
+      sub += ` · ${pct >= 0 ? '▲' : '▼'} ${Math.abs(pct)}% vs. semana pasada (${money(prev)})`;
+    }
+    setText('todaySub', sub);
+
+    // Top 3 productos del día
+    const qtyBy = {};
+    txs.forEach(t => (t.items || []).forEach(i => {
+      const k = (i.key || '').startsWith('birria_kilo') || (i.key || '').startsWith('barb_libre') ? 'Barbacoa × Kilo' : (i.title || i.key);
+      qtyBy[k] = (qtyBy[k] || 0) + (i.subtotal || i.price * i.qty || 0);
+    }));
+    const top = Object.entries(qtyBy).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    setText('todayTop', top.length ? '🏆 Lo más vendido: ' + top.map(([k, v]) => `${k} (${money(v)})`).join(' · ') : '');
+
+    // Por cobrar (órdenes de hoy enviadas a cocina sin cobrar)
+    const or = await fetch('/api/orders', { cache: 'no-store', headers: { Accept: 'application/json' } });
+    if (or.ok) {
+      const { pendingPayment = [] } = await or.json();
+      const pend = pendingPayment.reduce((s, o) => s + (o.total || 0), 0);
+      setText('todayPending', `${money(pend)}${pendingPayment.length ? ` · ${pendingPayment.length}` : ''}`);
+    }
+    setText('todayLive', '● En vivo · ' + new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }));
+  } catch (e) {
+    console.warn('Venta del día:', e);
   }
 }
 
@@ -664,14 +728,19 @@ function renderHourChart(txs) {
   if (!el) return;
   if (!txs.length) { el.innerHTML = '<p style="color:#9CA3AF;text-align:center;padding:16px;">Sin datos para este mes.</p>'; return; }
 
-  // Contar clientes por hora
+  // Contar clientes por hora LOCAL (desde el timestamp; el campo "hour" viejo venía en UTC)
   const counts = Array(24).fill(0);
-  txs.forEach(t => { if (t.hour >= 0 && t.hour <= 23) counts[t.hour]++; });
+  txs.forEach(t => {
+    const h = t.timestamp ? new Date(t.timestamp).getHours() : t.hour;
+    if (h >= 0 && h <= 23) counts[h]++;
+  });
   const max = Math.max(...counts, 1);
 
-  // Solo mostrar horas con actividad (o rango 6-18)
+  // Rango: de la primera a la última hora con ventas (mínimo 7 AM – 3 PM)
+  const active = counts.map((c, h) => c ? h : null).filter(h => h !== null);
+  const from = Math.min(7, ...active), to = Math.max(15, ...active);
   const hours = [];
-  for (let h = 6; h <= 18; h++) hours.push(h);
+  for (let h = from; h <= to; h++) hours.push(h);
 
   el.innerHTML = `
     <div class="hours-chart">
@@ -911,6 +980,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Analítica
   loadAnalytics();
+  setInterval(() => { if (document.visibilityState === 'visible') loadTodaySales(); }, 60_000);
   document.getElementById('analyticsMonth')?.addEventListener('change', loadAnalytics);
 
   // Promos
