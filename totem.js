@@ -112,7 +112,11 @@ const T = {
       html += '</div>';
     }
 
+    // Conservar el monto que el cliente estaba escribiendo en barbacoa
+    const pendingKilo = document.getElementById('kilo-inp')?.value || '';
     container.innerHTML = html || '<div style="text-align:center;color:#999;padding:40px;">No hay productos</div>';
+    const kiloInp = document.getElementById('kilo-inp');
+    if (kiloInp && pendingKilo) { kiloInp.value = pendingKilo; this.calcKilo(); }
     this.updateTotal();
   },
 
@@ -143,13 +147,22 @@ const T = {
     const img = p.image
       ? `<img class="menu-card-img" src="${p.image}" alt="${p.title}" onerror="this.style.display='none'">`
       : `<div class="menu-card-img" style="display:flex;align-items:center;justify-content:center;font-size:3rem;">${p.emoji}</div>`;
-    return `<div class="menu-card">${img}<div class="menu-card-body">
+    // Porciones de barbacoa ya agregadas → feedback visible
+    const kiloItems = this.cart.filter(c => c.key.startsWith('birria_kilo_'));
+    const badge = kiloItems.length ? `<div class="card-badge">${kiloItems.length}</div>` : '';
+    const chips = kiloItems.map(c => `
+      <div class="kilo-chip">
+        <span>✓ ${c.qty > 1 ? c.qty + '× ' : ''}$${c.price} · ${c.grams}g</span>
+        <button onclick="event.stopPropagation();T.removeKilo('${c.key}')">✕</button>
+      </div>`).join('');
+    return `<div class="menu-card${kiloItems.length ? ' has-items' : ''}">${badge}${img}<div class="menu-card-body">
       <div class="menu-card-name">${p.emoji} ${p.title}</div>
       <div class="menu-card-price">$${p.price}/kg</div>
+      ${chips}
       <div class="kilo-wrap">
         <div class="kilo-row">
           <span style="font-weight:700;color:var(--accent);font-size:1.2rem;">$</span>
-          <input type="number" id="kilo-inp" placeholder="Monto" min="1" step="1" oninput="T.calcKilo()">
+          <input type="number" id="kilo-inp" placeholder="Monto" min="1" step="1" inputmode="numeric" oninput="T.calcKilo()">
           <button class="kilo-add" onclick="T.addKilo()">Agregar</button>
         </div>
         <div class="kilo-result" id="kilo-result"></div>
@@ -170,35 +183,40 @@ const T = {
   },
 
   // ── Kilo ───────────────────────────────────────────────────────
+  /** Gramos a entregar por un monto — reglas: <$80 → -20%, $80-$149 → -10%, $150+ → normal */
+  kiloGrams(amount) {
+    const priceKg = Number(this.getProduct('birria').price) || 250;
+    const factor = amount < 80 ? 0.80 : amount < 150 ? 0.90 : 1;
+    return Math.round((amount / priceKg) * 1000 * factor);
+  },
+
   calcKilo() {
-    const p = this.getProduct('birria');
-    const priceKg = Number(p.price) || 250;
     const val = parseFloat(document.getElementById('kilo-inp')?.value);
     const el = document.getElementById('kilo-result');
     if (!el) return;
-    if (!val || val <= 0) { el.textContent = ''; return; }
-    let grams = Math.round((val / priceKg) * 1000);
-    if (val < 80) grams = Math.round(grams * 0.80);
-    else if (val < 150) grams = Math.round(grams * 0.90);
-    el.textContent = `→ ${grams}g`;
+    el.textContent = (val > 0) ? `→ ${this.kiloGrams(val)}g` : '';
   },
 
   addKilo() {
     const p = this.getProduct('birria');
-    const priceKg = Number(p.price) || 250;
-    const val = parseFloat(document.getElementById('kilo-inp')?.value);
-    if (!val || val <= 0) { document.getElementById('kilo-inp')?.focus(); return; }
-    let grams = Math.round((val / priceKg) * 1000);
-    if (val < 80) grams = Math.round(grams * 0.80);
-    else if (val < 150) grams = Math.round(grams * 0.90);
+    const inp = document.getElementById('kilo-inp');
+    const val = Math.round(parseFloat(inp?.value));
+    if (!val || val <= 0) { inp?.focus(); return false; }
+    const grams = this.kiloGrams(val);
     this.cart.push({
       key: 'birria_kilo_' + Date.now(),
       title: `${p.title || 'Barbacoa × Kilo'} (${grams}g)`,
-      emoji: p.emoji || '🥩', qty: 1, price: val, subtotal: val
+      emoji: p.emoji || '🥩', qty: 1, price: val, subtotal: val, grams
     });
-    document.getElementById('kilo-inp').value = '';
-    document.getElementById('kilo-result').textContent = '';
-    this.updateTotal();
+    if (inp) inp.value = '';
+    this.renderMenu();   // muestra la porción agregada en la tarjeta
+    this.resetIdle();
+    return true;
+  },
+
+  removeKilo(key) {
+    this.cart = this.cart.filter(c => c.key !== key);
+    this.renderMenu();
     this.resetIdle();
   },
 
@@ -263,6 +281,9 @@ const T = {
 
   // ── Sugerencias ────────────────────────────────────────────────
   goSuggestions() {
+    // Si dejó un monto de barbacoa escrito sin tocar "Agregar", agregarlo
+    const pending = parseFloat(document.getElementById('kilo-inp')?.value);
+    if (pending > 0) this.addKilo();
     if (!this.cart.length) return;
     this.go('suggest');
   },
