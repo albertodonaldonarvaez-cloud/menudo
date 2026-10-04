@@ -27,17 +27,77 @@ const ADMIN_USER     = process.env.ADMIN_USER     || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'changeme';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'cambiar_esta_clave_secreta';
 
-// ── Helpers de I/O ───────────────────────────────────────────
+// ── Helpers de I/O (seguros: nunca se pierden datos) ─────────
+/**
+ * Lee un JSON. Si el archivo está dañado usa el respaldo .bak.
+ * Si ambos están dañados LANZA error en lugar de devolver vacío:
+ * así nadie sobrescribe el historial con una lista vacía.
+ */
 function readJSON(file) {
-  if (!fs.existsSync(file)) return null;
-  try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return null; }
+  for (const f of [file, file + '.bak']) {
+    if (!fs.existsSync(f)) continue;
+    try { return JSON.parse(fs.readFileSync(f, 'utf8')); }
+    catch (e) { console.error(`⚠️  ${f} dañado: ${e.message}`); }
+  }
+  if (fs.existsSync(file)) throw new Error(`${path.basename(file)} dañado; no se sobrescribe para no perder datos`);
+  return null;
 }
 
+/** Escritura atómica: escribe a .tmp, guarda la versión anterior como .bak y renombra. */
 function writeJSON(file, data) {
   const dir = path.dirname(file);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+  const tmp = file + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
+  if (fs.existsSync(file)) fs.copyFileSync(file, file + '.bak');
+  fs.renameSync(tmp, file);
 }
+
+// ── Respaldo diario automático dentro del volumen (/data/backups) ──
+function backupData() {
+  try {
+    const day  = new Date().toISOString().slice(0, 10);
+    const dest = path.join('/data/backups', day);
+    fs.mkdirSync(dest, { recursive: true });
+    [CONFIG_FILE, TRANSACTIONS_FILE, USERS_FILE, ORDERS_FILE].forEach(f => {
+      if (fs.existsSync(f)) fs.copyFileSync(f, path.join(dest, path.basename(f)));
+    });
+    // Conservar solo los últimos 30 días
+    const days = fs.readdirSync('/data/backups').filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+    days.slice(0, Math.max(0, days.length - 30)).forEach(d =>
+      fs.rmSync(path.join('/data/backups', d), { recursive: true, force: true }));
+    console.log(`💾 Respaldo diario en ${dest}`);
+  } catch (e) { console.error('Respaldo diario falló:', e.message); }
+}
+
+// ── Sesiones guardadas en disco (sobreviven a reinicios/deploys) ──
+class FileSessionStore extends session.Store {
+  constructor(file) {
+    super();
+    this.file = file;
+    try { this.sessions = readJSON(file) || {}; } catch { this.sessions = {}; }
+    this.timer = null;
+  }
+  isExpired(s) { return s?.cookie?.expires && new Date(s.cookie.expires).getTime() < Date.now(); }
+  schedule(ms = 2000) { if (!this.timer) this.timer = setTimeout(() => this.flush(), ms); }
+  flush() {
+    clearTimeout(this.timer); this.timer = null;
+    for (const [sid, s] of Object.entries(this.sessions)) if (this.isExpired(s)) delete this.sessions[sid];
+    try { writeJSON(this.file, this.sessions); } catch (e) { console.error('Sesiones:', e.message); }
+  }
+  get(sid, cb) {
+    const s = this.sessions[sid];
+    if (!s || this.isExpired(s)) { delete this.sessions[sid]; return cb(null, null); }
+    cb(null, JSON.parse(JSON.stringify(s)));
+  }
+  set(sid, sess, cb) { this.sessions[sid] = JSON.parse(JSON.stringify(sess)); this.schedule(); cb?.(null); }
+  destroy(sid, cb) { delete this.sessions[sid]; this.schedule(); cb?.(null); }
+  touch(sid, sess, cb) {
+    if (this.sessions[sid]) { this.sessions[sid].cookie = JSON.parse(JSON.stringify(sess.cookie)); this.schedule(15000); }
+    cb?.(null);
+  }
+}
+const sessionStore = new FileSessionStore('/data/sessions.json');
 
 // ── Gestión de usuarios cajero ───────────────────────────────
 function hashPassword(password) {
@@ -74,9 +134,11 @@ function checkCredentials(user, password) {
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(session({
+  store: sessionStore,
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  rolling: true,                 // cada uso renueva las 10 h (tótem/POS no se desloguean a media jornada)
   cookie: {
     httpOnly: true,
     secure: false,
@@ -774,8 +836,9 @@ app.get('/', (req, res) => { noCache(res); sendFile(res, 'index.html'); });
 app.use((req, res) => res.status(404).redirect('/'));
 
 // ── Iniciar servidor ─────────────────────────────────────────
-app.listen(PORT, () => {
-  const userCount = loadUsers().length;
+const server = app.listen(PORT, () => {
+  let userCount = '?';
+  try { userCount = loadUsers().length; } catch (e) { console.error(e.message); }
   console.log('══════════════════════════════════════════');
   console.log(`  🔥  Menú Digital v2.3 en :${PORT}`);
   console.log(`  👤  Admin: ${ADMIN_USER}`);
@@ -785,4 +848,17 @@ app.listen(PORT, () => {
   console.log(`  🍳  Órdenes cocina: ${ORDERS_FILE}`);
   console.log(`  🔑  Usuarios: ${USERS_FILE}`);
   console.log('══════════════════════════════════════════');
+  backupData();
+  setInterval(backupData, 6 * 60 * 60 * 1000); // revisa cada 6 h (una carpeta por día)
 });
+
+// ── Apagado ordenado (docker stop / deploy) ──────────────────
+// Node como PID 1 ignora SIGTERM si no hay handler → Docker esperaría 10 s y lo mataría.
+function shutdown(signal) {
+  console.log(`[${new Date().toISOString()}] ${signal}: guardando sesiones y cerrando…`);
+  sessionStore.flush();
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(0), 3000).unref(); // conexiones keep-alive (polling) no bloquean
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT',  () => shutdown('SIGINT'));

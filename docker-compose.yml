@@ -8,7 +8,8 @@
 #    Iniciar:    docker compose up -d
 #    Detener:    docker compose down
 #    Logs:       docker compose logs -f
-#    Actualizar: git pull && docker compose up -d --build --force-recreate
+#    Actualizar: ./deploy.sh   (respalda datos, build sin cortar servicio, reemplaza en ~2 s)
+#    ⚠️ NUNCA: docker compose down -v   (-v BORRA el volumen con todas las ventas)
 # =============================================================
 
 services:
