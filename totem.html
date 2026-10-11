@@ -184,6 +184,23 @@
         .modal-actions { display: flex; flex-direction: column; gap: 12px; align-items: center; }
         .idle-countdown { font-size: 4.5rem; font-weight: 900; color: var(--accent); margin: 6px 0 18px; }
 
+        /* ── Teclado numérico kilo ── */
+        .kilo-amount.tappable { cursor: pointer; border: 2px dashed var(--accent); gap: 8px; }
+        .kilo-amount.tappable::after { content: '✏️'; font-size: 1.1rem; }
+        .kilo-manual-btn { background: none; border: none; color: var(--accent-dark); font-size: 1.15rem; font-weight: 800; text-decoration: underline; padding: 6px; align-self: center; }
+        .pad-box { max-width: 520px; padding: 30px 28px; }
+        .pad-box h2 { font-size: 1.9rem; }
+        .pad-display { font-size: 4.2rem; font-weight: 900; color: var(--accent-dark); background: var(--accent-light); border-radius: 18px; padding: 8px 16px; margin: 8px 0 6px; letter-spacing: 1px; }
+        .pad-display.empty { color: #c8bfae; }
+        .pad-grams { font-size: 1.45rem; font-weight: 700; color: var(--muted); min-height: 2rem; margin-bottom: 16px; }
+        .pad-grams.ok { color: #059669; }
+        .pad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+        .pad-key { height: 90px; background: #fff; border: 1.5px solid var(--border); border-radius: 18px; font-size: 2.2rem; font-weight: 800; color: var(--text); box-shadow: 0 4px 0 #e2ddd2; transition: transform 0.06s; }
+        .pad-key:active { transform: translateY(3px); box-shadow: 0 1px 0 #e2ddd2; background: var(--accent-light); }
+        .pad-key.pad-alt { font-size: 1.4rem; color: var(--muted); background: #faf8f4; }
+        .pad-actions { display: flex; gap: 12px; }
+        .pad-actions .btn { flex: 1; }
+
         /* ── Toast ── */
         #toast { position: fixed; left: 50%; bottom: 130px; transform: translateX(-50%) translateY(20px); background: var(--text); color: #fff; padding: 14px 26px; border-radius: 999px; font-size: 1.3rem; font-weight: 700; opacity: 0; pointer-events: none; transition: all 0.25s; z-index: 9000; white-space: nowrap; }
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -320,6 +337,33 @@
         </div>
     </div>
 
+    <!-- Teclado numérico: monto de barbacoa por kilo -->
+    <div id="kilo-pad" class="overlay" onclick="T.closeKiloPad()">
+        <div class="modal-box pad-box" onclick="event.stopPropagation();">
+            <h2>🥩 ¿Cuánto quieres llevar?</h2>
+            <div class="pad-display" id="pad-display">$0</div>
+            <div class="pad-grams" id="pad-grams">Mínimo $50</div>
+            <div class="pad-grid">
+                <button class="pad-key" onclick="T.padKey('1')">1</button>
+                <button class="pad-key" onclick="T.padKey('2')">2</button>
+                <button class="pad-key" onclick="T.padKey('3')">3</button>
+                <button class="pad-key" onclick="T.padKey('4')">4</button>
+                <button class="pad-key" onclick="T.padKey('5')">5</button>
+                <button class="pad-key" onclick="T.padKey('6')">6</button>
+                <button class="pad-key" onclick="T.padKey('7')">7</button>
+                <button class="pad-key" onclick="T.padKey('8')">8</button>
+                <button class="pad-key" onclick="T.padKey('9')">9</button>
+                <button class="pad-key pad-alt" onclick="T.padKey('C')">Borrar</button>
+                <button class="pad-key" onclick="T.padKey('0')">0</button>
+                <button class="pad-key pad-alt" onclick="T.padKey('B')">⌫</button>
+            </div>
+            <div class="pad-actions">
+                <button class="btn btn-ghost" onclick="T.closeKiloPad()">Cancelar</button>
+                <button class="btn" id="pad-ok" onclick="T.confirmKiloPad()" disabled>Listo ✓</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal inactividad -->
     <div id="idle-overlay" class="overlay" onclick="T.dismissIdle()">
         <div class="modal-box" onclick="event.stopPropagation();">
@@ -344,6 +388,6 @@
     <div id="toast"></div>
 
     <script src="data.js?v=20261004"></script>
-    <script src="totem.js?v=20261004"></script>
+    <script src="totem.js?v=20261011"></script>
 </body>
 </html>

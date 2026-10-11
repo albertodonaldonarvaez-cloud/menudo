@@ -306,9 +306,10 @@ const T = {
         </div>
         <div class="kilo-stepper">
           <button class="qty-btn minus" onclick="T.stepKilo(-10)">−$10</button>
-          <div class="kilo-amount" id="kilo-amount">Elige un monto</div>
+          <div class="kilo-amount tappable" id="kilo-amount" onclick="T.openKiloPad()">Elige un monto</div>
           <button class="qty-btn" onclick="T.stepKilo(10)">+$10</button>
         </div>
+        <button class="kilo-manual-btn" onclick="T.openKiloPad()">⌨️ Escribir otro monto</button>
         <div class="kilo-grams" id="kilo-grams">Mínimo ${this.money(KILO_RULES.minAmount)}</div>
         <button class="add-btn" id="kilo-add" onclick="T.addKilo()" disabled>Agregar barbacoa +</button>
         ${added.length ? `<div class="kilo-added">${added.map(c => `
@@ -325,6 +326,52 @@ const T = {
     this.kiloAmount = this.kiloAmount == null ? min : Math.min(5000, Math.max(min, this.kiloAmount + delta));
     this.updateKiloUI();
     this.resetIdle();
+  },
+
+  // ── Teclado numérico (monto manual) ───────────────────────────
+  openKiloPad() {
+    this.padValue = this.kiloAmount ? String(this.kiloAmount) : '';
+    this.updatePad();
+    document.getElementById('kilo-pad').classList.add('active');
+    this.resetIdle();
+  },
+
+  closeKiloPad() {
+    document.getElementById('kilo-pad')?.classList.remove('active');
+    this.resetIdle();
+  },
+
+  padKey(k) {
+    let v = this.padValue || '';
+    if (k === 'B') v = v.slice(0, -1);
+    else if (k === 'C') v = '';
+    else if (v.length < 4 && !(v === '' && k === '0')) v += k;
+    if (Number(v) > 5000) v = '5000';
+    this.padValue = v;
+    this.updatePad();
+    this.resetIdle();
+  },
+
+  updatePad() {
+    const n = Number(this.padValue || 0);
+    const min = KILO_RULES.minAmount;
+    const ok = n >= min;
+    const disp = document.getElementById('pad-display');
+    disp.textContent = this.money(n);
+    disp.classList.toggle('empty', !n);
+    const g = document.getElementById('pad-grams');
+    g.textContent = ok ? `Te llevas ≈ ${kiloGramsFor(n, this.kiloPriceKg())} g`
+      : n ? `Mínimo ${this.money(min)}` : `Escribe el monto · mínimo ${this.money(min)}`;
+    g.classList.toggle('ok', ok);
+    document.getElementById('pad-ok').disabled = !ok;
+  },
+
+  confirmKiloPad() {
+    const n = Number(this.padValue || 0);
+    if (n < KILO_RULES.minAmount) return;
+    this.kiloAmount = Math.min(5000, n);
+    this.closeKiloPad();
+    this.updateKiloUI();
   },
 
   updateKiloUI() {
@@ -539,6 +586,7 @@ const T = {
     clearInterval(this.idleCountdown);
     document.getElementById('idle-overlay').classList.remove('active');
     this.hideModal();
+    document.getElementById('kilo-pad')?.classList.remove('active');
     this.renderName();
   },
 
