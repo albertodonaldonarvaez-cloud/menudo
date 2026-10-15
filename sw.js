@@ -5,11 +5,13 @@
  * Cache-first solo para fuentes, íconos y CDN.
  */
 
-const CACHE_NAME  = 'menudo-pos-v9';
+const CACHE_NAME  = 'menudo-pos-v10';
 const STATIC_URLS = [
   '/manifest.json',
   '/icon.svg',
-  'https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap',
+  '/favicon.ico',
+  '/brand/favicon.svg',
+  '/brand/icons/icon-192.png',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'
 ];
 

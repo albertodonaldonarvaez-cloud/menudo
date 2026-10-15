@@ -823,6 +823,16 @@ app.post('/api/totem-order', requireTotemAccess, (req, res) => {
 // ── Identidad de marca (logos, tramas, brand.css) ────────────
 app.use('/brand', express.static(path.join(ROOT, 'brand'), { maxAge: '7d', index: false }));
 
+// Favicon e ícono de iOS en la raíz (los navegadores los piden solos)
+app.get('/favicon.ico', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=604800');
+  res.type('image/x-icon').sendFile(path.join(ROOT, 'favicon.ico'));
+});
+app.get(['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png'], (req, res) => {
+  res.set('Cache-Control', 'public, max-age=604800');
+  res.sendFile(path.join(ROOT, 'brand', 'icons', 'apple-touch-icon.png'));
+});
+
 // ── Archivos públicos del menú ────────────────────────────────
 ['index.html', 'app.js', 'data.js', 'styles.css', 'manifest.json', 'sw.js', 'icon.svg'].forEach(file => {
   app.get(`/${file}`, (req, res) => {
