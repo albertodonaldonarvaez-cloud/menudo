@@ -6,24 +6,27 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Caja POS">
-  <meta name="theme-color" content="#C84B31">
+  <meta name="theme-color" content="#231F20">
   <link rel="manifest" href="/manifest.json">
-  <title>Caja — POS</title>
+  <title>Caja — POS · La Familia</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/brand/brand.css?v=20261015">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
     :root{
-      --bg:#F5F6FA;--bg2:#FFFFFF;--bg3:#F0F0F3;--border:#E2E4EC;
-      --text:#1F2937;--muted:#6B7280;--primary:#C84B31;
-      --green:#16A34A;--red:#DC2626;--amber:#D97706;--blue:#2563EB;
+      /* Paleta La Familia — Menudo y Barbacoa (brand/brand.css) */
+      --bg:#FAF6F0;--bg2:#FFFFFF;--bg3:#F6F1E9;--border:#E2D7C7;
+      --text:#231F20;--muted:#6E6259;--primary:#B84A27;--primary-dark:#96391B;--primary-soft:#F6E3DA;
+      --green:#234B38;--green-soft:#E3EDE7;--red:#A8321D;--amber:#B7791F;--amber-soft:#FBF0DC;--blue:#2563EB;
+      --dark:#231F20;
+      --font-ui:var(--lf-font-label,'Poppins',sans-serif);
+      --font-display:var(--lf-font-display,'Playfair Display',Georgia,serif);
     }
 
     html,body{
-      font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);
+      font-family:var(--font-ui);background:var(--bg);color:var(--text);
       height:100%;height:100dvh;overflow:hidden;display:flex;flex-direction:column;
     }
     body>*{flex-shrink:0}
@@ -31,15 +34,21 @@
     /* ── Header ─────────────────────────────── */
     .pos-bar{
       display:flex;align-items:center;justify-content:space-between;
-      padding:0 12px;height:48px;background:#1E2022;flex-shrink:0;
+      padding:0 12px;height:48px;background:var(--dark);flex-shrink:0;
+      border-bottom:3px solid var(--primary);
     }
-    .pos-bar-left{display:flex;align-items:center;gap:8px}
-    .pos-logo{font-size:1.2rem}
-    .pos-biz-name{font-size:0.9rem;font-weight:800;color:#fff}
+    .pos-bar-left{display:flex;align-items:center;gap:9px;min-width:0}
+    .pos-logo{height:32px;width:auto;flex-shrink:0;display:block}
+    .pos-lockup-text{display:flex;flex-direction:column;line-height:1;padding-left:9px;border-left:1.5px solid #E9A487}
+    .pos-lockup-name{font-family:var(--font-display);font-weight:900;font-size:1.08rem;color:#FAF6F0;letter-spacing:0.01em;white-space:nowrap}
+    .pos-lockup-sub{font-family:var(--font-ui);font-weight:700;font-size:0.48rem;letter-spacing:0.32em;color:#E9A487;text-transform:uppercase;margin-top:3px;white-space:nowrap}
+    .pos-biz-name{font-size:0.62rem;font-weight:700;color:#FAF6F0;text-transform:uppercase;letter-spacing:0.18em;
+      background:var(--primary);padding:3px 10px;border-radius:999px;margin-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+    @media(max-width:479px){.pos-lockup-sub{display:none}.pos-biz-name{display:none}}
     .pos-bar-right{display:flex;align-items:center;gap:8px}
-    .pos-clock{font-size:0.8rem;color:#9CA3AF;font-weight:600;min-width:52px;text-align:right}
+    .pos-clock{font-size:0.82rem;color:#CFC4B8;font-weight:600;min-width:52px;text-align:right;font-variant-numeric:tabular-nums}
     .pos-bar-action{
-      display:flex;align-items:center;gap:4px;color:#9CA3AF;text-decoration:none;
+      display:flex;align-items:center;gap:4px;color:#CFC4B8;text-decoration:none;
       font-size:0.75rem;font-weight:700;padding:4px 8px;border-radius:8px;
       background:rgba(255,255,255,0.07);transition:background 0.15s;
     }
@@ -49,21 +58,21 @@
     /* ── Mobile tabs (3 tabs) ───────────────── */
     .pos-mobile-tabs{
       display:none;
-      background:#1E2022;
-      border-top:1px solid #374151;
+      background:var(--dark);
+      border-top:1px solid #3A3435;
       flex-shrink:0;
     }
     @media(max-width:639px){
       .pos-mobile-tabs{display:flex}
     }
     .pos-mtab{
-      flex:1;padding:8px 4px;background:none;border:none;color:#9CA3AF;
-      font-family:'Outfit',sans-serif;font-size:0.72rem;font-weight:700;
+      flex:1;padding:8px 4px;background:none;border:none;color:#CFC4B8;
+      font-family:var(--font-ui);font-size:0.72rem;font-weight:700;
       cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;
       position:relative;text-transform:uppercase;letter-spacing:0.5px;
     }
     .pos-mtab i{font-size:1rem}
-    .pos-mtab.active{color:#fff}
+    .pos-mtab.active{color:#fff;box-shadow:inset 0 3px 0 var(--primary)}
     .pos-mtab-badge{
       display:none;position:absolute;top:2px;right:calc(50% - 18px);
       background:var(--primary);color:#fff;font-size:0.6rem;font-weight:900;
@@ -98,12 +107,13 @@
       position:relative;background:var(--bg2);border:1.5px solid var(--border);
       border-radius:14px;padding:12px 8px;cursor:pointer;
       display:flex;flex-direction:column;align-items:center;gap:4px;
-      font-family:'Outfit',sans-serif;color:var(--text);
+      font-family:var(--font-ui);color:var(--text);
       transition:transform 0.1s,box-shadow 0.1s;
       min-height:90px;
     }
+    .pos-btn:hover{border-color:#D8CBB8;box-shadow:0 2px 6px rgba(35,31,32,0.06)}
     .pos-btn:active{transform:scale(0.95)}
-    .pos-btn.flash{background:#FEF3C7;border-color:var(--amber)}
+    .pos-btn.flash{background:var(--amber-soft);border-color:var(--amber)}
     .pos-btn-qty-badge{
       display:none;position:absolute;top:-5px;right:-5px;
       background:var(--primary);color:#fff;font-size:0.62rem;font-weight:900;
@@ -118,10 +128,10 @@
     .pos-libre-label{color:var(--amber)}
 
     /* Botones libres */
-    .pos-btn-libre{border:2px dashed var(--primary);background:#FFF5F3}
-    .pos-btn-libre-barb{border:2px dashed var(--amber);background:#FFFBEB}
-    .pos-btn-kilo{border:2px solid var(--amber);background:linear-gradient(145deg,#FFFBEB,#FEF3C7);}
-    .pos-btn-kilo:hover{background:linear-gradient(145deg,#FEF3C7,#FDE68A);border-color:#B45309;}
+    .pos-btn-libre{border:2px dashed var(--primary);background:#FDF3EE}
+    .pos-btn-libre-barb{border:2px dashed var(--amber);background:var(--amber-soft)}
+    .pos-btn-kilo{border:2px solid var(--amber);background:linear-gradient(145deg,#FDF7EC,#FBF0DC);}
+    .pos-btn-kilo:hover{background:linear-gradient(145deg,#FBF0DC,#F5E1B8);border-color:#96600F;}
     .pos-btn-kilo .pos-libre-label{color:var(--amber);font-weight:800;}
 
     /* ── Modal Editar Orden ─────────────────────────────────────── */
@@ -129,13 +139,13 @@
     #editOrderModal.hidden{display:none}
     .edit-modal-box{background:#fff;border-radius:20px;width:100%;max-width:640px;max-height:92dvh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.22)}
     .edit-modal-header{padding:14px 18px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-    .edit-modal-title{font-size:1rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px}
+    .edit-modal-title{font-family:var(--font-display);font-size:1.15rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px}
     .edit-modal-client{font-size:0.78rem;color:var(--muted);font-weight:600}
     .edit-modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted);padding:4px 8px;border-radius:8px}
     .edit-modal-close:hover{background:var(--bg);color:var(--text)}
     .edit-modal-body{flex:1 1 0;min-height:0;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:16px}
     /* Items actuales */
-    .edit-section-label{font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:6px}
+    .edit-section-label{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;color:var(--muted);margin-bottom:6px}
     .edit-items-list{display:flex;flex-direction:column;gap:6px}
     .edit-item-row{display:flex;align-items:center;gap:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:8px 12px}
     .edit-item-name{flex:1;font-size:0.88rem;font-weight:600;color:var(--text)}
@@ -144,8 +154,8 @@
     .edit-qty-ctrl{display:flex;align-items:center;gap:6px}
     .edit-qty-ctrl button{width:28px;height:28px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:1rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text)}
     .edit-qty-ctrl button:hover{background:var(--bg)}
-    .edit-qty-ctrl .eq-del{border-color:#FCA5A5;color:var(--red)}
-    .edit-qty-ctrl .eq-del:hover{background:#FEF2F2}
+    .edit-qty-ctrl .eq-del{border-color:#E6B3A5;color:var(--red)}
+    .edit-qty-ctrl .eq-del:hover{background:#F8E1DA}
     .edit-qty-num{min-width:20px;text-align:center;font-weight:800;font-size:0.9rem}
     /* Grid de agregar productos */
     .edit-add-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
@@ -156,20 +166,20 @@
     .edit-add-btn .ea-price{font-size:0.7rem;color:var(--primary);font-weight:700}
     /* Footer con total y guardar */
     .edit-modal-footer{padding:14px 18px;border-top:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0;background:#fff}
-    .edit-total-display{font-size:1.1rem;font-weight:800;color:var(--text)}
+    .edit-total-display{font-family:var(--font-display);font-size:1.3rem;font-weight:900;color:var(--text);font-variant-numeric:lining-nums}
     .edit-total-label{font-size:0.72rem;color:var(--muted);font-weight:600}
-    .edit-save-btn{background:var(--green);color:#fff;border:none;border-radius:12px;padding:10px 22px;font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:6px}
+    .edit-save-btn{background:var(--green);color:#fff;border:none;border-radius:12px;padding:10px 22px;font-family:var(--font-ui);font-size:0.9rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:6px}
     .edit-save-btn:disabled{opacity:0.5;cursor:not-allowed}
 
     /* Promos */
     .pos-promo-divider{
       grid-column:1/-1;display:flex;align-items:center;gap:8px;
-      font-size:0.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;
-      letter-spacing:0.8px;padding:4px 0;
+      font-size:0.64rem;font-weight:700;color:var(--primary);text-transform:uppercase;
+      letter-spacing:0.22em;padding:4px 0;
     }
     .pos-promo-divider::before,.pos-promo-divider::after{content:'';flex:1;height:1px;background:var(--border)}
-    .pos-btn-promo{border-color:#E9D5FF;background:#FDFAFF}
-    .pos-btn-promo .pos-btn-price{color:#7C3AED}
+    .pos-btn-promo{border-color:#BFD3C7;background:#F3F8F5}
+    .pos-btn-promo .pos-btn-price{color:var(--green)}
 
     /* ── Panel derecho ───────────────────────── */
     .pos-right{
@@ -190,16 +200,16 @@
       display:flex;flex-direction:column;gap:6px;
     }
     .client-name-label{
-      font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;
+      font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.16em;
       color:var(--muted);display:flex;align-items:center;gap:5px;
     }
     .client-name-label .req{color:var(--primary);font-size:0.7rem}
     .client-name-input{
       width:100%;padding:9px 11px;border:2px solid var(--border);border-radius:10px;
-      font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:700;
+      font-family:var(--font-ui);font-size:0.95rem;font-weight:700;
       color:var(--text);background:#fff;outline:none;transition:border-color 0.15s;
     }
-    .client-name-input:focus{border-color:var(--primary)}
+    .client-name-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
     .client-name-input.shake{animation:shake 0.4s}
     @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 
@@ -207,18 +217,19 @@
     .order-type-toggle{display:flex;gap:6px}
     .order-type-btn{
       flex:1;padding:7px;border:2px solid var(--border);border-radius:10px;
-      background:#fff;font-family:'Outfit',sans-serif;font-size:0.78rem;font-weight:700;
+      background:#fff;font-family:var(--font-ui);font-size:0.78rem;font-weight:700;
       cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;
       color:var(--muted);transition:all 0.15s;
     }
-    .order-type-btn.active{border-color:var(--primary);background:#FFF5F3;color:var(--primary)}
-    .order-type-btn.llevar.active{border-color:var(--amber);background:#FFFBEB;color:var(--amber)}
+    .order-type-btn.active{border-color:var(--primary);background:var(--primary-soft);color:var(--primary-dark)}
+    .order-type-btn.llevar.active{border-color:var(--amber);background:var(--amber-soft);color:#8A5A12}
 
     /* Ticket list */
     .ticket-list{flex:1 1 0;min-height:0;overflow-y:auto;padding:8px}
     .ticket-empty{
       display:flex;flex-direction:column;align-items:center;justify-content:center;
-      height:100%;gap:8px;color:var(--muted);font-size:0.85rem;text-align:center;opacity:0.6;
+      height:100%;gap:8px;color:var(--muted);font-size:0.9rem;text-align:center;opacity:0.75;
+      font-family:var(--lf-font-serif,Georgia,serif);font-style:italic;
     }
     .ticket-empty i{font-size:2rem}
     .ticket-row{
@@ -245,8 +256,8 @@
       display:flex;align-items:center;justify-content:space-between;
       background:var(--bg2);border-top:2px solid var(--border);
     }
-    .ticket-total-label{font-size:0.8rem;font-weight:700;color:var(--muted)}
-    .ticket-total-amount{font-size:1.3rem;font-weight:900;color:var(--text)}
+    .ticket-total-label{font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.2em}
+    .ticket-total-amount{font-family:var(--font-display);font-size:1.45rem;font-weight:900;color:var(--text);font-variant-numeric:lining-nums}
     .ticket-total-amount.pop{animation:pop 0.25s}
     @keyframes pop{0%{transform:scale(1.18)}100%{transform:scale(1)}}
 
@@ -254,25 +265,25 @@
     .enviar-wrap{flex-shrink:0;padding:8px 10px 10px}
     .enviar-btn{
       width:100%;padding:15px;border:none;border-radius:14px;
-      background:linear-gradient(135deg,#16A34A,#15803D);
-      color:#fff;font-family:'Outfit',sans-serif;font-size:1rem;font-weight:800;
+      background:linear-gradient(135deg,#2E6049,#234B38);
+      color:#fff;font-family:var(--font-ui);font-size:1rem;font-weight:800;
       cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
-      transition:all 0.2s;box-shadow:0 4px 20px rgba(22,163,74,0.28);
+      transition:all 0.2s;box-shadow:0 4px 20px rgba(35,75,56,0.28);
     }
     .enviar-btn:hover:not(:disabled){opacity:0.92}
     .enviar-btn:active:not(:disabled){transform:scale(0.97)}
-    .enviar-btn:disabled{background:#E5E7EB;color:#9CA3AF;cursor:not-allowed;box-shadow:none}
+    .enviar-btn:disabled{background:#EDE6DB;color:#A79B90;cursor:not-allowed;box-shadow:none}
 
     /* ── Selector de copias ──────────────────── */
     .copies-bar{
       display:flex;align-items:center;gap:8px;padding:6px 14px;
-      background:#F9FAFB;border-top:1px solid var(--border);
+      background:var(--bg3);border-top:1px solid var(--border);
     }
     .copies-label{font-size:0.72rem;font-weight:700;color:var(--muted);white-space:nowrap}
     .copies-btns{display:flex;gap:4px}
     .copies-btn{
       width:34px;height:30px;border:1.5px solid var(--border);border-radius:8px;
-      background:#fff;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:800;
+      background:#fff;font-family:var(--font-ui);font-size:0.85rem;font-weight:800;
       cursor:pointer;color:var(--text);transition:all 0.15s;
     }
     .copies-btn.active{border-color:var(--primary);background:var(--primary);color:#fff}
@@ -292,8 +303,8 @@
       display:flex;align-items:center;justify-content:space-between;
     }
     .por-cobrar-title{
-      font-size:0.72rem;font-weight:800;text-transform:uppercase;
-      letter-spacing:0.8px;color:var(--muted);display:flex;align-items:center;gap:6px;
+      font-size:0.72rem;font-weight:700;text-transform:uppercase;
+      letter-spacing:0.2em;color:var(--text);display:flex;align-items:center;gap:6px;
     }
     .por-cobrar-count{
       background:var(--green);color:#fff;font-size:0.62rem;font-weight:900;
@@ -309,18 +320,19 @@
     }
     .pending-empty{
       display:flex;flex-direction:column;align-items:center;justify-content:center;
-      padding:20px 8px;gap:6px;color:var(--muted);font-size:0.78rem;text-align:center;opacity:0.6;
+      padding:20px 8px;gap:6px;color:var(--muted);font-size:0.85rem;text-align:center;opacity:0.75;
+      font-family:var(--lf-font-serif,Georgia,serif);font-style:italic;
     }
     .pending-empty i{font-size:1.5rem}
     .pending-card{
       border:2px solid var(--border);border-radius:10px;padding:8px 10px;
       cursor:pointer;background:var(--bg);transition:border-color 0.15s;
     }
-    .pending-card.selected{border-color:var(--green);background:#F0FDF4}
+    .pending-card.selected{border-color:var(--green);background:var(--green-soft)}
     .pending-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
     .pending-type{font-size:0.68rem;font-weight:800;padding:2px 7px;border-radius:8px}
-    .pending-type.aqui{background:#EEF2FF;color:#3730A3}
-    .pending-type.llevar{background:#FFFBEB;color:#92400E}
+    .pending-type.aqui{background:var(--green-soft);color:var(--green)}
+    .pending-type.llevar{background:var(--amber-soft);color:#8A5A12}
     .pending-time{font-size:0.62rem;color:var(--muted)}
     .pending-name{font-size:0.88rem;font-weight:800;display:flex;align-items:center;gap:5px;margin-bottom:2px}
     .pending-items{font-size:0.68rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -329,7 +341,7 @@
     /* Sección de pago para pendiente seleccionado */
     .pending-pay-section{
       flex-shrink:0;padding:8px 10px 10px;
-      border-top:1.5px solid var(--border);background:#F0FDF4;
+      border-top:1.5px solid var(--border);background:var(--green-soft);
     }
     .pending-pay-section.hidden{display:none}
     .pending-pay-who{font-size:0.75rem;font-weight:700;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:5px}
@@ -353,19 +365,19 @@
     .pending-pay-btns{display:flex;gap:5px;margin-bottom:6px}
     .pending-pay-btn{
       flex:1;padding:8px 4px;border:2px solid var(--border);border-radius:9px;
-      background:#fff;font-family:'Outfit',sans-serif;font-size:0.72rem;font-weight:700;
+      background:#fff;font-family:var(--font-ui);font-size:0.72rem;font-weight:700;
       cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;
       color:var(--text);transition:all 0.15s;
     }
-    .pending-pay-btn.active{border-color:var(--green);background:rgba(22,163,74,0.08);color:var(--green)}
+    .pending-pay-btn.active{border-color:var(--green);background:rgba(35,75,56,0.10);color:var(--green)}
     .cobrar-pendiente-btn{
       width:100%;padding:13px;border:none;border-radius:12px;
-      background:linear-gradient(135deg,#16A34A,#15803D);color:#fff;
-      font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:800;
+      background:linear-gradient(135deg,#2E6049,#234B38);color:#fff;
+      font-family:var(--font-ui);font-size:0.95rem;font-weight:800;
       cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
-      box-shadow:0 3px 12px rgba(22,163,74,0.3);
+      box-shadow:0 3px 12px rgba(35,75,56,0.3);
     }
-    .cobrar-pendiente-btn:disabled{background:#E5E7EB;color:#9CA3AF;box-shadow:none}
+    .cobrar-pendiente-btn:disabled{background:#EDE6DB;color:#A79B90;box-shadow:none}
     /* Botón editar en pending card */
     .pending-edit-btn{background:none;border:1.5px solid var(--border);border-radius:7px;padding:3px 7px;cursor:pointer;color:var(--muted);font-size:0.78rem;transition:all 0.15s}
     .pending-edit-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
@@ -383,6 +395,10 @@
       /* En móvil ambas secciones ocupan todo el espacio (controlado por tabs) */
       .por-cobrar-section{border-bottom:none;border-top:none;flex:1 1 0}
       .new-order-section{flex:1 1 0}
+      /* Que el botón de producto crezca con su contenido (nota "por taco", "la pieza"):
+         Chromium subestima el alto intrínseco del <button> flex dentro del grid */
+      .pos-btn{min-height:max-content}
+      .pos-products-grid{grid-auto-rows:max-content}
     }
 
     /* ── Tablet/Desktop: Por Cobrar prominente ─── */
@@ -413,7 +429,7 @@
       .pending-type{font-size:0.72rem;padding:3px 9px;border-radius:9px}
 
       /* Header Por Cobrar */
-      .por-cobrar-title{font-size:0.8rem}
+      .por-cobrar-title{font-size:0.78rem}
       .por-cobrar-header{padding:10px 14px 8px}
 
       /* Pay section */
@@ -452,14 +468,15 @@
       box-shadow:0 20px 60px rgba(0,0,0,0.35);overflow:hidden;
     }
     .pay-modal-header{
-      background:var(--dark);color:#fff;padding:16px 20px;text-align:center;
-      font-weight:800;font-size:1.1rem;
+      background:var(--dark);color:#FAF6F0;padding:16px 20px;text-align:center;
+      font-family:var(--font-display);font-weight:900;font-size:1.3rem;font-variant-numeric:lining-nums;
+      border-bottom:3px solid var(--primary);
     }
     .pay-modal-body{padding:16px 20px}
     .pay-method-btns{display:flex;gap:8px;margin-bottom:16px}
     .pay-method-btn{
       flex:1;padding:14px 6px;border:2px solid var(--border);border-radius:12px;
-      background:#fff;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:700;
+      background:#fff;font-family:var(--font-ui);font-size:0.85rem;font-weight:700;
       cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;
       transition:all 0.15s;color:var(--text);
     }
@@ -467,43 +484,43 @@
     .pay-method-btn i{font-size:1.3rem}
 
     .pay-cash-section{margin-top:12px}
-    .pay-cash-label{font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+    .pay-cash-label{font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:6px}
     .pay-cash-input{
       width:100%;padding:14px;border:2px solid var(--border);border-radius:12px;
-      font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:800;
+      font-family:var(--font-ui);font-size:1.5rem;font-weight:800;
       text-align:center;color:var(--text);outline:none;
     }
-    .pay-cash-input:focus{border-color:var(--primary)}
+    .pay-cash-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
     .pay-quick-bills{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
     .pay-quick-bill{
       flex:1;min-width:60px;padding:10px 4px;border:1.5px solid var(--border);border-radius:10px;
-      background:#FEFCE8;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:700;
-      cursor:pointer;text-align:center;color:#92400E;transition:all 0.15s;
+      background:var(--amber-soft);font-family:var(--font-ui);font-size:0.85rem;font-weight:700;
+      cursor:pointer;text-align:center;color:#8A5A12;transition:all 0.15s;
     }
-    .pay-quick-bill:active{transform:scale(0.95);background:#FEF08A}
+    .pay-quick-bill:active{transform:scale(0.95);background:#F5E1B8}
     .pay-change-display{
       margin-top:14px;padding:14px;border-radius:14px;text-align:center;
-      font-family:'Outfit',sans-serif;
+      font-family:var(--font-ui);
     }
-    .pay-change-display.positive{background:#DCFCE7;color:#166534}
-    .pay-change-display.negative{background:#FEE2E2;color:#991B1B}
-    .pay-change-display.zero{background:#F3F4F6;color:#6B7280}
-    .pay-change-label{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
-    .pay-change-amount{font-size:1.8rem;font-weight:900}
+    .pay-change-display.positive{background:var(--green-soft);color:var(--green)}
+    .pay-change-display.negative{background:#F8E1DA;color:var(--red)}
+    .pay-change-display.zero{background:var(--bg3);color:var(--muted)}
+    .pay-change-label{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.2em}
+    .pay-change-amount{font-family:var(--font-display);font-size:2rem;font-weight:900;font-variant-numeric:lining-nums}
 
     .pay-modal-footer{padding:12px 20px 20px;display:flex;flex-direction:column;gap:8px}
     .pay-confirm-btn{
       width:100%;padding:16px;border:none;border-radius:14px;
-      background:linear-gradient(135deg,#16A34A,#15803D);
-      color:#fff;font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:800;
+      background:linear-gradient(135deg,#2E6049,#234B38);
+      color:#fff;font-family:var(--font-ui);font-size:1.05rem;font-weight:800;
       cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
-      transition:all 0.15s;box-shadow:0 4px 15px rgba(22,163,74,0.3);
+      transition:all 0.15s;box-shadow:0 4px 15px rgba(35,75,56,0.3);
     }
     .pay-confirm-btn:active{transform:scale(0.97)}
-    .pay-confirm-btn:disabled{background:#D1D5DB;color:#9CA3AF;cursor:not-allowed;box-shadow:none}
+    .pay-confirm-btn:disabled{background:#EDE6DB;color:#A79B90;cursor:not-allowed;box-shadow:none}
     .pay-cancel-btn{
       width:100%;padding:10px;border:none;border-radius:10px;
-      background:#F3F4F6;color:#6B7280;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:700;
+      background:var(--bg3);color:var(--muted);font-family:var(--font-ui);font-size:0.85rem;font-weight:700;
       cursor:pointer;
     }
 
@@ -520,22 +537,22 @@
       display:flex;flex-direction:column;align-items:center;gap:12px;
     }
     .price-modal-emoji{font-size:2.5rem}
-    .price-modal-title{font-size:1.1rem;font-weight:800}
+    .price-modal-title{font-family:var(--font-display);font-size:1.25rem;font-weight:800}
     .price-modal-input{
       width:100%;padding:12px;border:2px solid var(--border);border-radius:12px;
-      font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:800;
+      font-family:var(--font-ui);font-size:1.4rem;font-weight:800;
       text-align:center;outline:none;
     }
-    .price-modal-input:focus{border-color:var(--primary)}
+    .price-modal-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
     .price-modal-actions{display:flex;gap:8px;width:100%}
     .price-modal-cancel{
       flex:1;padding:12px;border:2px solid var(--border);border-radius:12px;
-      background:var(--bg3);font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;
+      background:var(--bg3);font-family:var(--font-ui);font-size:0.9rem;font-weight:700;cursor:pointer;
     }
     .price-modal-confirm{
       flex:2;padding:12px;border:none;border-radius:12px;
-      background:linear-gradient(135deg,var(--primary),#A83D27);
-      color:#fff;font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:800;cursor:pointer;
+      background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+      color:#fff;font-family:var(--font-ui);font-size:0.95rem;font-weight:800;cursor:pointer;
     }
   </style>
 </head>
@@ -544,12 +561,16 @@
   <!-- ── Header ──────────────────────────────────────────────── -->
   <header class="pos-bar">
     <div class="pos-bar-left">
-      <div class="pos-logo">🔥</div>
+      <img class="pos-logo" src="/brand/isotipo-noche.svg" alt="La Familia">
+      <div class="pos-lockup-text">
+        <span class="pos-lockup-name">La Familia</span>
+        <span class="pos-lockup-sub">Menudo y Barbacoa</span>
+      </div>
       <span class="pos-biz-name" id="posBusinessName">Caja</span>
     </div>
     <div class="pos-bar-right">
       <span class="pos-clock" id="posClock">--:--</span>
-      <a href="/cocina" class="pos-bar-action" style="color:#D97706;">
+      <a href="/cocina" class="pos-bar-action" style="color:#E9A487;">
         <i class="fa-solid fa-fire-burner"></i>
         <span class="pos-logout-text">Cocina</span>
       </a>
@@ -692,20 +713,20 @@
   <!-- ── Modal calculadora Barbacoa × Kilo ────────────────────── -->
   <style>
     .kilo-modal-box{max-width:360px;width:92vw;}
-    .kilo-product-name{font-size:1.05rem;font-weight:800;text-align:center;}
+    .kilo-product-name{font-family:var(--font-display);font-size:1.2rem;font-weight:800;text-align:center;}
     .kilo-price-ref{font-size:0.8rem;color:var(--muted);text-align:center;margin-top:2px;}
     .kilo-mode-toggle{display:flex;gap:6px;width:100%;}
     .kilo-mode-btn{
       flex:1;padding:9px;border:2px solid var(--border);border-radius:10px;
-      background:#fff;font-family:'Outfit',sans-serif;font-size:0.8rem;font-weight:700;
+      background:#fff;font-family:var(--font-ui);font-size:0.8rem;font-weight:700;
       cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;
       color:var(--muted);transition:all 0.15s;
     }
-    .kilo-mode-btn.active{border-color:var(--amber);background:#FFFBEB;color:var(--amber);}
+    .kilo-mode-btn.active{border-color:var(--amber);background:var(--amber-soft);color:#8A5A12;}
     .kilo-input-wrap{width:100%;position:relative;}
     .kilo-input{
       width:100%;padding:12px 44px 12px 12px;border:2px solid var(--border);border-radius:12px;
-      font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:800;
+      font-family:var(--font-ui);font-size:1.4rem;font-weight:800;
       text-align:center;outline:none;
     }
     .kilo-input:focus{border-color:var(--amber);}
@@ -752,7 +773,7 @@
       <!-- Acciones -->
       <div class="price-modal-actions">
         <button class="price-modal-cancel" onclick="closeKiloModal({target:document.getElementById('kiloModal')})">Cancelar</button>
-        <button class="price-modal-confirm" style="background:linear-gradient(135deg,var(--amber),#B45309);" onclick="confirmKiloModal()">Agregar al ticket</button>
+        <button class="price-modal-confirm" style="background:linear-gradient(135deg,var(--amber),#96600F);" onclick="confirmKiloModal()">Agregar al ticket</button>
       </div>
     </div>
   </div>
@@ -862,6 +883,6 @@
   </div>
 
   <script src="data.js?v=20261004"></script>
-  <script src="caja.js?v=20261004"></script>
+  <script src="caja.js?v=20261015"></script>
 </body>
 </html>

@@ -3,15 +3,146 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#C84B31">
+  <meta name="theme-color" content="#231F20">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="/manifest.json">
-  <title>Panel de Administración</title>
+  <title>Panel de Administración · La Familia</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="styles.css?v=20260829">
+  <link rel="stylesheet" href="/brand/brand.css?v=20261015">
+  <!-- ── Identidad La Familia (overrides locales del panel admin) ──
+       Se definen aquí, con valores propios, para que el admin no dependa de
+       las variables raíz de styles.css (que pertenecen al menú público). -->
+  <style>
+    body.admin-body {
+      --adm-terracota: #B84A27; --adm-terracota-dark: #96391B; --adm-terracota-soft: #F6E3DA;
+      --adm-carbon: #231F20; --adm-carbon-2: #3A3435; --adm-crema: #FAF6F0; --adm-crema-2: #F6F1E9;
+      --adm-maguey: #234B38; --adm-maguey-soft: #E3EDE7; --adm-tierra: #6E6259;
+      --adm-linea: #E2D7C7; --adm-linea-2: #D8CBB8; --adm-alerta: #B7791F; --adm-alerta-soft: #FBF0DC;
+      --adm-error: #A8321D;
+      --adm-font-ui: var(--lf-font-label, 'Poppins', sans-serif);
+      --adm-font-display: var(--lf-font-display, 'Playfair Display', Georgia, serif);
+      --adm-font-serif: var(--lf-font-serif, Georgia, serif);
+      /* alias de styles.css usados por reglas del admin */
+      --color-primary: #B84A27; --color-primary-dark: #96391B; --color-primary-light: #F6E3DA;
+      --color-secondary: #B7791F; --color-secondary-light: #FBF0DC;
+      --color-border: #E2D7C7; --color-text-main: #231F20; --color-text-muted: #6E6259;
+      --color-bg-main: #FAF6F0; --color-bg-card: #FFFFFF;
+      --font-heading: var(--adm-font-display); --font-body: var(--adm-font-ui);
+      font-family: var(--adm-font-ui);
+      background: var(--adm-crema);
+      color: var(--adm-carbon);
+    }
+    body.admin-body button, body.admin-body input, body.admin-body select, body.admin-body textarea { font-family: var(--adm-font-ui); }
+
+    /* Header */
+    body.admin-body .admin-header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      background: var(--adm-carbon); color: var(--adm-crema);
+      height: 60px; padding: 0 18px;
+      border-bottom: 3px solid var(--adm-terracota);
+      box-shadow: 0 2px 10px rgba(35, 31, 32, 0.25);
+    }
+    body.admin-body .admin-brand { display: flex; align-items: center; gap: 11px; min-width: 0; font-family: var(--adm-font-ui); font-size: 1rem; overflow: visible; }
+    body.admin-body .admin-logo { height: 40px; width: auto; flex-shrink: 0; display: block; }
+    body.admin-body .admin-lockup-text { display: flex; flex-direction: column; line-height: 1; padding-left: 11px; border-left: 1.5px solid #E9A487; }
+    body.admin-body .admin-lockup-name { font-family: var(--adm-font-display); font-weight: 900; font-size: 1.32rem; color: var(--adm-crema); letter-spacing: 0.01em; white-space: nowrap; }
+    body.admin-body .admin-lockup-sub { font-family: var(--adm-font-ui); font-weight: 700; font-size: 0.54rem; letter-spacing: 0.32em; color: #E9A487; text-transform: uppercase; margin-top: 4px; white-space: nowrap; }
+    body.admin-body .admin-brand-pill { display: inline-flex; align-items: center; gap: 6px; margin-left: 4px; padding: 4px 12px; border-radius: 999px; background: var(--adm-terracota); color: #fff; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; white-space: nowrap; }
+    body.admin-body .btn-back-menu {
+      background: var(--adm-terracota); color: #fff; text-decoration: none;
+      font-family: var(--adm-font-ui); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em;
+      padding: 7px 14px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;
+      white-space: nowrap; border: 1px solid transparent; min-height: 36px; transition: background 0.2s, border-color 0.2s;
+    }
+    body.admin-body .btn-back-menu:hover { background: var(--adm-terracota-dark); }
+    body.admin-body .btn-back-menu.btn-cocina { background: transparent; border-color: #E9A487; color: #F3C3AE; }
+    body.admin-body .btn-back-menu.btn-cocina:hover { background: rgba(233, 164, 135, 0.14); }
+    body.admin-body .btn-back-menu.btn-salir { background: var(--adm-carbon-2); color: var(--adm-crema); }
+    body.admin-body .btn-back-menu.btn-salir:hover { background: #4A4344; }
+    @media (max-width: 720px) {
+      body.admin-body .admin-brand-pill { display: none; }
+    }
+    @media (max-width: 560px) {
+      body.admin-body .admin-header { height: 56px; padding: 0 10px; }
+      body.admin-body .admin-lockup-sub { display: none; }
+      body.admin-body .admin-lockup-name { font-size: 1.1rem; }
+      body.admin-body .admin-logo { height: 32px; }
+      body.admin-body .btn-back-menu { font-size: 0; gap: 0; padding: 7px 11px; }
+      body.admin-body .btn-back-menu i { font-size: 0.9rem; }
+    }
+
+    /* Bienvenida */
+    body.admin-body .admin-welcome-box {
+      background-color: var(--adm-crema-2);
+      background-image: var(--lf-trama-crema, none); background-size: 220px 220px;
+      border: 1.5px solid var(--adm-linea); border-left: 5px solid var(--adm-terracota);
+      border-radius: 18px; padding: 20px 24px; margin-bottom: 18px; box-shadow: none; color: var(--adm-carbon);
+    }
+    body.admin-body .admin-welcome-box h2 { font-family: var(--adm-font-display); font-weight: 900; font-size: 1.6rem; color: var(--adm-carbon); margin-bottom: 4px; }
+    body.admin-body .admin-welcome-box p { font-family: var(--adm-font-serif); font-style: italic; color: var(--adm-tierra); font-size: 0.95rem; }
+
+    /* Tabs */
+    body.admin-body .dashboard-tabs-wrapper { border-bottom: 2px solid var(--adm-linea); }
+    body.admin-body .dashboard-tab {
+      background: #fff; border: 1.5px solid var(--adm-linea); color: var(--adm-tierra);
+      font-family: var(--adm-font-ui); font-weight: 700; letter-spacing: 0.02em; box-shadow: none;
+    }
+    body.admin-body .dashboard-tab:hover { border-color: var(--adm-terracota); color: var(--adm-terracota); background: #fff; }
+    body.admin-body .dashboard-tab.active { background: var(--adm-terracota); border-color: var(--adm-terracota); color: #fff; box-shadow: 0 4px 12px rgba(184, 74, 39, 0.25); }
+
+    /* Tarjetas */
+    body.admin-body .admin-panel-card { background: #fff; border: 1.5px solid var(--adm-linea); border-radius: 18px; box-shadow: 0 2px 6px rgba(35, 31, 32, 0.05); }
+    body.admin-body .card-header-styled { border-bottom: 1.5px solid var(--adm-linea); }
+    body.admin-body .card-header-styled h3 { font-family: var(--adm-font-display); font-weight: 800; font-size: 1.25rem; color: var(--adm-carbon); }
+    body.admin-body .card-header-styled h3 i { color: var(--adm-terracota); font-size: 0.95em; }
+    body.admin-body .card-header-styled p { color: var(--adm-tierra); }
+
+    /* Formularios */
+    body.admin-body .field-item label, body.admin-body .schedule-label, body.admin-body .schedule-time-field label {
+      font-family: var(--adm-font-ui); color: var(--adm-carbon); font-weight: 700;
+    }
+    body.admin-body .field-item label i, body.admin-body .schedule-label i, body.admin-body .schedule-time-field label i { color: var(--adm-terracota); }
+    body.admin-body .form-input { border: 1.5px solid var(--adm-linea-2); background: #fff; color: var(--adm-carbon); font-family: var(--adm-font-ui); }
+    body.admin-body .form-input:focus { outline: none; border-color: var(--adm-terracota); box-shadow: 0 0 0 3px var(--adm-terracota-soft); }
+    body.admin-body .day-chip span { background: #fff; border-color: var(--adm-linea-2); color: var(--adm-tierra); font-weight: 700; }
+    body.admin-body .day-chip input:checked + span { background: var(--adm-terracota); border-color: var(--adm-terracota); color: #fff; }
+    body.admin-body .schedule-preview { background: var(--adm-crema-2); border: 1.5px solid var(--adm-linea); color: var(--adm-carbon); }
+    body.admin-body .pass-toggle:hover { color: var(--adm-terracota); }
+
+    /* Botones */
+    body.admin-body .btn-primary {
+      background: var(--adm-terracota); color: #fff; border: none; border-radius: 999px;
+      font-family: var(--adm-font-ui); font-weight: 700; letter-spacing: 0.03em;
+      box-shadow: 0 4px 12px rgba(184, 74, 39, 0.22); transition: background 0.2s, transform 0.1s;
+    }
+    body.admin-body .btn-primary:hover { background: var(--adm-terracota-dark); }
+    body.admin-body .btn-primary:active { transform: scale(0.98); }
+    body.admin-body .btn-primary.btn-pos { background: var(--adm-maguey); box-shadow: 0 4px 12px rgba(35, 75, 56, 0.25); }
+    body.admin-body .btn-primary.btn-pos:hover { background: #1A3A2B; }
+
+    /* Analítica */
+    body.admin-body .analytics-top-bar { background: #fff; border: 1.5px solid var(--adm-linea); border-radius: 16px; }
+    body.admin-body .caja-stat-card { background: #fff; border: 1.5px solid var(--adm-linea); border-radius: 16px; box-shadow: 0 2px 6px rgba(35, 31, 32, 0.05); }
+    body.admin-body .caja-stat-label { color: var(--adm-tierra); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.16em; }
+    body.admin-body .caja-stat-value { font-family: var(--adm-font-display); font-weight: 900; color: var(--adm-terracota); font-variant-numeric: lining-nums; }
+    body.admin-body .caja-table th { background: var(--adm-crema-2); color: var(--adm-tierra); border-bottom: 2px solid var(--adm-linea); letter-spacing: 0.14em; font-size: 0.7rem; }
+    body.admin-body .caja-table td { border-bottom: 1px solid #EFE7DB; color: var(--adm-carbon); }
+    body.admin-body .caja-table tfoot td { background: var(--adm-alerta-soft); border-top: 2px solid var(--adm-alerta); }
+    body.admin-body .caja-sub, body.admin-body .caja-entry-total { color: var(--adm-terracota); }
+
+    /* Promos / usuarios */
+    body.admin-body .promo-add-form, body.admin-body .user-add-form { background: var(--adm-crema-2); border-color: var(--adm-linea); }
+    body.admin-body .promo-row, body.admin-body .user-row { border-color: var(--adm-linea); }
+    body.admin-body .user-row:hover { border-color: var(--adm-terracota-soft); }
+    body.admin-body .promo-price { color: var(--adm-terracota); }
+    body.admin-body .user-status-label.active { color: var(--adm-maguey); }
+
+    /* Toast */
+    body.admin-body .toast-notification { background: var(--adm-carbon); color: var(--adm-crema); font-family: var(--adm-font-ui); }
+  </style>
   <!-- QR Code lib -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
@@ -20,17 +151,21 @@
   <!-- ── Header admin ──────────────────────────────────────── -->
   <header class="admin-header">
     <div class="admin-brand">
-      <i class="fa-solid fa-utensils"></i>
-      <span>Panel de Control</span>
+      <img class="admin-logo" src="/brand/isotipo-noche.svg" alt="La Familia">
+      <div class="admin-lockup-text">
+        <span class="admin-lockup-name">La Familia</span>
+        <span class="admin-lockup-sub">Menudo y Barbacoa</span>
+      </div>
+      <span class="admin-brand-pill"><i class="fa-solid fa-utensils"></i> Panel de Control</span>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <a href="/cocina" class="btn-back-menu" style="background:#D97706;">
+      <a href="/cocina" class="btn-back-menu btn-cocina">
         <i class="fa-solid fa-fire-burner"></i> Cocina
       </a>
       <a href="/" class="btn-back-menu">
         <i class="fa-solid fa-eye"></i> Ver Menú
       </a>
-      <a href="/logout" class="btn-back-menu" style="background:#374151;" title="Cerrar Sesión">
+      <a href="/logout" class="btn-back-menu btn-salir" title="Cerrar Sesión">
         <i class="fa-solid fa-right-from-bracket"></i> Salir
       </a>
     </div>
@@ -330,24 +465,24 @@
             <i class="fa-solid fa-rotate"></i> Actualizar
           </button>
         </div>
-        <a href="/caja" target="_blank" class="btn-primary" style="background:#16A34A; text-decoration:none;">
+        <a href="/caja" target="_blank" class="btn-primary btn-pos" style="text-decoration:none;">
           <i class="fa-solid fa-cash-register"></i> Abrir Caja (POS)
         </a>
       </div>
 
       <!-- ── Venta del día (se actualiza sola cada minuto) ── -->
       <style>
-        .today-card { background: linear-gradient(135deg, #7c2d12 0%, #C84B31 55%, #E38B29 100%); color: #fff; border-radius: 18px; padding: 20px 22px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(200,75,49,0.25); }
+        .today-card { background-color: #B84A27; background-image: linear-gradient(135deg, rgba(150,57,27,0.92) 0%, rgba(184,74,39,0.86) 60%, rgba(184,74,39,0.80) 100%), url('/brand/trama-terracota.svg'); background-size: auto, 240px 240px; color: #fff; border-radius: 18px; padding: 20px 22px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(184,74,39,0.25); }
         .today-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
-        .today-label { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85; }
-        .today-total { font-size: 2.6rem; font-weight: 900; line-height: 1.1; margin: 4px 0 2px; }
+        .today-label { font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.9; }
+        .today-total { font-family: var(--lf-font-display, 'Playfair Display', Georgia, serif); font-size: 2.8rem; font-weight: 900; line-height: 1.1; margin: 4px 0 2px; font-variant-numeric: lining-nums; }
         .today-sub { font-size: 0.9rem; opacity: 0.9; }
         .today-live { font-size: 0.75rem; background: rgba(255,255,255,0.18); padding: 4px 10px; border-radius: 999px; font-weight: 700; white-space: nowrap; }
         .today-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 16px; }
         .today-cell { background: rgba(255,255,255,0.14); border-radius: 12px; padding: 10px 12px; }
-        .today-cell-label { font-size: 0.72rem; font-weight: 700; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.5px; }
+        .today-cell-label { font-size: 0.66rem; font-weight: 700; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .today-cell-value { font-size: 1.25rem; font-weight: 800; margin-top: 2px; }
-        .today-cell.pending { background: rgba(255,255,255,0.95); color: #92400e; }
+        .today-cell.pending { background: #FAF6F0; color: #8A5A12; }
         .today-top-products { margin-top: 12px; font-size: 0.85rem; opacity: 0.95; }
       </style>
       <div class="today-card" id="todayCard">
@@ -557,6 +692,6 @@
   </div>
 
   <script src="data.js?v=20261004"></script>
-  <script src="admin.js?v=20261004"></script>
+  <script src="admin.js?v=20261015"></script>
 </body>
 </html>

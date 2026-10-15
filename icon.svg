@@ -1,15 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Fondo -->
-  <rect width="512" height="512" rx="96" fill="#C84B31"/>
-  <!-- Cuenco -->
-  <ellipse cx="256" cy="310" rx="140" ry="36" fill="#FFE5B4"/>
-  <path d="M116 310 Q116 420 256 420 Q396 420 396 310 Z" fill="#FFE5B4"/>
-  <!-- Vapor 1 -->
-  <path d="M200 270 Q195 240 205 215 Q215 190 210 165" stroke="white" stroke-width="10" fill="none" stroke-linecap="round"/>
-  <!-- Vapor 2 -->
-  <path d="M256 260 Q251 230 261 205 Q271 180 266 155" stroke="white" stroke-width="10" fill="none" stroke-linecap="round"/>
-  <!-- Vapor 3 -->
-  <path d="M312 270 Q307 240 317 215 Q327 190 322 165" stroke="white" stroke-width="10" fill="none" stroke-linecap="round"/>
-  <!-- Texto POS -->
-  <text x="256" y="390" font-family="Arial Black,sans-serif" font-size="72" font-weight="900" text-anchor="middle" fill="#C84B31">POS</text>
+  <rect width="512" height="512" rx="112" fill="#FAF6F0"/>
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#B84A27" stroke-width="6"/>
+  <g transform="translate(256 262) scale(0.66) translate(-600 -443)">
+  <path d="M600 442C530 392 468 340 468 278C468 228 506 194 550 194C578 194 594 212 600 232C606 212 622 194 650 194C694 194 732 228 732 278C732 340 670 392 600 442Z" fill="none" stroke="#B84A27" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M520 468C502 440 514 415 498 392" fill="none" stroke="#B84A27" stroke-width="10" stroke-linecap="round"/>
+  <path d="M680 468C698 440 686 415 702 392" fill="none" stroke="#B84A27" stroke-width="10" stroke-linecap="round"/>
+  <path d="M418 532C372 532 372 586 424 586" fill="none" stroke="#231F20" stroke-width="14" stroke-linecap="round"/>
+  <path d="M782 532C828 532 828 586 776 586" fill="none" stroke="#231F20" stroke-width="14" stroke-linecap="round"/>
+  <rect x="405" y="498" width="390" height="28" rx="14" fill="none" stroke="#231F20" stroke-width="14"/>
+  <path d="M422 526C428 634 495 690 600 690C705 690 772 634 778 526" fill="none" stroke="#231F20" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M475 582Q506 562 537 582T600 582T663 582T725 582" fill="none" stroke="#B84A27" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="545" cy="624" r="7" fill="#B84A27"/>
+  <circle cx="600" cy="630" r="9" fill="#B84A27"/>
+  <circle cx="655" cy="624" r="7" fill="#B84A27"/>
+  <line x1="510" y1="690" x2="690" y2="690" stroke="#231F20" stroke-width="14" stroke-linecap="round"/></g>
 </svg>

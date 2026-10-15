@@ -301,8 +301,8 @@ function updateSchedulePreview() {
   const tempSchedule = readScheduleFromForm();
   const isOpen = checkIsOpenNow(tempSchedule);
   previewEl.innerHTML = isOpen
-    ? '<span style="color:#16A34A;font-weight:700;">🟢 ABIERTO ahora</span>'
-    : '<span style="color:#DC2626;font-weight:700;">🔴 CERRADO ahora</span>';
+    ? '<span style="color:#234B38;font-weight:700;">🟢 ABIERTO ahora</span>'
+    : '<span style="color:#A8321D;font-weight:700;">🔴 CERRADO ahora</span>';
 }
 
 function readScheduleFromForm() {
@@ -357,7 +357,7 @@ function initQRCode() {
   const qrInput = document.getElementById('customQrUrl');
   if (qrInput && !qrInput.value) qrInput.value = getMenuUrl();
   const url = qrInput?.value || getMenuUrl();
-  const qrOpts = (w) => ({ text: url, width: w, height: w, colorDark: '#C84B31', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.H });
+  const qrOpts = (w) => ({ text: url, width: w, height: w, colorDark: '#B84A27', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.H });
 
   const box = document.getElementById('qrcodeBox');
   if (box) { box.innerHTML = ''; new QRCode(box, qrOpts(160)); }
@@ -516,8 +516,8 @@ function renderExtraProductsList() {
         <!-- Info -->
         <div style="flex:1;min-width:180px;">
           <div style="font-weight:800;font-size:0.95rem;">${ep.emoji || ''} ${ep.title}</div>
-          <div style="font-size:0.8rem;color:#C84B31;font-weight:700;">$${Number(ep.price).toLocaleString('es-MX')}${ep.priceNote ? ' <span style="color:#6B7280;font-weight:400;">' + ep.priceNote + '</span>' : ''}</div>
-          ${ep.badge ? `<div style="font-size:0.72rem;color:#7C3AED;margin-top:2px;">${ep.badge}</div>` : ''}
+          <div style="font-size:0.8rem;color:#B84A27;font-weight:700;">$${Number(ep.price).toLocaleString('es-MX')}${ep.priceNote ? ' <span style="color:#6B7280;font-weight:400;">' + ep.priceNote + '</span>' : ''}</div>
+          ${ep.badge ? `<div style="font-size:0.72rem;color:#234B38;margin-top:2px;">${ep.badge}</div>` : ''}
           ${ep.description ? `<div style="font-size:0.72rem;color:#6B7280;margin-top:2px;">${ep.description}</div>` : ''}
         </div>
         <!-- Controles -->

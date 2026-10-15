@@ -3,165 +3,75 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Acceso Administración | Menú Digital</title>
+  <title>Acceso Administración | La Familia — Menudo y Barbacoa</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/brand/brand.css?v=20261015">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
-      font-family: 'Outfit', sans-serif;
-      background: linear-gradient(135deg, #1a0a00 0%, #2d1200 50%, #1a0a00 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+      font-family: var(--lf-font-label);
+      background-color: var(--lf-crema-2);
+      background-image: var(--lf-trama-crema);
+      background-size: 260px 260px;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 20px; color: var(--lf-carbon);
     }
-
     .login-card {
-      background: #fff;
-      border-radius: 20px;
-      padding: 40px 32px 36px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-      text-align: center;
+      background: var(--lf-crema); border: 1.5px solid var(--lf-linea);
+      border-radius: var(--lf-radius-lg); padding: 36px 34px 28px;
+      width: 100%; max-width: 410px; box-shadow: var(--lf-shadow-lg);
+      text-align: center; position: relative; overflow: hidden;
     }
-
-    @media (max-width: 479px) {
-      .login-card {
-        padding: 28px 20px 24px;
-        border-radius: 16px;
-        box-shadow: 0 12px 40px rgba(0,0,0,0.4);
-      }
-    }
-
-    .login-icon {
-      font-size: 3rem;
-      margin-bottom: 6px;
-    }
-
-    .login-title {
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: #1F2937;
-      margin-bottom: 4px;
-    }
-
-    .login-subtitle {
-      font-size: 0.88rem;
-      color: #6B7280;
-      margin-bottom: 32px;
-    }
-
-    .form-group {
-      text-align: left;
-      margin-bottom: 16px;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #374151;
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .input-icon-wrap {
-      position: relative;
-    }
-
-    .input-icon-wrap i {
-      position: absolute;
-      left: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #9CA3AF;
-      font-size: 0.9rem;
-    }
-
+    .login-card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: var(--lf-terracota); }
+    @media (max-width: 479px) { .login-card { padding: 28px 20px 22px; border-radius: 16px; } }
+    .login-lockup { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+    .login-lockup img { width: 88px; height: auto; margin-bottom: 8px; }
+    .login-lockup .name { font-family: var(--lf-font-display); font-weight: 900; font-size: 2.3rem; line-height: 1; color: var(--lf-carbon); }
+    .login-lockup .lf-heart-rule { width: 200px; margin: 8px 0 6px; font-size: 0.8rem; }
+    .login-lockup .sub { font-family: var(--lf-font-label); font-weight: 700; font-size: 0.66rem; letter-spacing: 0.32em; color: var(--lf-terracota); text-transform: uppercase; padding-left: .32em; }
+    .login-lockup .tag { font-family: var(--lf-font-serif); font-style: italic; font-size: 0.82rem; color: var(--lf-tierra); margin-top: 6px; }
+    .login-title { font-family: var(--lf-font-label); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--lf-carbon); margin: 4px 0 4px; padding-top: 18px; border-top: 1.5px solid var(--lf-linea); }
+    .login-subtitle { font-size: 0.85rem; color: var(--lf-tierra); margin-bottom: 22px; }
+    .login-subtitle strong { color: var(--lf-carbon); }
+    .form-group { text-align: left; margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.7rem; font-weight: 700; color: var(--lf-carbon); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.2em; }
+    .input-icon-wrap { position: relative; }
+    .input-icon-wrap i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--lf-tierra); font-size: 0.9rem; }
     .form-group input {
-      width: 100%;
-      padding: 12px 14px 12px 40px;
-      border: 2px solid #E5E7EB;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-family: 'Outfit', sans-serif;
-      color: #1F2937;
-      transition: border-color 0.2s;
-      background: #F9FAFB;
+      width: 100%; padding: 12px 14px 12px 40px; border: 1.5px solid var(--lf-linea-2);
+      border-radius: var(--lf-radius-sm); font-size: 1rem; font-family: var(--lf-font-label);
+      color: var(--lf-carbon); transition: border-color 0.2s, box-shadow 0.2s; background: #fff;
     }
-
-    .form-group input:focus {
-      outline: none;
-      border-color: #E38B29;
-      background: #fff;
-    }
-
+    .form-group input:focus { outline: none; border-color: var(--lf-terracota); box-shadow: 0 0 0 3px var(--lf-terracota-soft); }
     .error-box {
-      background: #FEF2F2;
-      border: 1.5px solid #FCA5A5;
-      border-radius: 10px;
-      padding: 10px 14px;
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.88rem;
-      color: #DC2626;
-      font-weight: 600;
-      text-align: left;
+      background: var(--lf-error-soft); border: 1.5px solid #E6B3A5; border-radius: var(--lf-radius-sm);
+      padding: 10px 14px; margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+      font-size: 0.88rem; color: var(--lf-error); font-weight: 600; text-align: left;
     }
-
     .btn-login {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #E38B29, #C84B31);
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      font-size: 1rem;
-      font-weight: 800;
-      font-family: 'Outfit', sans-serif;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: opacity 0.2s, transform 0.1s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+      width: 100%; padding: 15px; background: var(--lf-terracota); color: #fff; border: none;
+      border-radius: 999px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
+      font-family: var(--lf-font-label); cursor: pointer; margin-top: 8px;
+      transition: background 0.2s, transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 10px;
+      box-shadow: 0 6px 16px rgba(184, 74, 39, 0.28);
     }
-
-    .btn-login:hover  { opacity: 0.92; }
+    .btn-login:hover  { background: var(--lf-terracota-dark); }
     .btn-login:active { transform: scale(0.98); }
-
-    .back-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 24px;
-      font-size: 0.85rem;
-      color: #6B7280;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    .back-link:hover { color: #E38B29; }
-
-    .divider {
-      border: none;
-      border-top: 1.5px solid #F3F4F6;
-      margin: 24px 0 20px;
-    }
+    .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--lf-tierra); text-decoration: none; transition: color 0.2s; }
+    .back-link:hover { color: var(--lf-terracota); }
+    .divider { border: none; border-top: 1.5px solid var(--lf-linea); margin: 22px 0 14px; }
   </style>
 </head>
 <body>
   <div class="login-card">
-    <div class="login-icon">🔥</div>
+    <div class="login-lockup">
+      <img src="/brand/isotipo.svg" alt="La Familia">
+      <span class="name">La Familia</span>
+      <div class="lf-heart-rule"><span>&#9829;</span></div>
+      <span class="sub">Menudo y Barbacoa</span>
+      <span class="tag">Sazón casero hecho con el corazón</span>
+    </div>
     <h1 class="login-title">Acceso al Sistema</h1>
     <p class="login-subtitle">Ingresa con tu cuenta de <strong>administrador</strong> o <strong>cajero</strong></p>
 

@@ -3,70 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#C84B31">
+  <meta name="theme-color" content="#231F20">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Cocina">
   <link rel="manifest" href="/manifest.json">
-  <title>🍳 Cocina</title>
+  <title>🍳 Cocina · La Familia</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/brand/brand.css?v=20261015">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --bg:#F0F2F5;--bg2:#FFFFFF;--border:#E2E4EC;--text:#1F2937;
-      --muted:#6B7280;--primary:#C84B31;--green:#16A34A;
-      --amber:#D97706;--blue:#2563EB;--red:#DC2626;
-      --shadow:0 2px 12px rgba(0,0,0,0.08);
+      /* Paleta La Familia — Menudo y Barbacoa (brand/brand.css) */
+      --bg:#FAF6F0;--bg2:#FFFFFF;--bg3:#F6F1E9;--border:#E2D7C7;--text:#231F20;
+      --muted:#6E6259;--primary:#B84A27;--primary-soft:#F6E3DA;--green:#234B38;--green-soft:#E3EDE7;
+      --amber:#B7791F;--amber-soft:#FBF0DC;--blue:#2563EB;--red:#A8321D;--red-soft:#F8E1DA;
+      --live:#4ADE80;
+      --shadow:0 4px 14px rgba(35,31,32,0.08);
+      --font-ui:var(--lf-font-label,'Poppins',sans-serif);
+      --font-display:var(--lf-font-display,'Playfair Display',Georgia,serif);
     }
-    body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+    body{font-family:var(--font-ui);background:var(--bg);color:var(--text);height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 
     /* Header */
-    .cocina-header{background:#1E2022;color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-    .cocina-brand{font-size:1.1rem;font-weight:800;display:flex;align-items:center;gap:8px}
-    .cocina-meta{display:flex;align-items:center;gap:12px;font-size:0.82rem;color:#9CA3AF}
-    .cocina-clock{font-size:1rem;font-weight:700;color:#fff}
-    .cocina-refresh-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 2s infinite}
+    .cocina-header{background:var(--text);color:#FAF6F0;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:3px solid var(--primary)}
+    .cocina-brand{font-size:1.1rem;font-weight:800;display:flex;align-items:center;gap:10px;min-width:0}
+    .cocina-logo{height:38px;width:auto;flex-shrink:0;display:block}
+    .cocina-lockup-text{display:flex;flex-direction:column;line-height:1;padding-left:10px;border-left:1.5px solid #E9A487}
+    .cocina-lockup-name{font-family:var(--font-display);font-weight:900;font-size:1.25rem;color:#FAF6F0;letter-spacing:0.01em;white-space:nowrap}
+    .cocina-lockup-sub{font-family:var(--font-ui);font-weight:700;font-size:0.52rem;letter-spacing:0.32em;color:#E9A487;text-transform:uppercase;margin-top:4px;white-space:nowrap}
+    #cocinaBusName{font-family:var(--font-ui);font-size:0.66rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;background:var(--primary);color:#FAF6F0;padding:4px 11px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+    @media(max-width:520px){.cocina-lockup-sub{display:none}#cocinaBusName{display:none}}
+    .cocina-meta{display:flex;align-items:center;gap:12px;font-size:0.82rem;color:#CFC4B8}
+    .cocina-clock{font-size:1.05rem;font-weight:700;color:#FAF6F0;font-variant-numeric:tabular-nums}
+    .cocina-refresh-dot{width:8px;height:8px;border-radius:50%;background:var(--live);display:inline-block;animation:pulse 2s infinite}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
-    .btn-exit{background:#374151;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-family:'Outfit',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+    .btn-exit{background:#3A3435;color:#FAF6F0;border:none;border-radius:8px;padding:6px 12px;font-family:var(--font-ui);font-size:0.82rem;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
 
     /* Cola de pedidos — una sola columna que ocupa todo */
     .cocina-queue{flex:1 1 0;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:10px}
     .queue-header{
       display:flex;align-items:center;justify-content:space-between;
-      background:#FEF3C7;color:#92400E;border:1.5px solid #FDE68A;
+      background:var(--bg3);color:var(--text);border:1.5px solid var(--border);border-top:4px solid var(--primary);
       border-radius:14px 14px 0 0;padding:10px 16px;
-      font-size:0.82rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;flex-shrink:0;
+      font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;flex-shrink:0;
     }
-    .queue-count{font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:20px;background:rgba(0,0,0,0.08)}
+    .queue-count{font-size:0.78rem;font-weight:800;padding:2px 11px;border-radius:20px;background:var(--primary);color:#fff;letter-spacing:0}
     .queue-body{
       flex:1 1 0;min-height:0;overflow-y:auto;
-      background:var(--bg2);border:1.5px solid #FDE68A;border-top:none;
+      background:var(--bg);border:1.5px solid var(--border);border-top:none;
       border-radius:0 0 14px 14px;
       padding:10px;display:flex;flex-direction:column;gap:10px;
     }
-    .queue-empty{text-align:center;color:var(--muted);font-size:1rem;padding:48px 16px;opacity:0.6}
+    .queue-empty{text-align:center;color:var(--muted);font-size:1.1rem;padding:48px 16px;opacity:0.8;font-family:var(--lf-font-serif,Georgia,serif);font-style:italic}
 
     /* Tarjeta */
     .order-card{
-      background:var(--bg);border:1.5px solid var(--border);border-radius:14px;
-      padding:12px 14px;transition:box-shadow 0.2s;
+      background:var(--bg2);border:1.5px solid var(--border);border-left:4px solid var(--green);border-radius:14px;
+      padding:12px 14px;transition:box-shadow 0.2s;box-shadow:0 2px 6px rgba(35,31,32,0.04);
     }
     .order-card:hover{box-shadow:var(--shadow)}
     .card-llevar{border-left:4px solid var(--amber)!important}
 
     .order-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-    .order-num{font-size:0.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px}
-    .order-time{font-size:0.65rem;color:var(--muted)}
-    .order-time.late{color:var(--red);font-weight:700}
+    .order-num{font-size:0.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.14em}
+    .order-time{font-size:0.72rem;color:var(--muted);font-weight:600}
+    .order-time.late{color:#fff;background:var(--red);font-weight:700;padding:2px 8px;border-radius:999px}
 
     .order-type-tag{font-size:0.7rem;font-weight:800;padding:3px 10px;border-radius:8px;display:inline-block;margin-bottom:6px}
-    .order-type-aqui{background:#EEF2FF;color:#3730A3}
-    .order-type-llevar{background:#FFFBEB;color:#92400E}
+    .order-type-aqui{background:var(--green-soft);color:var(--green)}
+    .order-type-llevar{background:var(--amber-soft);color:#8A5A12}
 
-    .order-client{font-size:1.15rem;font-weight:800;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+    .order-client{font-family:var(--font-display);font-size:1.3rem;font-weight:800;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px}
 
     .order-items{list-style:none;margin-bottom:8px}
     .order-items li{font-size:0.88rem;display:flex;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);gap:8px}
@@ -76,10 +85,10 @@
 
     /* Acciones */
     .order-actions{display:flex;gap:6px;margin-top:4px}
-    .order-btn{flex:1;padding:9px 6px;border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity 0.15s,transform 0.1s}
+    .order-btn{flex:1;padding:9px 6px;border:none;border-radius:10px;font-family:var(--font-ui);font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity 0.15s,transform 0.1s}
     .order-btn:hover{opacity:0.85}
     .order-btn:active{transform:scale(0.96)}
-    .btn-print{background:#F3F4F6;color:var(--text);border:1.5px solid var(--border);flex:0 0 auto;padding:9px 14px}
+    .btn-print{background:var(--bg3);color:var(--text);border:1.5px solid var(--border);flex:0 0 auto;padding:9px 14px}
     .btn-done{background:var(--green);color:#fff;font-size:0.9rem}
 
     /* Responsive — en movil se ven como cards mas anchas */
@@ -108,8 +117,12 @@
 
   <header class="cocina-header">
     <div class="cocina-brand">
-      <i class="fa-solid fa-fire-burner"></i>
-      <span id="cocinaBusName">Cocina</span>
+      <img class="cocina-logo" src="/brand/isotipo-noche.svg" alt="La Familia">
+      <div class="cocina-lockup-text">
+        <span class="cocina-lockup-name">La Familia</span>
+        <span class="cocina-lockup-sub">Menudo y Barbacoa</span>
+      </div>
+      <span id="cocinaBusName"><i class="fa-solid fa-fire-burner"></i> Cocina</span>
     </div>
     <div class="cocina-meta">
       <span class="cocina-refresh-dot" title="Auto-refrescando cada 8s"></span>
@@ -121,7 +134,7 @@
   <!-- Cola única de pedidos pendientes -->
   <div class="cocina-queue">
     <div class="queue-header">
-      <span>🟡 Cola de pedidos</span>
+      <span><i class="fa-solid fa-fire-burner" style="color:var(--primary)"></i>&nbsp; Cola de pedidos</span>
       <span class="queue-count" id="queueCount">0</span>
     </div>
     <div class="queue-body" id="queueBody">

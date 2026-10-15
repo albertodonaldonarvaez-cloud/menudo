@@ -1,12 +1,12 @@
 {
-  "name": "Barbacoa & Antojitos POS",
-  "short_name": "Caja POS",
-  "description": "Terminal de punto de venta — Barbacoa & Antojitos",
+  "name": "La Familia · Menudo y Barbacoa",
+  "short_name": "La Familia",
+  "description": "Terminal de punto de venta — La Familia Menudo y Barbacoa",
   "start_url": "/caja",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#F5F6FA",
-  "theme_color": "#C84B31",
+  "background_color": "#FAF6F0",
+  "theme_color": "#B84A27",
   "orientation": "any",
   "icons": [
     {

@@ -46,7 +46,7 @@ function money(n) {
 }
 
 function emojiPlaceholder(emoji) {
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#FFF4E5'/><stop offset='1' stop-color='#FFEDE9'/></linearGradient></defs><rect width='160' height='100' fill='url(#g)'/><text x='80' y='64' font-size='44' text-anchor='middle'>${emoji || '🍽️'}</text></svg>`;
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#FAF6F0'/><stop offset='1' stop-color='#F6E3DA'/></linearGradient></defs><rect width='160' height='100' fill='url(#g)'/><text x='80' y='64' font-size='44' text-anchor='middle'>${emoji || '🍽️'}</text></svg>`;
   return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
 }
 
@@ -305,6 +305,7 @@ function renderMenu() {
           </div>
           <span class="pm-section-count">${items.length}</span>
         </header>
+        <div class="lf-heart-rule pm-section-rule" aria-hidden="true"><span>&#9829;</span></div>
         ${body}
       </section>`;
   }).join('');

@@ -138,6 +138,9 @@ const T = {
   // ── Bienvenida: fotos rotando ─────────────────────────────────
   startHero() {
     const img = document.getElementById('hero-img');
+    // Visual: si la foto no carga, se ve la trama terracota del marco en vez del ícono roto
+    img.onerror = () => img.classList.add('broken');
+    img.onload = () => img.classList.remove('broken');
     let i = 0;
     const next = () => {
       const pics = ['menudo', 'birria', 'tacos', 'quesadillas', 'carlota']
@@ -239,7 +242,7 @@ const T = {
     document.getElementById('menu-container').innerHTML = groups.map(([id, label, items]) =>
       `<div class="menu-section-title" id="sec-${id}">${label}</div>
        <div class="menu-grid">${items.map(p => p.calcMode === 'kilo' ? this.kiloCard(p) : this.itemCard(p)).join('')}</div>`
-    ).join('') || '<div style="text-align:center;color:#999;padding:40px;font-size:1.3rem;">No hay productos disponibles</div>';
+    ).join('') || '<div style="text-align:center;color:var(--lf-tierra);font-family:var(--lf-font-serif);font-style:italic;padding:40px;font-size:1.5rem;">No hay productos disponibles</div>';
 
     scroller.scrollTop = keepScroll;
     scroller.onscroll = () => this.syncChips();
@@ -483,7 +486,7 @@ const T = {
     document.getElementById('cart-type').textContent = (this.orderType === 'llevar' ? '🛍️ Para llevar' : '🍽️ Para aquí') + ' · cambiar';
     const list = document.getElementById('cart-list');
     if (!this.cart.length) {
-      list.innerHTML = '<div style="text-align:center;color:#999;padding:40px;font-size:1.3rem;">Tu pedido está vacío</div>';
+      list.innerHTML = '<div style="text-align:center;color:var(--lf-tierra);font-family:var(--lf-font-serif);font-style:italic;padding:40px;font-size:1.5rem;">Tu pedido está vacío</div>';
     } else {
       list.innerHTML = this.cart.map((c, i) => `
         <div class="cart-row">

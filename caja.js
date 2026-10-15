@@ -331,7 +331,7 @@ function renderTicket() {
       enviarWrap.innerHTML = `
         <div style="display:flex;gap:6px;margin-bottom:6px">
           <button class="enviar-btn" onclick="sendEditedToKitchen()" ${!hasChanges ? 'disabled' : ''}
-            style="flex:1;background:linear-gradient(135deg,#D97706,#B45309);padding:12px;font-size:0.9rem">
+            style="flex:1;background:linear-gradient(135deg,#B7791F,#96600F);padding:12px;font-size:0.9rem">
             <i class="fa-solid fa-fire-burner"></i> Actualizar cocina
           </button>
           <button class="enviar-btn" onclick="cobrarEditingOrder()"
@@ -340,7 +340,7 @@ function renderTicket() {
           </button>
         </div>
         <button class="enviar-btn" onclick="cancelEditing()"
-          style="background:#6B7280;padding:10px;font-size:0.82rem">
+          style="background:#6E6259;padding:10px;font-size:0.82rem">
           <i class="fa-solid fa-xmark"></i> Nueva orden
         </button>`;
     } else {
@@ -765,7 +765,7 @@ function notifyTotemOrder(order) {
 
   // Banner de notificación visual
   const banner = document.createElement('div');
-  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;padding:14px 16px;background:#059669;color:#fff;font-size:1.05rem;font-weight:700;text-align:center;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.25);cursor:pointer;';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;padding:14px 16px;background:#234B38;color:#fff;font-size:1.05rem;font-weight:700;text-align:center;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.25);cursor:pointer;';
   banner.innerHTML = `📱 NUEVO PEDIDO TÓTEM — <b>${order.clientName}</b> · $${order.total} · ${order.orderType === 'llevar' ? 'Llevar' : 'Aquí'}`;
   banner.onclick = () => banner.remove();
   document.body.appendChild(banner);
@@ -799,9 +799,9 @@ function renderPendingOrders() {
     const isEditing  = o.id === editingOrderId;
     const isTotem    = o.createdBy === 'totem';
     const typeLabel  = o.orderType === 'llevar' ? '🛍️ Llevar' : '🍽️ Aquí';
-    const totemBadge = isTotem ? '<span style="background:#059669;color:#fff;font-size:0.7rem;padding:2px 6px;border-radius:6px;font-weight:700;margin-left:4px;">📱 TÓTEM</span>' : '';
+    const totemBadge = isTotem ? '<span style="background:#234B38;color:#fff;font-size:0.7rem;padding:2px 6px;border-radius:6px;font-weight:700;margin-left:4px;">📱 TÓTEM</span>' : '';
     const itemsText  = (o.items || []).map(it => `${it.qty}× ${it.title}`).join(' · ');
-    const borderStyle = isTotem ? 'border-left:4px solid #059669;' : '';
+    const borderStyle = isTotem ? 'border-left:4px solid #234B38;' : '';
     return `
       <div class="pending-card${isEditing ? ' selected' : ''}" style="${borderStyle}" onclick="selectPendingOrder('${o.id}')">
         <div class="pending-card-top">
@@ -1025,7 +1025,7 @@ function showPosToast(msg) {
   if (!el) {
     el = document.createElement('div');
     el.id = 'posToast';
-    el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1F2937;color:#fff;padding:10px 20px;border-radius:12px;font-family:Outfit,sans-serif;font-size:0.9rem;font-weight:600;z-index:9999;transition:opacity 0.3s;pointer-events:none;';
+    el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#231F20;color:#FAF6F0;padding:10px 20px;border-radius:12px;font-family:var(--lf-font-label,sans-serif);font-size:0.9rem;font-weight:600;z-index:9999;transition:opacity 0.3s;pointer-events:none;';
     document.body.appendChild(el);
   }
   el.textContent = msg;

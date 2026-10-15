@@ -820,6 +820,9 @@ app.post('/api/totem-order', requireTotemAccess, (req, res) => {
   }
 });
 
+// ── Identidad de marca (logos, tramas, brand.css) ────────────
+app.use('/brand', express.static(path.join(ROOT, 'brand'), { maxAge: '7d', index: false }));
+
 // ── Archivos públicos del menú ────────────────────────────────
 ['index.html', 'app.js', 'data.js', 'styles.css', 'manifest.json', 'sw.js', 'icon.svg'].forEach(file => {
   app.get(`/${file}`, (req, res) => {

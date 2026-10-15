@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title id="pageTitle">Menú Digital</title>
   <meta name="description" content="Menú digital para consultar en mesa: barbacoa, menudo, tacos, quesadillas, bebidas, postres y promos.">
-  <meta name="theme-color" content="#C84B31">
+  <meta name="theme-color" content="#231F20">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Menú Digital">
@@ -16,9 +16,9 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=20261004">
+  <link rel="stylesheet" href="/brand/brand.css?v=20261015">
+  <link rel="stylesheet" href="styles.css?v=20261015">
 </head>
 <body class="public-menu">
 
@@ -35,16 +35,27 @@
     </div>
   </div>
 
-  <!-- ── Hero ── -->
+  <!-- ── Hero: lockup horizontal La Familia ── -->
   <header class="pm-hero">
     <div class="pm-hero-glow" aria-hidden="true"></div>
     <div class="pm-wrap pm-hero-inner">
-      <div class="pm-hero-avatar" aria-hidden="true">🔥</div>
-      <h1 class="pm-hero-title" id="businessName">Barbacoa &amp; Antojitos</h1>
-      <p class="pm-hero-slogan" id="businessSlogan">La barbacoa más rica, recién hecha y bien calientita 🔥</p>
-      <div class="pm-hero-chips">
-        <span class="pm-chip"><i class="fa-solid fa-utensils"></i> Menú digital en mesa</span>
-        <span class="pm-chip" id="heroSchedule" hidden></span>
+      <div class="pm-hero-card">
+        <div class="lf-lockup pm-lockup" role="img" aria-label="La Familia · Menudo y Barbacoa · Sazón casero hecho con el corazón">
+          <img src="/brand/isotipo.svg" alt="" width="70" height="75">
+          <span class="lf-lockup-rule" aria-hidden="true"></span>
+          <span class="lf-lockup-text" aria-hidden="true">
+            <span class="lf-lockup-name">La Familia</span>
+            <span class="lf-lockup-sub">Menudo y Barbacoa</span>
+            <span class="lf-lockup-tag">Sazón casero hecho con el corazón</span>
+          </span>
+        </div>
+        <h1 class="pm-hero-title pm-sr-only" id="businessName">Barbacoa &amp; Antojitos</h1>
+        <div class="lf-heart-rule pm-hero-rule" aria-hidden="true"><span>&#9829;</span></div>
+        <p class="pm-hero-slogan" id="businessSlogan">La barbacoa más rica, recién hecha y bien calientita 🔥</p>
+        <div class="pm-hero-chips">
+          <span class="pm-chip"><i class="fa-solid fa-utensils"></i> Menú digital en mesa</span>
+          <span class="pm-chip" id="heroSchedule" hidden></span>
+        </div>
       </div>
     </div>
   </header>
@@ -67,6 +78,16 @@
   <!-- ── Footer ── -->
   <footer class="pm-footer">
     <div class="pm-wrap pm-footer-inner">
+      <div class="lf-lockup on-dark pm-footer-lockup" role="img" aria-label="La Familia · Menudo y Barbacoa">
+        <img src="/brand/isotipo-noche.svg" alt="" width="54" height="58">
+        <span class="lf-lockup-rule" aria-hidden="true"></span>
+        <span class="lf-lockup-text" aria-hidden="true">
+          <span class="lf-lockup-name">La Familia</span>
+          <span class="lf-lockup-sub">Menudo y Barbacoa</span>
+          <span class="lf-lockup-tag">Sazón casero hecho con el corazón</span>
+        </span>
+      </div>
+      <div class="lf-heart-rule pm-footer-rule" aria-hidden="true"><span>&#9829;</span></div>
       <p class="pm-footer-name" id="footerBusinessName">Barbacoa &amp; Antojitos</p>
       <p class="pm-footer-sub" id="footerSchedule"></p>
       <p class="pm-footer-sub">¡Gracias por visitarnos y buen provecho! 🙌</p>
@@ -79,7 +100,7 @@
   </footer>
 
   <script src="data.js?v=20261004"></script>
-  <script src="app.js?v=20261004"></script>
+  <script src="app.js?v=20261015"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(e => console.warn('SW:', e));

@@ -1,0 +1,89 @@
+/* =============================================================
+   LA FAMILIA — MENUDO Y BARBACOA
+   Tokens del Manual de Identidad Visual (Lámina 04)
+   Se carga en TODAS las pantallas: menú público, tótem, caja,
+   cocina, admin y login.
+   ============================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&family=Poppins:wght@400;500;600;700;800&family=Gelasio:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap');
+
+/* Alias de Century Gothic: local() solo coincide con la cara exacta.
+   Si falta la Regular (algunas PCs solo tienen Bold/Italic), 400–600 cae a Poppins en vez de verse en cursiva. */
+@font-face { font-family: 'LF Gothic'; src: local('Century Gothic'), local('CenturyGothic'); font-weight: 400 600; font-style: normal; }
+@font-face { font-family: 'LF Gothic'; src: local('Century Gothic Bold'), local('CenturyGothic-Bold'); font-weight: 700 900; font-style: normal; }
+/* El "$" de Playfair 900 tiene trazos muy finos y se ve roto en precios: solo ese glifo usa Georgia Bold */
+@font-face { font-family: 'LF Dollar'; src: local('Georgia Bold'), local('Georgia-Bold'), local('Gelasio Bold'), local('Gelasio-Bold'); unicode-range: U+0024; font-weight: 600 900; }
+
+:root {
+  /* Paleta cromática oficial */
+  --lf-terracota: #B84A27;        /* Terracota barro / guajillo — acento y corazón */
+  --lf-terracota-dark: #96391B;
+  --lf-terracota-soft: #F6E3DA;   /* tinte suave para fondos de selección */
+  --lf-carbon: #231F20;           /* Carbón de leña — trazo y titulares */
+  --lf-carbon-2: #3A3435;
+  --lf-crema: #FAF6F0;            /* Crema de maíz — fondo principal */
+  --lf-crema-2: #F6F1E9;          /* fondo de lámina */
+  --lf-hueso: #FFFFFF;
+  --lf-maguey: #234B38;           /* Verde penca de maguey — acento secundario */
+  --lf-maguey-soft: #E3EDE7;
+  --lf-tierra: #6E6259;           /* Tierra tostada — textos secundarios */
+  --lf-linea: #E2D7C7;            /* filetes y bordes */
+  --lf-linea-2: #D8CBB8;
+  --lf-kraft: #DDBF94;            /* papel kraft (trama 02) */
+
+  /* Estados (derivados de la paleta) */
+  --lf-ok: #234B38;
+  --lf-ok-soft: #E3EDE7;
+  --lf-alerta: #B7791F;
+  --lf-alerta-soft: #FBF0DC;
+  --lf-error: #A8321D;
+  --lf-error-soft: #F8E1DA;
+
+  /* Sistema tipográfico institucional */
+  --lf-font-display: 'LF Dollar', 'Playfair Display', Georgia, 'Times New Roman', serif; /* Logotipo y títulos */
+  --lf-font-label: 'LF Gothic', 'Poppins', sans-serif;                                  /* Descriptores / UI (Century Gothic → Poppins) */
+  --lf-font-serif: Georgia, 'Gelasio', 'Times New Roman', serif;                      /* Lemas y descripciones */
+  --lf-tracking: 0.22em;          /* mayúsculas con espaciado amplio (+200 a +300) */
+
+  --lf-radius-sm: 10px;
+  --lf-radius: 14px;
+  --lf-radius-lg: 22px;
+  --lf-shadow-sm: 0 2px 6px rgba(35, 31, 32, 0.06);
+  --lf-shadow: 0 8px 24px rgba(35, 31, 32, 0.08);
+  --lf-shadow-lg: 0 18px 44px rgba(35, 31, 32, 0.14);
+
+  --lf-trama-crema: url('/brand/trama-crema.svg');
+  --lf-trama-terracota: url('/brand/trama-terracota.svg');
+  --lf-trama-carbon: url('/brand/trama-carbon.svg');
+}
+
+/* ── Utilidades de marca ───────────────────────────────────── */
+.lf-trama { background-color: var(--lf-crema); background-image: var(--lf-trama-crema); background-size: 260px 260px; }
+.lf-trama-terracota { background-color: var(--lf-terracota); background-image: var(--lf-trama-terracota); background-size: 260px 260px; }
+.lf-trama-carbon { background-color: var(--lf-carbon); background-image: var(--lf-trama-carbon); background-size: 260px 260px; }
+
+.lf-display { font-family: var(--lf-font-display); font-weight: 900; color: var(--lf-carbon); letter-spacing: 0.01em; }
+.lf-label { font-family: var(--lf-font-label); font-weight: 700; text-transform: uppercase; letter-spacing: var(--lf-tracking); }
+.lf-serif { font-family: var(--lf-font-serif); font-style: italic; color: var(--lf-tierra); }
+
+/* Lockup horizontal: [isotipo] | La Familia / MENUDO Y BARBACOA / lema */
+.lf-lockup { display: inline-flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; }
+.lf-lockup img { height: 52px; width: auto; flex-shrink: 0; }
+.lf-lockup-rule { width: 2px; align-self: stretch; background: var(--lf-terracota); border-radius: 2px; position: relative; margin: 4px 0; }
+.lf-lockup-text { display: flex; flex-direction: column; line-height: 1; }
+.lf-lockup-name { font-family: var(--lf-font-display); font-weight: 900; font-size: 1.7rem; color: var(--lf-carbon); letter-spacing: 0.01em; }
+.lf-lockup-sub { font-family: var(--lf-font-label); font-weight: 700; font-size: 0.62rem; letter-spacing: 0.32em; color: var(--lf-terracota); text-transform: uppercase; margin-top: 6px; padding-top: 5px; border-top: 1.5px solid var(--lf-terracota); }
+.lf-lockup-tag { font-family: var(--lf-font-serif); font-style: italic; font-size: 0.8rem; color: var(--lf-tierra); margin-top: 5px; }
+.lf-lockup.on-dark .lf-lockup-name { color: var(--lf-crema); }
+.lf-lockup.on-dark .lf-lockup-sub { color: #E9A487; border-color: #E9A487; }
+.lf-lockup.on-dark .lf-lockup-tag { color: #CFC4B8; }
+
+/* Filete con corazón ( ——— ♥ ——— ) */
+.lf-heart-rule { display: flex; align-items: center; gap: 10px; color: var(--lf-terracota); }
+.lf-heart-rule::before, .lf-heart-rule::after { content: ''; flex: 1; height: 1.5px; background: currentColor; opacity: 0.55; }
+.lf-heart-rule > span { font-size: 0.8em; line-height: 1; }
+
+/* Sello / insignia en mayúsculas */
+.lf-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 999px; font-family: var(--lf-font-label); font-weight: 700; font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; background: var(--lf-carbon); color: var(--lf-crema); }
+.lf-pill.terracota { background: var(--lf-terracota); }
+.lf-pill.maguey { background: var(--lf-maguey); }
+.lf-pill.outline { background: transparent; color: var(--lf-terracota); border: 1.5px solid var(--lf-terracota); }
